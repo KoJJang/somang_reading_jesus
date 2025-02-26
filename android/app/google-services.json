@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "415585262962",
+    "project_id": "reading-jesus-somang",
+    "storage_bucket": "reading-jesus-somang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415585262962:android:135a0fc6f934668a7d11eb",
+        "android_client_info": {
+          "package_name": "com.example.somang_reading_jesus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVf_4vF0wE9OpmErxTRRHwiTfNNzQhd14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

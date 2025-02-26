@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBVf_4vF0wE9OpmErxTRRHwiTfNNzQhd14',
-    appId: '1:415585262962:android:c5ff0adf3ca465dd7d11eb',
+    appId: '1:415585262962:android:135a0fc6f934668a7d11eb',
     messagingSenderId: '415585262962',
     projectId: 'reading-jesus-somang',
     storageBucket: 'reading-jesus-somang.firebasestorage.app',
@@ -59,10 +59,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBrE1-G1S-KsvMNZf8oZUFAk-i9ai0HzUI',
-    appId: '1:415585262962:ios:0a01c4ddaf1908b47d11eb',
+    appId: '1:415585262962:ios:30ef83ae317de3fa7d11eb',
     messagingSenderId: '415585262962',
     projectId: 'reading-jesus-somang',
     storageBucket: 'reading-jesus-somang.firebasestorage.app',
-    iosBundleId: 'com.shawn-jang',
+    iosBundleId: 'com.example.somangReadingJesus',
   );
+
 }
