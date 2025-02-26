@@ -1,0 +1,27 @@
+import 'package:flutter/material.dart';
+
+class AppColors {
+  // Primary Colors
+  static const Color primary = Color(0xFF4F46E5);
+  static const Color primaryLight = Color(0xFFEEF2FF);
+  static const Color primaryLighter = Color(0xFFE0E7FF);
+
+  // Text Colors
+  static const Color textPrimary = Color(0xFF111827);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textTertiary = Color(0xFF9CA3AF);
+
+  // Background Colors
+  static const Color background = Color(0xFFF9FAFB);
+  static const Color cardBackground = Colors.white;
+  static const Color errorBackground = Color(0xFFDC2626);
+
+  // Status Colors
+  static const Color completed = Color(0xFF059669);
+  static const Color pending = Color(0xFFFCD34D);
+
+  // Calendar Colors
+  static const Color sundayText = Colors.red;
+  static const Color saturdayText = Colors.blue;
+  static const Color disabledText = Color(0xFFD1D5DB);
+}
