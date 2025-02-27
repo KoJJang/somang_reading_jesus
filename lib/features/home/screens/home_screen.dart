@@ -6,7 +6,10 @@ import '../../../data/services/completion_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
 import '../../../features/auth/screens/phone_auth_screen.dart';
+import '../../../features/auth/controllers/user_service.dart';
+import '../../../features/auth/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,12 +23,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   final _completionService = CompletionService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _userService = UserService();
+  UserProfile? _userProfile;
+  bool _isLoadingProfile = true;
   bool get _isAuthenticated => _auth.currentUser != null;
+  final _dateFormat = DateFormat('yyyy년 MM월 dd일');
 
   @override
   void initState() {
     super.initState();
     _checkTodayCompletion();
+    _loadUserProfile();
   }
 
   Future<void> _checkTodayCompletion() async {
@@ -68,6 +76,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadUserProfile() async {
+    if (_isAuthenticated) {
+      final profile = await _userService.getUserProfile();
+      if (mounted) {
+        setState(() {
+          _userProfile = profile;
+          _isLoadingProfile = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _userProfile = null;
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
+
   void _navigateToPhoneAuth() async {
     final result = await Navigator.push(
       context,
@@ -75,10 +102,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (result == true && mounted) {
-      setState(() {});
+      setState(() {
+        _isLoadingProfile = true;
+      });
+      await _loadUserProfile();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('휴대폰 인증이 완료되었습니다'),
+          content: Text('인증이 완료되었습니다'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -88,7 +119,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _signOut() async {
     await _auth.signOut();
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _userProfile = null;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('로그아웃 되었습니다'),
@@ -114,53 +147,83 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.grey.withOpacity(0.1)),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    _isAuthenticated
-                        ? Icons.verified_user
-                        : Icons.person_outline,
-                    color: _isAuthenticated ? Colors.green : Colors.orange,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isAuthenticated ? '인증된 사용자' : '게스트 사용자',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  Row(
+                    children: [
+                      Icon(
+                        _isAuthenticated
+                            ? Icons.verified_user
+                            : Icons.person_outline,
+                        color: _isAuthenticated ? Colors.green : Colors.orange,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isAuthenticated
+                                  ? (_isLoadingProfile
+                                      ? '인증된 사용자'
+                                      : (_userProfile?.name ?? '인증된 사용자'))
+                                  : '게스트 사용자',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              _isAuthenticated
+                                  ? '${_auth.currentUser?.phoneNumber ?? "인증됨"}'
+                                  : '휴대폰 인증이 필요합니다',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed:
+                            _isAuthenticated ? _signOut : _navigateToPhoneAuth,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              _isAuthenticated ? Colors.red[100] : Colors.blue,
+                          foregroundColor:
+                              _isAuthenticated ? Colors.red : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        Text(
-                          _isAuthenticated
-                              ? '${_auth.currentUser?.phoneNumber ?? "인증됨"}'
-                              : '휴대폰 인증이 필요합니다',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                        child: Text(_isAuthenticated ? '로그아웃' : '인증하기'),
+                      ),
+                    ],
                   ),
-                  ElevatedButton(
-                    onPressed:
-                        _isAuthenticated ? _signOut : _navigateToPhoneAuth,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _isAuthenticated ? Colors.red[100] : Colors.blue,
-                      foregroundColor:
-                          _isAuthenticated ? Colors.red : Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                  // 생년월일 정보 표시 (인증된 사용자이고 프로필이 있는 경우)
+                  if (_isAuthenticated &&
+                      _userProfile != null &&
+                      !_isLoadingProfile)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.cake, color: Colors.amber, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            '생년월일: ${_dateFormat.format(_userProfile!.birthDate)}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Text(_isAuthenticated ? '로그아웃' : '인증하기'),
-                  ),
                 ],
               ),
             ),

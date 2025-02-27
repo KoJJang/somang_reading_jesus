@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
+import '../controllers/user_service.dart';
+import 'profile_completion_screen.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -154,7 +156,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         await Future.delayed(const Duration(seconds: 1));
 
         if (mounted) {
-          Navigator.of(context).pop(true);
+          // 프로필 완성 여부 확인
+          _checkAndNavigateToProfileCompletion();
         }
       } else {
         print('TEST MODE: Invalid verification code');
@@ -178,7 +181,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       print('Authentication successful: ${userCredential.user?.uid}');
 
       if (mounted) {
-        Navigator.of(context).pop(true);
+        // 프로필 완성 여부 확인
+        _checkAndNavigateToProfileCompletion();
       }
     } catch (e) {
       print('SMS verification failed: $e');
@@ -186,6 +190,43 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         _isLoading = false;
         _errorMessage = '인증 코드가 올바르지 않습니다. 다시 확인해주세요.';
       });
+    }
+  }
+
+  // 프로필 완성 여부를 확인하고 필요시 프로필 설정 화면으로 이동
+  Future<void> _checkAndNavigateToProfileCompletion() async {
+    try {
+      final userService = UserService();
+      final hasProfile = await userService.hasUserProfile();
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        if (hasProfile) {
+          // 이미 프로필이 있으면 홈 화면으로 이동
+          Navigator.of(context).pop(true);
+        } else {
+          // 프로필이 없으면 프로필 설정 화면으로 이동
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProfileCompletionScreen(),
+            ),
+          );
+
+          // 프로필 설정 완료되면 홈 화면으로 이동
+          if (result == true && mounted) {
+            Navigator.of(context).pop(true);
+          }
+        }
+      }
+    } catch (e) {
+      print('프로필 확인 오류: $e');
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
     }
   }
 
