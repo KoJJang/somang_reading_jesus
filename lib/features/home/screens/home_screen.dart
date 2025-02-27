@@ -5,6 +5,8 @@ import '../widgets/history_section.dart';
 import '../../../data/services/completion_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
+import '../../../features/auth/screens/phone_auth_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isCompletedToday = false;
   bool _isLoading = true;
   final _completionService = CompletionService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool get _isAuthenticated => _auth.currentUser != null;
 
   @override
   void initState() {
@@ -64,6 +68,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _navigateToPhoneAuth() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PhoneAuthScreen()),
+    );
+
+    if (result == true && mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('휴대폰 인증이 완료되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _signOut() async {
+    await _auth.signOut();
+    if (mounted) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('로그아웃 되었습니다'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,6 +106,65 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // 사용자 인증 상태 표시 및 버튼
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isAuthenticated
+                        ? Icons.verified_user
+                        : Icons.person_outline,
+                    color: _isAuthenticated ? Colors.green : Colors.orange,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isAuthenticated ? '인증된 사용자' : '게스트 사용자',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          _isAuthenticated
+                              ? '${_auth.currentUser?.phoneNumber ?? "인증됨"}'
+                              : '휴대폰 인증이 필요합니다',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        _isAuthenticated ? _signOut : _navigateToPhoneAuth,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _isAuthenticated ? Colors.red[100] : Colors.blue,
+                      foregroundColor:
+                          _isAuthenticated ? Colors.red : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(_isAuthenticated ? '로그아웃' : '인증하기'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             // 오늘의 말씀 카드 (이전 디자인)
             const ReadingCard(),
             const SizedBox(height: 4),
