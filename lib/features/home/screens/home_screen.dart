@@ -34,6 +34,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _checkTodayCompletion();
     _loadUserProfile();
+
+    // Listen to authentication state changes
+    _auth.authStateChanges().listen((User? user) {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = true;
+        });
+        _loadUserProfile();
+      }
+    });
   }
 
   Future<void> _checkTodayCompletion() async {
@@ -139,95 +149,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 사용자 인증 상태 표시 및 버튼
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.withOpacity(0.1)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        _isAuthenticated
-                            ? Icons.verified_user
-                            : Icons.person_outline,
-                        color: _isAuthenticated ? Colors.green : Colors.orange,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isAuthenticated
-                                  ? (_isLoadingProfile
-                                      ? '인증된 사용자'
-                                      : (_userProfile?.name ?? '인증된 사용자'))
-                                  : '게스트 사용자',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              _isAuthenticated
-                                  ? '${_auth.currentUser?.phoneNumber ?? "인증됨"}'
-                                  : '휴대폰 인증이 필요합니다',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed:
-                            _isAuthenticated ? _signOut : _navigateToPhoneAuth,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              _isAuthenticated ? Colors.red[100] : Colors.blue,
-                          foregroundColor:
-                              _isAuthenticated ? Colors.red : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(_isAuthenticated ? '로그아웃' : '인증하기'),
-                      ),
-                    ],
-                  ),
-
-                  // 생년월일 정보 표시 (인증된 사용자이고 프로필이 있는 경우)
-                  if (_isAuthenticated &&
-                      _userProfile != null &&
-                      !_isLoadingProfile)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.cake, color: Colors.amber, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            '생년월일: ${_dateFormat.format(_userProfile!.birthDate)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             // 오늘의 말씀 카드 (이전 디자인)
             const ReadingCard(),
             const SizedBox(height: 4),

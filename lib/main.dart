@@ -8,6 +8,7 @@ import 'package:reading_jesus_somang/features/bible/screens/bible_reading_screen
 import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
+import 'package:reading_jesus_somang/features/auth/screens/profile_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -57,6 +58,10 @@ class MyApp extends StatelessWidget {
           case '/profile-completion':
             return MaterialPageRoute(
               builder: (context) => const ProfileCompletionScreen(),
+            );
+          case '/profile':
+            return MaterialPageRoute(
+              builder: (context) => const ProfileScreen(),
             );
           default:
             return null;
