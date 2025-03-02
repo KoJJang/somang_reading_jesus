@@ -65,12 +65,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       final dateKey = DateTime(date.year, date.month, date.day);
       final isFutureDate = date.isAfter(DateTime.now());
+      final isCompleted = _completionStatus[dateKey] == true;
 
       if (isFutureDate) {
+        // 미래 날짜는 남은 날짜로 카운트
         remaining++;
+        // 미래 날짜지만 완료된 경우 completed에 추가
+        if (isCompleted) {
+          completed++;
+        }
       } else {
+        // 현재까지의 날짜만 완료율 계산에 포함
         total++;
-        if (_completionStatus[dateKey] == true) {
+        if (isCompleted) {
           completed++;
         }
       }
@@ -123,7 +130,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final total = _monthStatus['total'] ?? 0;
     final completed = _monthStatus['completed'] ?? 0;
-    final completionRate = total > 0 ? (completed / total * 100).round() : 0;
+    var completionRate = total > 0 ? (completed / total * 100).round() : 0;
+    completionRate = completionRate > 100 ? 100 : completionRate;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -274,10 +282,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color:
-              isFutureDate
-                  ? Colors.grey[100]
-                  : isCompleted
+              isCompleted
                   ? Colors.green[50]
+                  : isFutureDate
+                  ? Colors.grey[100]
                   : Colors.amber[50],
           border:
               isSelected
