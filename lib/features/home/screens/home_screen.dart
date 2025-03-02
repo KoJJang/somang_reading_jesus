@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/daily_plan.dart';
 import '../widgets/history_section.dart';
-import '../../../data/services/completion_service.dart';
+import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
 import '../../../features/auth/screens/phone_auth_screen.dart';
@@ -21,19 +21,21 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isCompletedToday = false;
   bool _isLoading = true;
-  final _completionService = CompletionService();
+  final _readingService = ReadingService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final _userService = UserService();
   UserProfile? _userProfile;
   bool _isLoadingProfile = true;
   bool get _isAuthenticated => _auth.currentUser != null;
   final _dateFormat = DateFormat('yyyy년 MM월 dd일');
+  Map<String, dynamic>? _readingStats;
 
   @override
   void initState() {
     super.initState();
     _checkTodayCompletion();
     _loadUserProfile();
+    _loadReadingStats();
 
     // Listen to authentication state changes
     _auth.authStateChanges().listen((User? user) {
@@ -42,17 +44,41 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoadingProfile = true;
         });
         _loadUserProfile();
+        _checkTodayCompletion();
+        _loadReadingStats();
       }
     });
   }
 
+  Future<void> _loadReadingStats() async {
+    if (_isAuthenticated) {
+      final stats = await _readingService.getReadingStats();
+      if (mounted) {
+        setState(() {
+          _readingStats = stats;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _readingStats = null;
+        });
+      }
+    }
+  }
+
   Future<void> _checkTodayCompletion() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     final plan = await ReadingPlanService().getTodaysPlan();
-    final isCompleted = await _completionService.isCompleted(
+    final isCompleted = await _readingService.isCompleted(
       ReadingPlanService.startYear,
       plan?.week ?? 0,
       plan?.day ?? 0,
     );
+
     if (mounted) {
       setState(() {
         _isCompletedToday = isCompleted;
@@ -71,15 +97,28 @@ class _HomeScreenState extends State<HomeScreen> {
         day: plan.day,
         readings: plan.readings,
       );
-      await _completionService.markAsCompleted(completion);
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      await _readingService.markAsCompleted(completion);
+
+      if (_isAuthenticated) {
+        await _loadReadingStats();
+      }
+
       if (mounted) {
         setState(() {
           _isCompletedToday = true;
+          _isLoading = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('오늘의 말씀을 완료했습니다!'),
-            duration: Duration(milliseconds: 500),
+            duration: Duration(milliseconds: 1500),
+            backgroundColor: Color(0xFF059669),
           ),
         );
       }
@@ -284,6 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const DailyPlan(),
             const SizedBox(height: 24),
             const HistorySection(),
+            const SizedBox(height: 24),
           ],
         ),
       ),

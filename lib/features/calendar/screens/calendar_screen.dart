@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../../../features/services/reading_plan_service.dart';
 import '../../../features/services/models/reading_plan.dart';
-import '../../../data/services/completion_service.dart';
+import '../../../data/services/reading_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/logger_util.dart';
@@ -87,7 +87,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _loadMonthCompletions(DateTime month) async {
     try {
-      final service = CompletionService();
+      final service = ReadingService();
       final startDate = DateTime(month.year, month.month, 1);
       final endDate = DateTime(month.year, month.month + 1, 0);
 

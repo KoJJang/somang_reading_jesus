@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../data/services/completion_service.dart';
+import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
 
@@ -13,7 +13,7 @@ class QuickAccessGrid extends StatefulWidget {
 class _QuickAccessGridState extends State<QuickAccessGrid> {
   bool _isCompletedToday = false;
   bool _isLoading = true;
-  final _completionService = CompletionService();
+  final _readingService = ReadingService();
 
   @override
   void initState() {
@@ -23,7 +23,7 @@ class _QuickAccessGridState extends State<QuickAccessGrid> {
 
   Future<void> _checkTodayCompletion() async {
     final plan = await ReadingPlanService().getTodaysPlan();
-    final isCompleted = await _completionService.isCompleted(
+    final isCompleted = await _readingService.isCompleted(
       ReadingPlanService.startYear,
       plan?.week ?? 0,
       plan?.day ?? 0,
@@ -96,7 +96,7 @@ class _QuickAccessGridState extends State<QuickAccessGrid> {
         day: plan.day,
         readings: plan.readings,
       );
-      await _completionService.markAsCompleted(completion);
+      await _readingService.markAsCompleted(completion);
       if (context.mounted) {
         setState(() {
           _isCompletedToday = true;

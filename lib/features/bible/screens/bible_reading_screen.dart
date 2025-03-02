@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import '../../../data/models/bible_verse.dart';
 import '../../../data/services/database_service.dart';
-import '../../../data/services/completion_service.dart';
+import '../../../data/services/reading_service.dart';
 import '../../../core/utils/logger_util.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -29,7 +29,7 @@ class BibleReadingScreen extends StatefulWidget {
 
 class _BibleReadingScreenState extends State<BibleReadingScreen> {
   final DatabaseService _databaseService = DatabaseService();
-  final _completionService = CompletionService();
+  final _readingService = ReadingService();
   final _logger = Logger();
   List<BibleVerse> verses = [];
   bool isLoading = true;
@@ -49,7 +49,7 @@ class _BibleReadingScreenState extends State<BibleReadingScreen> {
     try {
       // 현재 읽고 있는 말씀의 week, day 정보를 가져오기 위해 첫 번째 reading 사용
       final reading = widget.readings[0];
-      final isCompleted = await _completionService.isCompleted(
+      final isCompleted = await _readingService.isCompleted(
         ReadingPlanService.startYear,
         reading['week'] as int,
         reading['day'] as int,
@@ -133,7 +133,7 @@ class _BibleReadingScreenState extends State<BibleReadingScreen> {
         readings: widget.readings,
       );
 
-      await _completionService.markAsCompleted(completion);
+      await _readingService.markAsCompleted(completion);
       if (mounted) {
         setState(() {
           _isCompletedToday = true;
