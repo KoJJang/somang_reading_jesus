@@ -8,6 +8,7 @@ import '../repositories/synced_reading_repository.dart';
 ///
 /// 이 클래스는 통독 완료 데이터의 저장, 조회, 동기화를 처리합니다.
 /// 내부적으로 로컬 저장소와 Firebase 저장소를 동기화하는 SyncedReadingRepository를 사용합니다.
+/// 오프라인 우선 접근 방식으로 동작합니다.
 class ReadingService {
   static final ReadingService _instance = ReadingService._internal();
   final SyncedReadingRepository _repository;
@@ -23,55 +24,54 @@ class ReadingService {
   ReadingService._internal()
     : _repository = SyncedReadingRepository(),
       _auth = FirebaseAuth.instance {
-    // 인증 상태 변경 감지
-    _auth.authStateChanges().listen(_onAuthStateChanged);
+    // 인증 상태는 repository에서 관리
   }
 
-  /// 인증 상태 변경 시 호출되는 메서드
-  void _onAuthStateChanged(User? user) {
-    if (user != null) {
-      // 로그인된 경우, 데이터 동기화 수행
-      _syncDataAfterLogin();
-    }
-  }
-
-  /// 로그인 후 데이터 동기화
-  Future<void> _syncDataAfterLogin() async {
-    try {
-      _logger.i('로그인 감지됨: 통독 데이터 동기화 시작');
-      await _repository.syncOnLogin();
-    } catch (e) {
-      _logger.e('로그인 후 데이터 동기화 중 오류: $e');
-    }
-  }
-
-  /// 통독 완료 표시
+  /// 통독 완료 표시 (로컬에 저장, 인증된 경우 Firebase에도 저장)
   Future<void> markAsCompleted(ReadingCompletion completion) async {
     await _repository.markAsCompleted(completion);
   }
 
-  /// 특정 날짜의 통독 완료 여부 확인
+  /// 특정 날짜의 통독 완료 여부 확인 (로컬 데이터 우선)
   Future<bool> isCompleted(int year, int week, int day) async {
     return await _repository.isCompleted(year, week, day);
   }
 
-  /// 모든 완료 데이터 가져오기
+  /// 모든 완료 데이터 가져오기 (로컬 데이터 우선)
   Future<List<ReadingCompletion>> getCompletions() async {
     return await _repository.getCompletions();
   }
 
-  /// 특정 연도의 완료 데이터 가져오기
+  /// 특정 연도의 완료 데이터 가져오기 (로컬 데이터 우선)
   Future<List<ReadingCompletion>> getCompletionsByYear(int year) async {
     return await _repository.getCompletionsByYear(year);
   }
 
-  /// 통독 통계 가져오기
+  /// 통독 통계 가져오기 (Firebase에서만 조회)
   Future<Map<String, dynamic>?> getReadingStats() async {
     return await _repository.getReadingStats();
   }
 
-  /// 수동으로 데이터 동기화 실행
-  Future<void> syncData() async {
-    await _repository.syncOnLogin();
+  /// 수동으로 Firebase에서 로컬로 데이터 동기화 실행
+  Future<void> syncFromFirebase() async {
+    await _repository.syncFromFirebase();
+  }
+
+  /// 로컬 데이터를 Firebase에 업로드
+  Future<void> uploadToFirebase() async {
+    await _repository.uploadLocalDataToFirebase();
+  }
+
+  /// 마지막 동기화 시간 조회
+  DateTime? getLastSyncTime() {
+    return _repository.getLastSyncDateTime();
+  }
+
+  /// 사용자가 인증되었는지 확인
+  bool get isAuthenticated => _auth.currentUser != null;
+
+  /// 리소스 정리
+  void dispose() {
+    _repository.dispose();
   }
 }

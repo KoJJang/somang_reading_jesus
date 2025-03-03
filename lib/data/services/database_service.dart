@@ -26,6 +26,9 @@ class DatabaseService {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
+
+    // 데이터베이스 초기화
+    await userDatabase;
   }
 
   // 성경 DB getter
@@ -67,8 +70,6 @@ class DatabaseService {
 
   Future<Database> _initUserDatabase() async {
     try {
-      await initialize();
-
       String path = join(await getDatabasesPath(), 'user_data.db');
       _logger.d(
         'User DB absolute path: ${File(path).absolute.path}',
@@ -76,19 +77,96 @@ class DatabaseService {
 
       return await openDatabase(
         path,
-        version: 1,
+        version: 2, // 버전 증가
         onCreate: (db, version) async {
           _logger.i('Creating user database tables...');
+          // 통독 완료 테이블 생성
           await db.execute('''
             CREATE TABLE reading_completions (
-              date TEXT PRIMARY KEY,
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT,
               year INTEGER,
               week INTEGER,
               day INTEGER,
-              readings TEXT
+              readings TEXT,
+              uid TEXT,
+              UNIQUE(date, uid)
             )
           ''');
+
+          // 동기화 설정 테이블 생성
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS sync_settings (
+              uid TEXT PRIMARY KEY,
+              last_sync_time TEXT,
+              auto_sync INTEGER DEFAULT 0
+            )
+          ''');
+
           _logger.i('User database tables created successfully');
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          _logger.i('Upgrading database from v$oldVersion to v$newVersion');
+          if (oldVersion < 2) {
+            // 기존 테이블에 uid 컬럼 추가 시도
+            try {
+              await db.execute(
+                "ALTER TABLE reading_completions ADD COLUMN uid TEXT DEFAULT 'local_user'",
+              );
+              _logger.i('Added uid column to reading_completions table');
+            } catch (e) {
+              _logger.e('Error adding uid column: $e');
+            }
+
+            // UNIQUE 제약 조건을 다시 생성하기 위해 테이블 구조 수정
+            try {
+              // 1. 기존 테이블 이름 변경
+              await db.execute(
+                "ALTER TABLE reading_completions RENAME TO reading_completions_old",
+              );
+
+              // 2. 새 테이블 생성
+              await db.execute('''
+                CREATE TABLE reading_completions (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  date TEXT,
+                  year INTEGER,
+                  week INTEGER,
+                  day INTEGER,
+                  readings TEXT,
+                  uid TEXT,
+                  UNIQUE(date, uid)
+                )
+              ''');
+
+              // 3. 데이터 복사
+              await db.execute('''
+                INSERT INTO reading_completions (date, year, week, day, readings, uid)
+                SELECT date, year, week, day, readings, uid FROM reading_completions_old
+              ''');
+
+              // 4. 이전 테이블 삭제
+              await db.execute("DROP TABLE reading_completions_old");
+
+              _logger.i('Successfully restructured reading_completions table');
+            } catch (e) {
+              _logger.e('Error restructuring reading_completions table: $e');
+            }
+
+            // 동기화 설정 테이블 생성
+            try {
+              await db.execute('''
+                CREATE TABLE IF NOT EXISTS sync_settings (
+                  uid TEXT PRIMARY KEY,
+                  last_sync_time TEXT,
+                  auto_sync INTEGER DEFAULT 0
+                )
+              ''');
+              _logger.i('Created sync_settings table');
+            } catch (e) {
+              _logger.e('Error creating sync_settings table: $e');
+            }
+          }
         },
       );
     } catch (e) {

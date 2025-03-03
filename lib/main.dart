@@ -4,6 +4,8 @@ import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
 import 'package:reading_jesus_somang/features/layout/app_layout.dart';
 import 'package:reading_jesus_somang/data/services/database_service.dart';
+import 'package:reading_jesus_somang/data/repositories/local_reading_repository.dart';
+import 'package:reading_jesus_somang/data/services/reading_service.dart';
 import 'package:reading_jesus_somang/features/bible/screens/bible_reading_screen.dart';
 import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
@@ -22,11 +24,52 @@ void main() async {
   final dbService = DatabaseService();
   await dbService.initialize();
 
+  // 로컬 저장소 초기화 (마이그레이션 실행)
+  final localRepo = LocalReadingRepository();
+  await localRepo.initialize();
+
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late final ReadingService _readingService;
+
+  @override
+  void initState() {
+    super.initState();
+    _readingService = ReadingService();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _readingService.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // 앱이 백그라운드로 이동하거나 종료될 때 리소스 정리
+    if (state == AppLifecycleState.detached) {
+      _readingService.dispose();
+    }
+    // 앱이 다시 포그라운드로 돌아왔을 때 동기화 시도
+    else if (state == AppLifecycleState.resumed &&
+        _readingService.isAuthenticated) {
+      // 앱이 다시 포그라운드로 왔을 때 동기화 시도 (Firebase에서 데이터 가져오기)
+      _readingService.syncFromFirebase();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

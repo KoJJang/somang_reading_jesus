@@ -6,6 +6,7 @@ import '../controllers/user_service.dart';
 import '../models/user_profile.dart';
 import '../../../core/constants/theme.dart';
 import '../../../data/services/reading_service.dart';
+import '../controllers/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,8 +16,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _userService = UserService();
-  final _readingService = ReadingService();
+  final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
+  final ReadingService _readingService = ReadingService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   UserProfile? _userProfile;
   bool _isLoading = true;
@@ -33,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadLastSyncTime();
 
     // Listen to authentication state changes
     _auth.authStateChanges().listen((User? user) {
@@ -59,12 +62,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  Future<void> _loadUserProfile() async {
-    setState(() {
-      _isLoading = true;
-    });
+  // 마지막 동기화 시간 로드
+  Future<void> _loadLastSyncTime() async {
+    if (_authService.isAuthenticated) {
+      final lastSyncTime = _readingService.getLastSyncTime();
+      setState(() {
+        _lastSyncTime = lastSyncTime;
+      });
+    }
+  }
 
-    if (_auth.currentUser != null) {
+  // 쿨다운 타이머 시작
+  void _startCooldownTimer() {
+    _remainingCooldown = _syncCooldownSeconds;
+
+    // 기존 타이머 취소
+    _cooldownTimer?.cancel();
+
+    // 새 타이머 시작
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingCooldown > 0) {
+          _remainingCooldown--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  // 사용자 프로필 로드
+  Future<void> _loadUserProfile() async {
+    if (_authService.isAuthenticated) {
       final profile = await _userService.getUserProfile();
       if (mounted) {
         setState(() {
@@ -75,95 +104,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       if (mounted) {
         setState(() {
-          _userProfile = null;
           _isLoading = false;
         });
-
-        // No need to navigate or show snackbar here
-        // The authStateChanges listener will handle navigation for unauthenticated users
       }
     }
   }
 
-  // 쿨다운 타이머 시작
-  void _startCooldownTimer() {
-    // 기존 타이머 취소
-    _cooldownTimer?.cancel();
-
-    // 남은 시간 계산
-    _updateRemainingCooldown();
-
-    // 타이머 시작 (1초마다 업데이트)
-    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        _updateRemainingCooldown();
-
-        // 쿨다운이 끝나면 타이머 종료
-        if (_remainingCooldown <= 0) {
-          timer.cancel();
-          setState(() {}); // UI 갱신하여 버튼 활성화
-        }
-      } else {
-        timer.cancel(); // 위젯이 dispose 되었으면 타이머 종료
-      }
-    });
-  }
-
-  // 남은 쿨다운 시간 업데이트
-  void _updateRemainingCooldown() {
-    if (_lastSyncTime != null) {
-      final elapsed = DateTime.now().difference(_lastSyncTime!).inSeconds;
-      final remaining = _syncCooldownSeconds - elapsed;
-
-      setState(() {
-        _remainingCooldown = remaining > 0 ? remaining : 0;
-      });
-    } else {
-      setState(() {
-        _remainingCooldown = 0;
-      });
-    }
-  }
-
-  // 동기화 버튼이 활성화되어 있는지 확인
-  bool get _isSyncButtonEnabled {
-    if (_isSyncing) return false;
-    if (_remainingCooldown > 0) return false;
-    return true;
-  }
-
+  // 데이터 동기화 실행
   Future<void> _syncReadingData() async {
-    // 현재 동기화 중이면 중복 실행 방지
-    if (_isSyncing) return;
-
-    // 쿨다운 시간 체크
-    if (_lastSyncTime != null) {
-      final timeSinceLastSync =
-          DateTime.now().difference(_lastSyncTime!).inSeconds;
-      if (timeSinceLastSync < _syncCooldownSeconds) {
-        // 쿨다운 중이면 사용자에게 알림
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${_syncCooldownSeconds - timeSinceLastSync}초 후에 다시 시도해주세요',
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-    }
-
-    // 사용자가 로그인되어 있는지 확인
-    if (_auth.currentUser == null) {
+    // 사용자가 인증되지 않은 경우 로그인 안내
+    if (!_authService.isAuthenticated) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('동기화하려면 로그인이 필요합니다'),
-            backgroundColor: Colors.red,
+            content: Text('데이터 동기화를 위해 로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -176,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       // 데이터 동기화 실행
-      await _readingService.syncData();
+      await _readingService.syncFromFirebase();
 
       // 마지막 동기화 시간 업데이트
       _lastSyncTime = DateTime.now();
@@ -187,8 +142,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('데이터가 성공적으로 동기화되었습니다'),
-            backgroundColor: Colors.green,
+            content: Text('데이터 동기화가 완료되었습니다.'),
+            duration: Duration(seconds: 2),
           ),
         );
       }
@@ -198,6 +153,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(
             content: Text('동기화 중 오류가 발생했습니다: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSyncing = false;
+        });
+      }
+    }
+  }
+
+  // 로컬 데이터를 Firebase에 업로드
+  Future<void> _uploadToFirebase() async {
+    // 사용자가 인증되지 않은 경우 로그인 안내
+    if (!_authService.isAuthenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('데이터 업로드를 위해 로그인이 필요합니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isSyncing = true;
+    });
+
+    try {
+      // 로컬 데이터 업로드 실행
+      await _readingService.uploadToFirebase();
+
+      // 마지막 동기화 시간 업데이트
+      _lastSyncTime = DateTime.now();
+
+      // 쿨다운 타이머 시작
+      _startCooldownTimer();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로컬 데이터가 성공적으로 업로드되었습니다.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('업로드 중 오류가 발생했습니다: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -211,19 +223,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signOut() async {
-    // Sign out without navigating directly
-    await _auth.signOut();
-
-    // Only show snackbar, let the auth state listener handle navigation
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그아웃 되었습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // No explicit navigation here - authStateChanges listener will handle it
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('로그아웃 중 오류가 발생했습니다')));
+      }
     }
   }
 
@@ -231,201 +241,187 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('내 프로필'),
-        actions: [
-          // 로그아웃 버튼
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.red),
-            onPressed: _signOut,
-          ),
-        ],
+        title: const Text('프로필'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _userProfile == null
-              ? const Center(child: Text('프로필 정보가 없습니다'))
               : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 프로필 이미지
-                    const CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.person, size: 70, color: Colors.white),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // 사용자 이름
-                    Text(
-                      _userProfile!.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // 전화번호
-                    Text(
-                      _userProfile!.phoneNumber,
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 32),
-
                     // 프로필 정보 카드
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '기본 정보',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.blue.shade100,
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: Colors.blue,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // 생년월일
-                          _buildProfileItem(
-                            Icons.cake,
-                            '생년월일',
-                            _dateFormat.format(_userProfile!.birthDate),
-                          ),
-
-                          const Divider(height: 24),
-
-                          // 계정 생성일
-                          _buildProfileItem(
-                            Icons.calendar_today,
-                            '가입일',
-                            _dateFormat.format(_userProfile!.createdAt),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            if (_userProfile != null) ...[
+                              Center(
+                                child: Text(
+                                  _userProfile!.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Center(
+                                child: Text(
+                                  _userProfile!.phoneNumber,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Center(
+                                child: Text(
+                                  '생년월일: ${DateFormat('yyyy년 MM월 dd일').format(_userProfile!.birthDate)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              const Center(
+                                child: Text(
+                                  '프로필 정보가 없습니다',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 24),
 
-                    // 버튼 행 (프로필 수정과 데이터 동기화 버튼)
-                    Row(
-                      children: [
-                        // 프로필 수정 버튼
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // 프로필 수정 화면으로 이동
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => EditProfileScreen(profile: _userProfile),
-                              //   ),
-                              // );
-                            },
-                            icon: const Icon(Icons.edit),
-                            label: const Text('프로필 수정'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                    // 데이터 동기화 설정 카드
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.sync, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text(
+                                  '데이터 동기화 설정',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            ListTile(
+                              title: const Text('데이터 동기화'),
+                              subtitle: Text(
+                                _lastSyncTime != null
+                                    ? '마지막 동기화: ${_dateFormat.format(_lastSyncTime!)}'
+                                    : '아직 동기화되지 않음',
+                              ),
+                              trailing:
+                                  _isSyncing
+                                      ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Icon(Icons.cloud_download),
+                              onTap:
+                                  _isSyncing || _remainingCooldown > 0
+                                      ? null
+                                      : _syncReadingData,
+                            ),
+                            if (_remainingCooldown > 0)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                ),
+                                child: Text(
+                                  '${_remainingCooldown}초 후에 다시 시도할 수 있습니다',
+                                  style: const TextStyle(
+                                    color: Colors.orange,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ListTile(
+                              title: const Text('로컬 데이터 업로드'),
+                              subtitle: const Text('로컬 데이터를 클라우드에 업로드합니다'),
+                              trailing:
+                                  _isSyncing
+                                      ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Icon(Icons.cloud_upload),
+                              onTap:
+                                  _isSyncing || _remainingCooldown > 0
+                                      ? null
+                                      : _uploadToFirebase,
+                            ),
+                          ],
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(width: 12),
+                    const SizedBox(height: 24),
 
-                        // 데이터 동기화 버튼
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed:
-                                _isSyncButtonEnabled ? _syncReadingData : null,
-                            icon:
-                                _isSyncing
-                                    ? Container(
-                                      width: 24,
-                                      height: 24,
-                                      padding: const EdgeInsets.all(2.0),
-                                      child: const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                    : const Icon(Icons.sync),
-                            label: Text(
-                              _isSyncing
-                                  ? '동기화 중...'
-                                  : _remainingCooldown > 0
-                                  ? '동기화 (${_remainingCooldown}s)'
-                                  : '데이터 동기화',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF059669),
-                              disabledBackgroundColor: Colors.grey.shade400,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
+                    // 로그아웃 버튼
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _signOut,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                      ],
+                        child: const Text('로그아웃'),
+                      ),
                     ),
                   ],
                 ),
               ),
-    );
-  }
-
-  Widget _buildProfileItem(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, color: AppTheme.primaryColor, size: 20),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }
