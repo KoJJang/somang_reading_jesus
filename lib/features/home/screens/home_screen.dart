@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/daily_plan.dart';
-import '../widgets/history_section.dart';
+import '../widgets/weekly_progress_card.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
@@ -320,9 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 4),
             // 오늘의 말씀 (이전 디자인)
-            const DailyPlan(),
+            const WeeklyProgressCard(),
             const SizedBox(height: 24),
-            const HistorySection(),
+            const DailyPlan(),
             const SizedBox(height: 24),
           ],
         ),
