@@ -9,6 +9,9 @@ plugins {
 dependencies {
   implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
   implementation("com.google.firebase:firebase-analytics")
+  implementation("com.google.android.gms:play-services-auth:20.7.0")
+  implementation("com.google.android.gms:play-services-base:18.3.0")
+  implementation("com.google.android.gms:play-services-safetynet:18.0.1")
 }
 
 android {
