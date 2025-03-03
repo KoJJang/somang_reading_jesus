@@ -79,6 +79,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       home: const AppLayout(child: HomeScreen()),
       onGenerateRoute: (settings) {
         switch (settings.name) {
+          case '/':
+            return PageRouteBuilder(
+              pageBuilder:
+                  (context, animation, secondaryAnimation) =>
+                      const AppLayout(child: HomeScreen()),
+              transitionsBuilder: (
+                context,
+                animation,
+                secondaryAnimation,
+                child,
+              ) {
+                return child;
+              },
+              settings: settings,
+            );
           case '/bible':
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(

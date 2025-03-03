@@ -266,9 +266,9 @@ class _WeeklyProgressCardState extends State<WeeklyProgressCard> {
       bgColor = const Color(0xFFDCFCE7);
       textColor = const Color(0xFF059669);
     } else {
-      // 완료되지 않음
-      bgColor = const Color(0xFFFEE2E2);
-      textColor = const Color(0xFFDC2626);
+      // 완료되지 않음 (빨간색에서 노란색으로 변경)
+      bgColor = const Color(0xFFFFFBEB);
+      textColor = const Color(0xFFF59E0B);
     }
 
     return Column(

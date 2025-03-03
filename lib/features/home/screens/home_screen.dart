@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isCompletedToday = false;
   bool _isLoading = true;
   final _readingService = ReadingService();
@@ -29,13 +29,28 @@ class _HomeScreenState extends State<HomeScreen> {
   bool get _isAuthenticated => _auth.currentUser != null;
   final _dateFormat = DateFormat('yyyy년 MM월 dd일');
   Map<String, dynamic>? _readingStats;
+  DateTime? _lastUpdatedDate;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _lastUpdatedDate = DateTime.now();
     _checkTodayCompletion();
     _loadUserProfile();
     _loadReadingStats();
+
+    // 앱 내에서 화면 전환 시 호출되는 리스너
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // PageRoute 리스너
+      final route = ModalRoute.of(context);
+      if (route != null) {
+        route.addScopedWillPopCallback(() async {
+          _checkForDateChange();
+          return true;
+        });
+      }
+    });
 
     // Listen to authentication state changes
     _auth.authStateChanges().listen((User? user) {
@@ -48,6 +63,49 @@ class _HomeScreenState extends State<HomeScreen> {
         _loadReadingStats();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkForDateChange();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // 앱이 다시 포그라운드로 돌아왔을 때 날짜 변경 확인
+    if (state == AppLifecycleState.resumed) {
+      _checkForDateChange();
+    }
+  }
+
+  // 날짜 변경 여부를 확인하고 필요시 데이터 갱신
+  void _checkForDateChange() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final lastUpdated =
+        _lastUpdatedDate != null
+            ? DateTime(
+              _lastUpdatedDate!.year,
+              _lastUpdatedDate!.month,
+              _lastUpdatedDate!.day,
+            )
+            : null;
+
+    // 날짜가 변경되었거나 처음 로드하는 경우
+    if (lastUpdated == null || today.isAfter(lastUpdated)) {
+      _lastUpdatedDate = now;
+      _checkTodayCompletion();
+      _loadReadingStats();
+    }
   }
 
   Future<void> _loadReadingStats() async {
