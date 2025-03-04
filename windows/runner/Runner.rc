@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "somang_reading_jesus" "\0"
+            VALUE "CompanyName", "com.somangchurch" "\0"
+            VALUE "FileDescription", "읽어주삼" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "somang_reading_jesus" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "somang_reading_jesus.exe" "\0"
-            VALUE "ProductName", "somang_reading_jesus" "\0"
+            VALUE "InternalName", "readingjesus" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.somangchurch. All rights reserved." "\0"
+            VALUE "OriginalFilename", "readingjesus.exe" "\0"
+            VALUE "ProductName", "읽어주삼" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

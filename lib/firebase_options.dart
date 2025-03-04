@@ -63,7 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '415585262962',
     projectId: 'reading-jesus-somang',
     storageBucket: 'reading-jesus-somang.firebasestorage.app',
-    iosBundleId: 'com.example.somangReadingJesus',
+    iosBundleId: 'com.somangchurch.readingjesus',
   );
-
 }

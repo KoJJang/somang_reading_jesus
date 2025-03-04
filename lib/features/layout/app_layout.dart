@@ -48,15 +48,15 @@ class _AppLayoutState extends State<AppLayout> {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5).withOpacity(0.1),
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.book_outlined,
-                  color: Color(0xFF4F46E5),
-                  size: 20,
+                child: Image.asset(
+                  'assets/images/icon.png',
+                  width: 28,
+                  height: 28,
                 ),
               ),
               const SizedBox(width: 12),

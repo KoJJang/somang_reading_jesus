@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <application
-        android:label="somang_reading_jesus"
+        android:label="리딩 지저스 소망교회"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
