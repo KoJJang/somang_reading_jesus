@@ -18,6 +18,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
   double _progressPercentage = 0.0;
   final _readingService = ReadingService();
   final _daysOfWeek = ['월', '화', '수', '목', '금', '토'];
+  final List<bool> _dayCompletionStatus = List.filled(6, false);
 
   @override
   void initState() {
@@ -40,6 +41,10 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
           _progressPercentage = 0.0;
           _completedDays = 0;
           _totalDaysThisWeek = 0;
+          // 요일별 완료 상태 초기화
+          for (int i = 0; i < _dayCompletionStatus.length; i++) {
+            _dayCompletionStatus[i] = false;
+          }
         });
         return;
       }
@@ -52,16 +57,26 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
       // 이번 주의 현재 요일까지의 총 날짜 수 (일요일 제외)
       _totalDaysThisWeek = currentDayOfWeek == 7 ? 6 : currentDayOfWeek;
 
-      // 이번 주 각 요일별 완료 여부 확인
+      // 각 요일별 완료 여부 개별적으로 확인하여 저장
       int completedCount = 0;
-      for (int day = 1; day <= _totalDaysThisWeek; day++) {
-        final isCompleted = await _readingService.isCompleted(
-          ReadingPlanService.startYear,
-          todayPlan.week,
-          day,
-        );
-        if (isCompleted) {
-          completedCount++;
+      for (int day = 1; day <= 6; day++) {
+        final dayIndex = day - 1; // 배열 인덱스는 0부터 시작
+
+        // 이번 주 현재 요일까지만 확인
+        if (day <= _totalDaysThisWeek) {
+          final isCompleted = await _readingService.isCompleted(
+            ReadingPlanService.startYear,
+            todayPlan.week,
+            day,
+          );
+          _dayCompletionStatus[dayIndex] = isCompleted;
+
+          if (isCompleted) {
+            completedCount++;
+          }
+        } else {
+          // 아직 오지 않은 요일은 완료되지 않은 상태로 설정
+          _dayCompletionStatus[dayIndex] = false;
         }
       }
 
@@ -83,6 +98,10 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         setState(() {
           _isLoading = false;
           _progressPercentage = 0.0;
+          // 오류 발생 시 완료 상태 초기화
+          for (int i = 0; i < _dayCompletionStatus.length; i++) {
+            _dayCompletionStatus[i] = false;
+          }
         });
       }
     }
@@ -202,8 +221,8 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                           // 이번 주의 현재 요일까지만 활성화
                           final isActive = day <= _totalDaysThisWeek;
 
-                          // 완료 여부 (완료한 날 수가 현재 날짜 이상이면 완료로 간주)
-                          final isCompleted = _completedDays >= day;
+                          // 각 요일별 실제 완료 여부 사용
+                          final isCompleted = _dayCompletionStatus[index];
 
                           return _buildDayCircle(
                             _daysOfWeek[index],
