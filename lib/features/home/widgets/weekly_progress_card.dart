@@ -7,10 +7,10 @@ class WeeklyProgressCard extends StatefulWidget {
   const WeeklyProgressCard({super.key});
 
   @override
-  State<WeeklyProgressCard> createState() => _WeeklyProgressCardState();
+  State<WeeklyProgressCard> createState() => WeeklyProgressCardState();
 }
 
-class _WeeklyProgressCardState extends State<WeeklyProgressCard> {
+class WeeklyProgressCardState extends State<WeeklyProgressCard> {
   bool _isLoading = true;
   int _completedDays = 0;
   int _totalDaysThisWeek = 0;
@@ -22,10 +22,10 @@ class _WeeklyProgressCardState extends State<WeeklyProgressCard> {
   @override
   void initState() {
     super.initState();
-    _loadWeeklyProgress();
+    loadWeeklyProgress();
   }
 
-  Future<void> _loadWeeklyProgress() async {
+  Future<void> loadWeeklyProgress() async {
     setState(() {
       _isLoading = true;
     });

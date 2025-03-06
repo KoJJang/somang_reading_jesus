@@ -19,6 +19,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final GlobalKey<WeeklyProgressCardState> _weeklyProgressKey =
+      GlobalKey<WeeklyProgressCardState>();
   bool _isCompletedToday = false;
   bool _isLoading = true;
   final _readingService = ReadingService();
@@ -47,9 +49,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (route != null) {
         route.addScopedWillPopCallback(() async {
           _checkForDateChange();
+          _refreshAllData();
           return true;
         });
       }
+
+      // 화면에 처음 진입할 때도 데이터 갱신
+      _refreshAllData();
+
+      // 화면 포커스 변경 리스너 추가
+      FocusManager.instance.addListener(_onFocusChange);
     });
 
     // Listen to authentication state changes
@@ -61,12 +70,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _loadUserProfile();
         _checkTodayCompletion();
         _loadReadingStats();
+        _weeklyProgressKey.currentState?.loadWeeklyProgress();
       }
     });
   }
 
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_onFocusChange);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -75,6 +86,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _checkForDateChange();
+    // 화면이 활성화될 때마다 WeeklyProgressCard 갱신
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _weeklyProgressKey.currentState?.loadWeeklyProgress();
+    });
   }
 
   @override
@@ -84,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // 앱이 다시 포그라운드로 돌아왔을 때 날짜 변경 확인
     if (state == AppLifecycleState.resumed) {
       _checkForDateChange();
+      _refreshAllData();
     }
   }
 
@@ -172,6 +188,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _isLoading = false;
         });
 
+        // WeeklyProgressCard 갱신
+        _weeklyProgressKey.currentState?.loadWeeklyProgress();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('오늘의 말씀을 완료했습니다!'),
@@ -238,8 +257,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  // 추가: 화면이 다시 포커스를 받을 때 호출될 함수
+  void _refreshAllData() {
+    _checkTodayCompletion();
+    _loadReadingStats();
+    _weeklyProgressKey.currentState?.loadWeeklyProgress();
+  }
+
+  // 화면 포커스 변경 시 호출되는 메서드
+  void _onFocusChange() {
+    if (FocusManager.instance.primaryFocus != null && mounted) {
+      // 앱이 포커스를 받았을 때 데이터 갱신
+      _refreshAllData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 화면에 진입할 때마다 데이터 갱신 제거
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
@@ -377,8 +413,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
             const SizedBox(height: 4),
-            // 오늘의 말씀 (이전 디자인)
-            const WeeklyProgressCard(),
+            // WeeklyProgressCard에 키 전달
+            WeeklyProgressCard(key: _weeklyProgressKey),
             const SizedBox(height: 24),
             const DailyPlan(),
             const SizedBox(height: 24),
