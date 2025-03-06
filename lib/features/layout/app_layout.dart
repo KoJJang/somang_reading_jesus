@@ -162,9 +162,9 @@ class _AppLayoutState extends State<AppLayout> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            '인증된 사용자',
-                            style: TextStyle(
+                          Text(
+                            _auth.currentUser?.displayName ?? '인증된 사용자',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

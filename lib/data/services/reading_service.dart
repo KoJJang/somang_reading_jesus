@@ -62,6 +62,12 @@ class ReadingService {
     await _repository.uploadLocalDataToFirebase();
   }
 
+  /// 사용자 데이터 삭제
+  Future<void> deleteUserData() async {
+    // 로컬 데이터 삭제
+    await _repository.deleteUserData();
+  }
+
   /// 마지막 동기화 시간 조회
   DateTime? getLastSyncTime() {
     return _repository.getLastSyncDateTime();

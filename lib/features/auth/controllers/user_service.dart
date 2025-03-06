@@ -56,6 +56,40 @@ class UserService {
     }
   }
 
+  // 회원 데이터 삭제
+  Future<void> deleteUserData() async {
+    if (currentUserId == null) {
+      throw Exception('사용자가 인증되지 않았습니다.');
+    }
+
+    try {
+      // 트랜잭션 내에서 사용자 관련 데이터 모두 삭제
+      await _firestore.runTransaction((transaction) async {
+        // 1. 사용자 프로필 문서 삭제
+        transaction.delete(_currentUserDoc!);
+
+        // 2. 통독 완료 데이터 삭제
+        final completionsRef = _currentUserDoc!.collection('completions');
+        final completionsSnapshot = await completionsRef.get();
+        for (final doc in completionsSnapshot.docs) {
+          transaction.delete(doc.reference);
+        }
+
+        // 3. 통계 데이터 삭제
+        final statsRef = _currentUserDoc!.collection('stats');
+        final statsSnapshot = await statsRef.get();
+        for (final doc in statsSnapshot.docs) {
+          transaction.delete(doc.reference);
+        }
+
+        // 4. 기타 사용자 관련 데이터 삭제
+        // (필요한 경우 추가 컬렉션 삭제 코드 추가)
+      });
+    } catch (e) {
+      throw Exception('사용자 데이터 삭제 중 오류가 발생했습니다: $e');
+    }
+  }
+
   // 사용자 프로필 가져오기
   Future<UserProfile?> getUserProfile() async {
     if (currentUserId == null) {

@@ -210,7 +210,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.calendar_today),
                       helperText:
-                          '생년월일을 YYYY-MM-DD 형식으로 입력해주세요. (숫자만 입력해도 됩니다)',
+                          '생년월일을 YYYY-MM-DD 형식으로 입력해주세요.\n(숫자만 입력해도 됩니다)',
                     ),
                     keyboardType: TextInputType.number,
                     inputFormatters: [

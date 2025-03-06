@@ -45,7 +45,7 @@ class SyncedReadingRepository implements ReadingCompletionRepository {
       _localRepo.setCurrentUid(user.uid);
 
       // 마지막 동기화 시간 로드
-      _lastSyncTime = await _localRepo.getLastSyncTime(user.uid);
+      _lastSyncTime = await _localRepo.loadLastSyncTime(user.uid);
 
       // 로그인 시 자동 동기화 실행 (마지막 동기화로부터 일정 시간이 지났으면)
       _checkAndRunAutoSync();
@@ -229,6 +229,24 @@ class SyncedReadingRepository implements ReadingCompletionRepository {
   /// 마지막 동기화 시간 반환
   DateTime? getLastSyncDateTime() {
     return _lastSyncTime;
+  }
+
+  /// 사용자 데이터 삭제
+  Future<void> deleteUserData() async {
+    try {
+      _logger.i('사용자 데이터 삭제 시작...');
+
+      // 로컬 데이터 삭제
+      await _localRepo.deleteAllCompletions();
+
+      // 마지막 동기화 시간 초기화
+      _lastSyncTime = null;
+
+      _logger.i('사용자 데이터 삭제 완료');
+    } catch (e) {
+      _logger.e('사용자 데이터 삭제 중 오류: $e');
+      rethrow;
+    }
   }
 
   /// 리소스 정리

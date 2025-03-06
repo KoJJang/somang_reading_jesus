@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import '../models/reading_completion.dart';
 import '../services/database_service.dart';
 import 'reading_completion_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// SQLite 기반의 로컬 통독 완료 데이터 저장소
 class LocalReadingRepository implements ReadingCompletionRepository {
@@ -145,39 +146,48 @@ class LocalReadingRepository implements ReadingCompletionRepository {
     }
   }
 
-  /// 마지막 동기화 시간 저장
+  /// 지정된 사용자 ID로 마지막 동기화 시간 저장
   Future<void> saveLastSyncTime(String uid, DateTime time) async {
     try {
-      final db = await _databaseService.userDatabase;
-      await db.insert(syncSettingsTable, {
-        'uid': uid,
-        'last_sync_time': time.toIso8601String(),
-      }, conflictAlgorithm: ConflictAlgorithm.replace);
-      _logger.i('마지막 동기화 시간 저장: $time');
+      final prefs = await _getPrefs();
+      final key = 'last_sync_$uid';
+      await prefs.setString(key, time.toIso8601String());
     } catch (e) {
-      _logger.e('동기화 시간 저장 중 오류: $e');
+      _logger.e('마지막 동기화 시간 저장 중 오류: $e');
     }
   }
 
-  /// 마지막 동기화 시간 조회
-  Future<DateTime?> getLastSyncTime(String uid) async {
+  /// 지정된 사용자 ID의 마지막 동기화 시간 로드
+  Future<DateTime?> loadLastSyncTime(String uid) async {
     try {
-      final db = await _databaseService.userDatabase;
-      final result = await db.query(
-        syncSettingsTable,
-        where: "uid = ?",
-        whereArgs: [uid],
-      );
-
-      if (result.isNotEmpty) {
-        final syncTimeStr = result.first['last_sync_time'] as String;
-        return DateTime.parse(syncTimeStr);
+      final prefs = await _getPrefs();
+      final key = 'last_sync_$uid';
+      final timeStr = prefs.getString(key);
+      if (timeStr != null) {
+        return DateTime.parse(timeStr);
       }
       return null;
     } catch (e) {
-      _logger.e('동기화 시간 조회 중 오류: $e');
+      _logger.e('마지막 동기화 시간 로드 중 오류: $e');
       return null;
     }
+  }
+
+  /// 모든 완료 데이터 삭제
+  Future<void> deleteAllCompletions() async {
+    try {
+      final db = await _databaseService.userDatabase;
+      await db.delete(tableName);
+      _logger.i('모든 통독 완료 데이터 삭제 완료');
+    } catch (e) {
+      _logger.e('통독 완료 데이터 삭제 중 오류: $e');
+      rethrow;
+    }
+  }
+
+  // SharedPreferences 인스턴스 가져오기
+  Future<SharedPreferences> _getPrefs() async {
+    return await SharedPreferences.getInstance();
   }
 
   /// 테이블 생성 (데이터베이스 초기화 시 호출)

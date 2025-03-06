@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
@@ -11,11 +12,18 @@ import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.d
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_screen.dart';
+import 'package:reading_jesus_somang/features/auth/screens/privacy_policy_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
   // Flutter 엔진과 위젯 바인딩 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 릴리즈 모드에서는 에러만 출력하도록 설정
+  if (kReleaseMode) {
+    // 디버그 출력 비활성화
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
 
   // Firebase 초기화
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -120,6 +128,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/profile':
             return MaterialPageRoute(
               builder: (context) => const ProfileScreen(),
+            );
+          case '/privacy-policy':
+            return MaterialPageRoute(
+              builder: (context) => const PrivacyPolicyScreen(),
             );
           default:
             return null;
