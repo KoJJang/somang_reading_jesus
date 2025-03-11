@@ -84,6 +84,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: '성경 통독',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
       home: const AppLayout(child: HomeScreen()),
       onGenerateRoute: (settings) {
         switch (settings.name) {
