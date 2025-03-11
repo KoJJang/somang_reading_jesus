@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/utils/logger_util.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -11,7 +12,13 @@ class AuthService {
 
   // 로그아웃
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      LoggerUtil.info('사용자 로그아웃: ${_auth.currentUser?.uid}');
+      await _auth.signOut();
+    } catch (e) {
+      LoggerUtil.error('로그아웃 중 오류: $e');
+      rethrow;
+    }
   }
 
   // 회원 탈퇴 (계정 삭제)
@@ -33,6 +40,7 @@ class AuthService {
           );
         }
       }
+      LoggerUtil.error('계정 삭제 중 오류: $e');
       rethrow; // 다른 예외는 그대로 전달
     }
   }
@@ -52,6 +60,7 @@ class AuthService {
     required Function(String) codeAutoRetrievalTimeout,
   }) async {
     try {
+      LoggerUtil.info('휴대폰 번호 인증 요청: $phoneNumber');
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: verificationCompleted,
@@ -62,6 +71,7 @@ class AuthService {
       );
       return true;
     } catch (e) {
+      LoggerUtil.error('휴대폰 번호 인증 요청 중 오류: $e');
       return false;
     }
   }
@@ -97,13 +107,14 @@ class AuthService {
       // 현재 사용자가 로그인 되어 있는 경우에만 재인증 진행
       if (_auth.currentUser != null) {
         // reauthenticateWithCredential 메서드는 UserCredential을 반환합니다
+        LoggerUtil.info('SMS 코드로 재인증 시도: ${_auth.currentUser?.uid}');
         return await _auth.currentUser!.reauthenticateWithCredential(
           credential,
         );
       }
       return null;
     } catch (e) {
-      print('재인증 오류: $e');
+      LoggerUtil.error('SMS 코드 재인증 중 오류: $e');
       return null;
     }
   }
@@ -114,13 +125,24 @@ class AuthService {
     required String smsCode,
   }) async {
     try {
+      LoggerUtil.info('SMS 코드로 인증 시도');
       final PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: verificationId,
         smsCode: smsCode,
       );
       return await _auth.signInWithCredential(credential);
     } catch (e) {
+      LoggerUtil.error('SMS 코드 인증 중 오류: $e');
       return null;
+    }
+  }
+
+  // 중간에 인증 프로세스가 중단된 경우 정리
+  Future<void> cleanupIncompleteAuth() async {
+    // 최근에 로그인했지만 프로필이 없는 경우, 로그아웃 처리
+    if (_auth.currentUser != null) {
+      LoggerUtil.info('불완전한 인증 프로세스 정리: ${_auth.currentUser?.uid}');
+      await signOut();
     }
   }
 }
