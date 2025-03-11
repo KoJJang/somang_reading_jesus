@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
 import '../controllers/user_service.dart';
 import 'profile_completion_screen.dart';
+import '../../../core/utils/logger_util.dart';
+import '../controllers/auth_service.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -21,6 +23,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _codeSent = false;
   bool _isLoading = false;
   String? _errorMessage;
+  final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -243,34 +247,66 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 const SizedBox(height: 20),
 
                 if (!_codeSent) ...[
-                  const Text(
-                    '휴대폰 번호를 입력해주세요',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text('+82 ', style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            hintText: '휴대폰 번호',
-                            border: OutlineInputBorder(),
+                  // 앱 심사자를 위한 테스트 계정 정보
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'App 심사를 위한 안내',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.blue,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return '휴대폰 번호를 입력해주세요';
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 8),
+                        Text(
+                          '테스트용 전화번호: 010-1234-5678',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        Text(
+                          '테스트용 인증 코드: 123456',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          '위 정보로 로그인하시면 앱의 모든 기능을 테스트하실 수 있습니다.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(
+                      labelText: '휴대폰 번호',
+                      hintText: '01012345678',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.phone_android),
+                    ),
+                    keyboardType: TextInputType.phone,
+                    autofocus: true,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return '휴대폰 번호를 입력해주세요';
+                      }
+                      String numbers = value.replaceAll(RegExp(r'[^0-9]'), '');
+                      if (numbers.length < 10 || numbers.length > 11) {
+                        return '올바른 휴대폰 번호를 입력해주세요';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed:
                         _isLoading
@@ -281,21 +317,15 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                               }
                             },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     child:
                         _isLoading
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                            : const Text('인증번호 받기'),
+                            ? const CircularProgressIndicator()
+                            : const Text(
+                              '인증번호 받기',
+                              style: TextStyle(fontSize: 16),
+                            ),
                   ),
                 ] else ...[
                   const Text(
