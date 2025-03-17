@@ -11,7 +11,13 @@ class UserService {
   String? get currentUserId => _auth.currentUser?.uid;
 
   // 현재 사용자의 전화번호 얻기
-  String? get currentUserPhone => _auth.currentUser?.phoneNumber;
+  String? get currentUserPhone {
+    final user = _auth.currentUser;
+    if (user?.phoneNumber != null) {
+      return user!.phoneNumber;
+    }
+    return null;
+  }
 
   // 사용자 컬렉션 레퍼런스
   CollectionReference get _usersCollection => _firestore.collection('users');
@@ -23,11 +29,17 @@ class UserService {
   // 사용자 프로필 생성 또는 업데이트
   Future<void> saveUserProfile({
     required String name,
-    required DateTime birthDate,
+    DateTime? birthDate,
   }) async {
-    if (currentUserId == null || currentUserPhone == null) {
+    final user = _auth.currentUser;
+    if (user == null) {
       LoggerUtil.error('사용자가 인증되지 않은 상태에서 프로필 저장 시도');
       throw Exception('사용자가 인증되지 않았습니다.');
+    }
+
+    if (currentUserId == null || user.phoneNumber == null) {
+      LoggerUtil.error('사용자 정보 부족: uid=${user.uid}, phone=${user.phoneNumber}');
+      throw Exception('사용자 정보가 부족합니다.');
     }
 
     try {
@@ -42,22 +54,28 @@ class UserService {
         // 프로필 업데이트
         final updatedProfile = existingProfile.copyWith(
           name: name,
-          birthDate: birthDate,
+          birthDate: birthDate ?? existingProfile.birthDate,
         );
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
         await _currentUserDoc!.update(updatedProfile.toMap());
       } else {
         // 새 프로필 생성
-        final newProfile = UserProfile(
-          uid: currentUserId!,
-          phoneNumber: currentUserPhone!,
-          name: name,
-          birthDate: birthDate,
-        );
+        final Map<String, dynamic> profileData = {
+          'uid': currentUserId!,
+          'phoneNumber': user.phoneNumber,
+          'name': name,
+          'createdAt': DateTime.now(),
+          'updatedAt': DateTime.now(),
+        };
+
+        // 생년월일이 제공된 경우에만 추가
+        if (birthDate != null) {
+          profileData['birthDate'] = birthDate;
+        }
 
         LoggerUtil.info('새 사용자 프로필 생성: $currentUserId');
-        await _currentUserDoc!.set(newProfile.toMap());
+        await _currentUserDoc!.set(profileData);
       }
     } catch (e) {
       LoggerUtil.error('프로필 저장 중 오류: $e');

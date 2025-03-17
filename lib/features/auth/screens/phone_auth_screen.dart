@@ -34,6 +34,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _smsVerified = false;
   bool _profileComplete = false;
 
+  // 약관 동의 상태
+  bool _privacyPolicyAccepted = false;
+
   @override
   void initState() {
     super.initState();
@@ -112,6 +115,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
   }
 
+  // 전화번호 인증 시작
   Future<void> _verifyPhoneNumber() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -126,7 +130,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     String phoneInput = _phoneController.text
         .trim()
         .replaceAll('-', '')
-        .replaceAll(' ', '');
+        .replaceAll(' ', '')
+        .replaceAll('_', '');
 
     // 전화번호 길이 검증
     if (phoneInput.length < 9 || phoneInput.length > 11) {
@@ -137,25 +142,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       return;
     }
 
-    // 테스트 번호 확인
-    if (phoneInput == "01012345678") {
-      setState(() {
-        _verificationId = "test_verification_id";
-        _phoneVerified = true;
-        _isLoading = false;
-      });
-      return;
-    }
+    // 국가코드 추가
+    final phoneNumber = '+82$phoneInput';
 
-    // 실제 Firebase 인증 로직
     try {
-      final phoneNumber = '+82$phoneInput';
-
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
+
+        // SMS 코드가 자동으로 검색되었을 때 (주로 안드로이드에서 발생)
         verificationCompleted: (PhoneAuthCredential credential) async {
           try {
-            // 자동 인증이 완료됨
             await _auth.signInWithCredential(credential);
             setState(() {
               _phoneVerified = true;
@@ -169,12 +165,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             });
           }
         },
+
+        // 인증 실패 시
         verificationFailed: (FirebaseAuthException e) {
           setState(() {
             _isLoading = false;
             _errorMessage = _getReadableErrorMessage(e);
           });
         },
+
+        // 인증 코드가 전송됨
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
             _verificationId = verificationId;
@@ -182,6 +182,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             _isLoading = false;
           });
         },
+
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
         },
@@ -195,6 +196,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
+  // SMS 코드 검증
   Future<void> _verifySmsCode() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -220,15 +222,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       setState(() {
         _isLoading = false;
         _errorMessage = '인증번호는 6자리 숫자입니다.';
-      });
-      return;
-    }
-
-    // 테스트 코드 확인
-    if (_verificationId == "test_verification_id" && smsCode == "123456") {
-      setState(() {
-        _smsVerified = true;
-        _isLoading = false;
       });
       return;
     }
@@ -281,35 +274,53 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       _errorMessage = null;
     });
 
+    // 개인정보 처리방침 동의 확인
+    if (!_privacyPolicyAccepted) {
+      setState(() {
+        _errorMessage = '서비스 이용을 위해 개인정보 처리방침에 동의해주세요.';
+      });
+      return;
+    }
+
     // 이름 및 생년월일 값 가져오기
     final name = _nameController.text.trim();
     final birthDateText = _birthDateController.text.trim();
 
-    // 생년월일 형식 변환
+    // 생년월일 형식 변환 (비어있는 경우 null로 처리)
     DateTime? birthDate;
-    try {
-      // 입력 형식이 YYYY-MM-DD인 경우
-      final parts = birthDateText.split('-');
-      if (parts.length == 3) {
-        final year = int.parse(parts[0]);
-        final month = int.parse(parts[1]);
-        final day = int.parse(parts[2]);
-        birthDate = DateTime(year, month, day);
-      } else {
-        // 입력이 숫자로만 이루어진 경우 (YYYYMMDD)
-        final cleanedInput = birthDateText.replaceAll(RegExp(r'[^0-9]'), '');
-        if (cleanedInput.length == 8) {
-          final year = int.parse(cleanedInput.substring(0, 4));
-          final month = int.parse(cleanedInput.substring(4, 6));
-          final day = int.parse(cleanedInput.substring(6, 8));
+    if (birthDateText.isNotEmpty) {
+      try {
+        // 입력 형식이 YYYY-MM-DD인 경우
+        final parts = birthDateText.split('-');
+        if (parts.length == 3) {
+          final year = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final day = int.parse(parts[2]);
           birthDate = DateTime(year, month, day);
+        } else {
+          // 입력이 숫자로만 이루어진 경우 (YYYYMMDD)
+          final cleanedInput = birthDateText.replaceAll(RegExp(r'[^0-9]'), '');
+          if (cleanedInput.length == 8) {
+            final year = int.parse(cleanedInput.substring(0, 4));
+            final month = int.parse(cleanedInput.substring(4, 6));
+            final day = int.parse(cleanedInput.substring(6, 8));
+            birthDate = DateTime(year, month, day);
+          }
         }
-      }
 
-      if (birthDate == null) {
-        throw Exception('유효하지 않은 생년월일 형식입니다.');
+        if (birthDateText.isNotEmpty && birthDate == null) {
+          throw Exception('유효하지 않은 생년월일 형식입니다.');
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '생년월일 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.';
+        });
+        return;
       }
+    }
 
+    try {
       // 프로필 저장
       await _userService.saveUserProfile(name: name, birthDate: birthDate);
 
@@ -687,7 +698,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: '이름',
+                        labelText: '이름 (필수)',
                         hintText: '이름을 입력해주세요',
                         prefixIcon: Icon(Icons.person),
                       ),
@@ -707,7 +718,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     TextFormField(
                       controller: _birthDateController,
                       decoration: const InputDecoration(
-                        labelText: '생년월일',
+                        labelText: '생년월일 (선택)',
                         hintText: 'YYYY-MM-DD (예: 1990-01-01)',
                         prefixIcon: Icon(Icons.calendar_today),
                         helperText: '생년월일을 YYYY-MM-DD 형식으로 입력해주세요.',
@@ -721,15 +732,14 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         ), // YYYY-MM-DD는 최대 10자
                       ],
                       validator: (value) {
-                        if (_smsVerified &&
-                            !_profileComplete &&
-                            (value == null || value.trim().isEmpty)) {
-                          return '생년월일을 입력해주세요';
+                        // 비어있으면 문제 없음 (선택 입력)
+                        if (value == null || value.trim().isEmpty) {
+                          return null;
                         }
 
                         if (_smsVerified && !_profileComplete) {
                           // 숫자만 추출해서 길이 확인
-                          final numericOnly = value!.replaceAll(
+                          final numericOnly = value.replaceAll(
                             RegExp(r'[^0-9]'),
                             '',
                           );
@@ -783,6 +793,64 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
                     // 프로필 저장하기 버튼 (프로필 완료 시 숨김)
                     if (!_profileComplete) ...[
+                      // 개인정보 처리방침 동의 체크박스
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _privacyPolicyAccepted,
+                            onChanged: (value) {
+                              setState(() {
+                                _privacyPolicyAccepted = value ?? false;
+                              });
+                            },
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Text(
+                                  '[필수] ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const Text(
+                                  '개인정보 처리방침에 동의합니다',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/privacy-policy',
+                                    );
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 0,
+                                    ),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    minimumSize: Size.zero,
+                                  ),
+                                  child: const Text(
+                                    '보기',
+                                    style: TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(

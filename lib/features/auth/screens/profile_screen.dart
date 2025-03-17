@@ -640,7 +640,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 8),
                               Center(
                                 child: Text(
-                                  '생년월일: ${DateFormat('yyyy년 MM월 dd일').format(_userProfile!.birthDate)}',
+                                  _userProfile!.birthDate != null
+                                      ? '생년월일: ${DateFormat('yyyy년 MM월 dd일').format(_userProfile!.birthDate!)}'
+                                      : '생년월일: 미설정',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey,
