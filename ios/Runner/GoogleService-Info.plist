@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.somangchurch.readingjesus</string>
+	<string>com.example.somangReadingJesus</string>
 	<key>PROJECT_ID</key>
 	<string>reading-jesus-somang</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:415585262962:ios:76facfcc59b3675b7d11eb</string>
+	<string>1:415585262962:ios:30ef83ae317de3fa7d11eb</string>
 </dict>
 </plist>

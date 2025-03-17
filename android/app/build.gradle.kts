@@ -21,9 +21,12 @@ dependencies {
   implementation("com.google.firebase:firebase-analytics")
   implementation("com.google.android.gms:play-services-auth:20.7.0")
   implementation("com.google.android.gms:play-services-base:18.3.0")
-  implementation("com.google.android.gms:play-services-safetynet:18.0.1")
-  
-  // Play Core 라이브러리 제거
+  implementation("com.google.android.play:integrity:1.3.0")
+  // reCAPTCHA 의존성 추가
+  implementation("com.google.android.recaptcha:recaptcha:18.4.0")
+  // Kotlin Coroutines 의존성 추가
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }
 
 android {

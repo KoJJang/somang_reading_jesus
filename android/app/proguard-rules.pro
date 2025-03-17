@@ -19,8 +19,9 @@
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
 
-# PlayCore
--keep class com.google.android.play.core.** { *; }
+# Play Integrity API (대체됨: SafetyNet)
+-keep class com.google.android.play.integrity.** { *; }
+-keep class com.google.android.recaptcha.** { *; }
 
 # SQLite
 -keep class org.sqlite.** { *; }
@@ -30,6 +31,7 @@
 -dontwarn android.support.**
 -dontwarn androidx.**
 -dontwarn com.google.android.play.core.**
+-dontwarn com.google.android.gms.safetynet.**
 
 # Keep model classes
 -keep class com.somangchurch.readingjesus.data.models.** { *; } 

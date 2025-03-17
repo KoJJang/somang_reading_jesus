@@ -11,6 +11,11 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+        
+        <!-- reCAPTCHA API 설정 (변경됨) -->
+        <meta-data
+            android:name="com.google.android.recaptcha.public_key"
+            android:value="AIzaSyBVf_4vF0wE9OpmErxTRRHwiTfNNzQhd14" />
             
         <activity
             android:name=".MainActivity"
