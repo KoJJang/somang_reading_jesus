@@ -13,6 +13,7 @@ import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dar
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/privacy_policy_screen.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -25,8 +26,23 @@ void main() async {
     debugPrint = (String? message, {int? wrapWidth}) {};
   }
 
-  // Firebase 초기화
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Firebase 초기화 - 중복 초기화 방지
+  try {
+    // 이미 초기화되었는지 확인
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      Firebase.app(); // 이미 초기화된 앱 인스턴스를 가져옴
+    }
+
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity,
+    );
+  } catch (e) {
+    debugPrint('Firebase 초기화 오류: $e');
+  }
 
   // 데이터베이스 서비스 초기화
   final dbService = DatabaseService();

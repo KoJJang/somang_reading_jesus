@@ -133,32 +133,61 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         .replaceAll(' ', '')
         .replaceAll('_', '');
 
+    // 디버깅 로그 추가
+    LoggerUtil.info('전화번호 인증 시작: $phoneInput');
+
     // 전화번호 길이 검증
     if (phoneInput.length < 9 || phoneInput.length > 11) {
       setState(() {
         _isLoading = false;
         _errorMessage = '올바른 휴대폰 번호를 입력해주세요.';
       });
+      LoggerUtil.error('전화번호 길이 유효성 검사 실패: $phoneInput');
       return;
     }
 
     // 국가코드 추가
     final phoneNumber = '+82$phoneInput';
+    LoggerUtil.info('국가코드가 추가된 전화번호: $phoneNumber');
 
     try {
+      // Firebase 인증 상태 디버깅
+      LoggerUtil.info(
+        'Firebase 인증 상태: ${_auth.currentUser != null ? "로그인됨" : "로그인되지 않음"}',
+      );
+      // Firebase App 초기화 확인
+      bool isInitialized = false;
+      try {
+        isInitialized = _auth.app != null;
+        LoggerUtil.info('Firebase App 초기화 여부: $isInitialized');
+        if (isInitialized) {
+          LoggerUtil.info('Firebase App 이름: ${_auth.app.name}');
+          LoggerUtil.info('Firebase App 옵션: ${_auth.app.options.projectId}');
+          LoggerUtil.info('Firebase App ID: ${_auth.app.options.appId}');
+        }
+      } catch (e) {
+        LoggerUtil.error('Firebase App 정보 확인 중 오류: $e');
+      }
+
+      LoggerUtil.info('verifyPhoneNumber 메서드 호출 시작: $phoneNumber');
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
 
         // SMS 코드가 자동으로 검색되었을 때 (주로 안드로이드에서 발생)
         verificationCompleted: (PhoneAuthCredential credential) async {
+          LoggerUtil.info(
+            'verificationCompleted 콜백 실행됨: ${credential.toString()}',
+          );
           try {
             await _auth.signInWithCredential(credential);
+            LoggerUtil.info('자동 인증 성공: ${_auth.currentUser?.uid}');
             setState(() {
               _phoneVerified = true;
               _smsVerified = true;
               _isLoading = false;
             });
           } catch (e) {
+            LoggerUtil.error('자동 인증 실패: $e');
             setState(() {
               _isLoading = false;
               _errorMessage = _getReadableErrorMessage(e as Exception);
@@ -168,6 +197,29 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
         // 인증 실패 시
         verificationFailed: (FirebaseAuthException e) {
+          LoggerUtil.error(
+            'verificationFailed 콜백 실행됨: ${e.code}, ${e.message}',
+          );
+          // 자세한 오류 정보 로깅
+          if (e.message?.contains('play_integrity_token') == true) {
+            LoggerUtil.error('Play Integrity Token 오류: ${e.message}');
+            LoggerUtil.error('오류 세부 정보 - 코드: ${e.code}, 메시지: ${e.message}');
+
+            // 추가 디버깅 정보
+            try {
+              // Flutter에서는 additionalData가 직접 접근되지 않으므로 toString()으로 전체 정보 로깅
+              LoggerUtil.error('전체 예외 정보: ${e.toString()}');
+
+              // 테넌트ID 또는 기타 추가 정보 확인
+              final tenantId = e.tenantId;
+              if (tenantId != null) {
+                LoggerUtil.error('Tenant ID: $tenantId');
+              }
+            } catch (innerError) {
+              LoggerUtil.error('추가 오류 데이터 분석 실패: $innerError');
+            }
+          }
+
           setState(() {
             _isLoading = false;
             _errorMessage = _getReadableErrorMessage(e);
@@ -176,6 +228,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
         // 인증 코드가 전송됨
         codeSent: (String verificationId, int? resendToken) {
+          LoggerUtil.info(
+            'codeSent 콜백 실행됨: verificationId=${verificationId.length} 글자, resendToken=$resendToken',
+          );
           setState(() {
             _verificationId = verificationId;
             _phoneVerified = true;
@@ -184,11 +239,19 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         },
 
         codeAutoRetrievalTimeout: (String verificationId) {
+          LoggerUtil.info('codeAutoRetrievalTimeout 콜백 실행됨');
           _verificationId = verificationId;
         },
         timeout: const Duration(seconds: 120),
       );
+      LoggerUtil.info('verifyPhoneNumber 메서드 호출 완료');
     } catch (e) {
+      LoggerUtil.error('verifyPhoneNumber 메서드 예외 발생: $e');
+      if (e is FirebaseAuthException) {
+        LoggerUtil.error(
+          'FirebaseAuthException 세부 정보 - 코드: ${e.code}, 메시지: ${e.message}',
+        );
+      }
       setState(() {
         _isLoading = false;
         _errorMessage = _getReadableErrorMessage(e as Exception);

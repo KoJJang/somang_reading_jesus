@@ -1,0 +1,52 @@
+Launching lib/main.dart on sdk gphone64 arm64 in debug mode...
+Running Gradle task 'assembleDebug'...                              5.9s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...        1,483ms
+I/flutter ( 9556): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(94)] Using the Impeller rendering backend (OpenGLES).
+Syncing files to device sdk gphone64 arm64...                   
+D/MainActivity( 9556): Firebase Auth initialized successfully
+D/MainActivity( 9556): App Package: com.somangchurch.readingjesus
+D/MainActivity( 9556): App Version: 1.0.0 (8)
+D/MainActivity( 9556): App SHA-1: 97:1A:3D:77:AF:D7:26:B9:1B:54:32:2C:74:1F:56:59:85:50:F8:C0
+D/MainActivity( 9556): App SHA-256: 03:AF:07:7C:46:A6:D7:47:E3:78:03:C9:24:BF:B7:7B:36:8D:E8:25:36:25:14:7C:0E:21:CF:A5:79:BD:12:60
+D/MainActivity( 9556): Firebase Project ID: new-reading-jesus-somang
+D/MainActivity( 9556): Firebase App ID: 1:979741941595:android:c706464f9009bf22e5847e
+D/MainActivity( 9556): Google API Key: AIzaSyBN6ewVbiUgdTCUCT_X6bS1n0FjD16JNsA
+I/FA      ( 9556): Tag Manager is not found and thus will not be used
+W/HWUI    ( 9556): Unknown dataspace 0
+Syncing files to device sdk gphone64 arm64...                      157ms
+
+Flutter run key commands.
+r Hot reload. 🔥🔥🔥
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on sdk gphone64 arm64 is available at: http://127.0.0.1:56678/QIfNiHoJkcU=/
+The Flutter DevTools debugger and profiler on sdk gphone64 arm64 is available at: http://127.0.0.1:9101?uri=http://127.0.0.1:56678/QIfNiHoJkcU=/
+I/Choreographer( 9556): Skipped 91 frames!  The application may be doing too much work on its main thread.
+I/WindowExtensionsImpl( 9556): Initializing Window Extensions, vendor API level=6, activity embedding enabled=true
+I/ch.readingjesus( 9556): Compiler allocated 5250KB to compile void android.view.ViewRootImpl.performTraversals()
+I/Gralloc4( 9556): mapper 4.x is not supported
+E/libEGL  ( 9556): called unimplemented OpenGL ES API
+W/HWUI    ( 9556): Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+W/HWUI    ( 9556): Failed to initialize 101010-2 format, error = EGL_SUCCESS
+I/flutter ( 9556): ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter ( 9556): │ #0   DatabaseService._initUserDatabase (package:reading_jesus_somang/data/services/database_service.dart:74:15)
+I/flutter ( 9556): │ #1   <asynchronous suspension>
+I/flutter ( 9556): ├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+I/flutter ( 9556): │ 🐛 User DB absolute path: /data/user/0/com.somangchurch.readingjesus/databases/user_data.db
+I/flutter ( 9556): └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I/flutter ( 9556): [38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+I/flutter ( 9556): [38;5;12m│ #0   SyncedReadingRepository._startSyncTimer (package:reading_jesus_somang/data/repositories/synced_reading_repository.dart:72:13)[0m
+I/flutter ( 9556): [38;5;12m│ #1   new SyncedReadingRepository (package:reading_jesus_somang/data/repositories/synced_reading_repository.dart:32:5)[0m
+I/flutter ( 9556): [38;5;12m├┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄[0m
+I/flutter ( 9556): [38;5;12m│ 💡 자동 동기화 타이머 시작: 60분 간격[0m
+I/flutter ( 9556): [38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+E/libEGL  ( 9556): called unimplemented OpenGL ES API
+I/Choreographer( 9556): Skipped 46 frames!  The application may be doing too much work on its main thread.
+W/WindowOnBackDispatcher( 9556): OnBackInvokedCallback is not enabled for the application.
+W/WindowOnBackDispatcher( 9556): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/ProfileInstaller( 9556): Installing profile for com.somangchurch.readingjesus

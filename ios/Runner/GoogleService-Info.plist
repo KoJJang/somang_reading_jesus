@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBrE1-G1S-KsvMNZf8oZUFAk-i9ai0HzUI</string>
+	<string>AIzaSyC29wANOk9nHgaueEQpvUKIFZ-FwYGHjPY</string>
 	<key>GCM_SENDER_ID</key>
-	<string>415585262962</string>
+	<string>979741941595</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.somangReadingJesus</string>
+	<string>com.somangchurch.readingjesus</string>
 	<key>PROJECT_ID</key>
-	<string>reading-jesus-somang</string>
+	<string>new-reading-jesus-somang</string>
 	<key>STORAGE_BUCKET</key>
-	<string>reading-jesus-somang.firebasestorage.app</string>
+	<string>new-reading-jesus-somang.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:415585262962:ios:30ef83ae317de3fa7d11eb</string>
+	<string>1:979741941595:ios:1bd0cae7cce85d87e5847e</string>
 </dict>
 </plist>

@@ -2,48 +2,33 @@ package com.somangchurch.readingjesus
 
 import android.content.Context
 import android.util.Log
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException
-import com.google.android.gms.common.GooglePlayServicesRepairableException
-import com.google.android.gms.security.ProviderInstaller
-import com.google.android.play.core.integrity.IntegrityManagerFactory
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
+/**
+ * SecurityProvider 간소화 - 보안 관련 기능을 최소화하여 인증 충돌 방지
+ */
 object SecurityProvider {
     private const val TAG = "SecurityProvider"
+    private var isInitialized = false
 
     fun installProvider(context: Context) {
-        try {
-            // 기존 보안 공급자 설치
-            ProviderInstaller.installIfNeeded(context)
-            Log.i(TAG, "Security provider installed successfully")
-            
-            // Play Integrity 및 reCAPTCHA 초기화
-            initializeSecurity(context)
-        } catch (e: GooglePlayServicesRepairableException) {
-            // Google Play Services is not installed, damaged, or outdated
-            Log.e(TAG, "GooglePlayServicesRepairableException: ${e.message}")
-            // Prompt the user to install/update/enable Google Play services
-            GoogleApiAvailability.getInstance()
-                .showErrorNotification(context, e.connectionStatusCode)
-        } catch (e: GooglePlayServicesNotAvailableException) {
-            // Google Play services is not available
-            Log.e(TAG, "GooglePlayServicesNotAvailableException: ${e.message}")
-        } catch (e: Exception) {
-            // General exception occurred
-            Log.e(TAG, "Unexpected error: ${e.message}")
+        // 중복 초기화 방지
+        if (isInitialized) {
+            return
         }
-    }
-    
-    private fun initializeSecurity(context: Context) {
+        
+        isInitialized = true
+        Log.i(TAG, "SecurityProvider initialized in minimal mode")
+        
+        // 안드로이드 패키지 정보 로깅
         try {
-            // Play Integrity 클라이언트 초기화
-            val integrityManager = IntegrityManagerFactory.create(context)
-            Log.i(TAG, "Security services initialized successfully")
+            val packageName = context.packageName
+            val packageInfo = context.packageManager.getPackageInfo(packageName, 0)
+            val versionName = packageInfo.versionName
+            val versionCode = packageInfo.versionCode
+            
+            Log.i(TAG, "App package: $packageName, version: $versionName ($versionCode)")
         } catch (e: Exception) {
-            Log.e(TAG, "Error initializing security services: ${e.message}")
+            Log.e(TAG, "Error getting package info: ${e.message}")
         }
     }
 } 

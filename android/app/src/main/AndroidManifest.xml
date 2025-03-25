@@ -1,22 +1,62 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- 구글 서비스 관련 권한은 더 이상 필요하지 않음 -->
+    <!-- <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" /> -->
     
     <application
         android:label="리딩 지저스 소망교회"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="false"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup">
         
         <!-- Google Play Services 버전 확인 -->
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
         
-        <!-- reCAPTCHA API 설정 (변경됨) -->
+        <!-- reCAPTCHA API 설정 -->
         <meta-data
             android:name="com.google.android.recaptcha.public_key"
             android:value="AIzaSyBVf_4vF0wE9OpmErxTRRHwiTfNNzQhd14" />
             
+        <!-- Firebase 전화번호 인증 설정 -->
+        <!-- Play Integrity 대신 SafetyNet을 사용하도록 설정 -->
+        <meta-data
+            android:name="firebase_auth_use_safety_net_for_phone_auth"
+            android:value="true" />
+            
+        <!-- 필요한 경우에만 활성화 (앱 심사용) -->
+        <meta-data
+            android:name="firebase_auth_disable_recaptcha_enterprise_verify_app"
+            android:value="true" />
+            
+        <meta-data
+            android:name="firebase_performance_logcat_enabled"
+            android:value="true" />
+            
+        <meta-data
+            android:name="firebase_auth_test_phone_number"
+            android:value="+8201012345678" />
+            
+        <meta-data
+            android:name="firebase_auth_test_sms_code"
+            android:value="123456" />
+            
+        <!-- Firebase 앱 ID 메타데이터 -->
+        <meta-data
+            android:name="com.google.firebase.app_id"
+            android:value="1:979741941595:android:c706464f9009bf22e5847e" 
+            tools:replace="android:value" />
+        <!-- 추가 설정: Play Integrity API 명시적 구성 -->
+
+        <meta-data
+            android:name="com.google.android.play.integrity.project_number"
+            android:value="979741941595" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
