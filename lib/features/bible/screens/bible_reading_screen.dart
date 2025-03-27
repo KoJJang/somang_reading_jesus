@@ -255,17 +255,18 @@ class _BibleReadingScreenState extends State<BibleReadingScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.bookmark_border,
-              color: AppColors.textPrimary,
-            ),
-            onPressed: () {
-              // TODO: 북마크 기능 구현
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(
+          //     Icons.bookmark_border,
+          //     color: AppColors.textPrimary,
+          //   ),
+          //   onPressed: () {
+          //     // TODO: 북마크 기능 구현
+          //   },
+          // ),
         ],
       ),
+
       body: ListView.builder(
         padding: EdgeInsets.all(AppSizes.paddingL),
         itemCount: verses.length,
