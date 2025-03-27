@@ -26,7 +26,17 @@ void main() async {
   }
 
   // Firebase 초기화
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      Firebase.app(); // 이미 초기화된 앱 인스턴스를 가져옴
+    }
+  } catch (e) {
+    debugPrint('Firebase 초기화 오류: $e');
+  }
 
   // 데이터베이스 서비스 초기화
   final dbService = DatabaseService();

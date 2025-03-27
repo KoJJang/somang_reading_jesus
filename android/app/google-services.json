@@ -7,20 +7,62 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:415585262962:android:8ef62639611afb6a7d11eb",
+        "mobilesdk_app_id": "1:415585262962:android:31c470b6701631947d11eb",
         "android_client_info": {
           "package_name": "com.somangchurch.readingjesus"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "415585262962-435f57v1qdip3mlfbk1hi108paiq6e7s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.somangchurch.readingjesus",
+            "certificate_hash": "d24d7c8e7ca10b90052c73626b434427009e4d9d"
+          }
+        },
+        {
+          "client_id": "415585262962-ddobtlii9c3a7pgbpsb2tl0arkf3qbb1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.somangchurch.readingjesus",
+            "certificate_hash": "971a3d77afd726b91b54322c741f56598550f8c0"
+          }
+        },
+        {
+          "client_id": "415585262962-sfc1mut726pqp4pfb69b5ufjsbf3urd0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.somangchurch.readingjesus",
+            "certificate_hash": "4c3c121e6d74b59f9b7da202fb2850e64eaf1999"
+          }
+        },
+        {
+          "client_id": "415585262962-cf3gch8bchtc627f6qmdupua94n8isju.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBVf_4vF0wE9OpmErxTRRHwiTfNNzQhd14"
+          "current_key": "AIzaSyDB-4XDLl7Q99PRXw1cozB_z7bfphbhx6E"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "415585262962-cf3gch8bchtc627f6qmdupua94n8isju.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "415585262962-puidm6estmrud1j4678m1t45i8trvm3r.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.somangchurch.readingjesus",
+                "app_store_id": "6743085479"
+              }
+            }
+          ]
         }
       }
     }
