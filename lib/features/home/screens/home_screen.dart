@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/daily_plan.dart';
 import '../widgets/weekly_progress_card.dart';
+import '../widgets/weekly_commentary_card.dart';
+import '../widgets/daily_explanation_card.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
@@ -10,6 +12,12 @@ import '../../../features/auth/controllers/user_service.dart';
 import '../../../features/auth/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/utils/logger_util.dart';
+import '../../../core/constants/app_sizes.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../features/services/rjesus_service.dart';
+import '../../../features/services/models/rjesus_content.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -415,6 +423,287 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(height: 4),
             // WeeklyProgressCard에 키 전달
             WeeklyProgressCard(key: _weeklyProgressKey),
+            const SizedBox(height: 16),
+            // 새로운 RJesus 콘텐츠 - 주간 해설과 일별 해설을 통독 일정 스타일로 배치
+            Row(
+              children: [
+                // 주간 해설
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final commentary =
+                          await RJesusService.instance.getThisWeeksCommentary();
+                      if (commentary != null) {
+                        try {
+                          final Uri uri = Uri.parse(commentary.url);
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.platformDefault,
+                          );
+                        } catch (e) {
+                          try {
+                            final Uri uri = Uri.parse(commentary.url);
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.inAppBrowserView,
+                            );
+                          } catch (fallbackError) {
+                            LoggerUtil.error('Failed to launch URL', {
+                              'url': commentary.url,
+                              'originalError': e.toString(),
+                              'fallbackError': fallbackError.toString(),
+                            });
+                          }
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.library_books,
+                              color: Colors.blue,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '주간 해설',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          FutureBuilder<WeeklyCommentary?>(
+                            future:
+                                RJesusService.instance.getThisWeeksCommentary(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData && snapshot.data != null) {
+                                final commentary = snapshot.data!;
+                                return Text(
+                                  '${commentary.volume}권 ${commentary.chapter}강',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                );
+                              }
+                              return const Text(
+                                '준비 중입니다',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // 일별 해설
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            backgroundColor: Colors.transparent,
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                    AppSizes.radiusL,
+                                  ),
+                                  color: Colors.white,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AppBar(
+                                      title: const Text('오늘의 해설'),
+                                      backgroundColor: Colors.transparent,
+                                      elevation: 0,
+                                      leading: IconButton(
+                                        icon: const Icon(Icons.close),
+                                        onPressed:
+                                            () => Navigator.of(context).pop(),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(
+                                          AppSizes.paddingM,
+                                        ),
+                                        child: FutureBuilder<String?>(
+                                          future:
+                                              RJesusService.instance
+                                                  .getTodaysExplanationImageUrl(),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState ==
+                                                ConnectionState.waiting) {
+                                              return const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              );
+                                            }
+
+                                            if (!snapshot.hasData ||
+                                                snapshot.data == null) {
+                                              return Container(
+                                                color: AppColors.textSecondary
+                                                    .withOpacity(0.1),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.image_not_supported,
+                                                      size: 64,
+                                                      color:
+                                                          AppColors
+                                                              .textSecondary,
+                                                    ),
+                                                    const SizedBox(height: 16),
+                                                    Text(
+                                                      '오늘의 해설 이미지가 준비되지 않았습니다',
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            AppSizes.fontL,
+                                                        color:
+                                                            AppColors
+                                                                .textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }
+
+                                            return InteractiveViewer(
+                                              child: Image.network(
+                                                snapshot.data!,
+                                                fit: BoxFit.contain,
+                                                errorBuilder: (
+                                                  context,
+                                                  error,
+                                                  stackTrace,
+                                                ) {
+                                                  return Container(
+                                                    color: AppColors
+                                                        .textSecondary
+                                                        .withOpacity(0.1),
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .image_not_supported,
+                                                          size: 64,
+                                                          color:
+                                                              AppColors
+                                                                  .textSecondary,
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 16,
+                                                        ),
+                                                        Text(
+                                                          '오늘의 해설 이미지가 준비되지 않았습니다',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize:
+                                                                AppSizes.fontL,
+                                                            color:
+                                                                AppColors
+                                                                    .textSecondary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.image,
+                              color: Colors.green,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '일별 해설',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            '탭하여 크게 보기',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             const DailyPlan(),
             const SizedBox(height: 24),
