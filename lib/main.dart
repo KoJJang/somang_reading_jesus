@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
 import 'package:reading_jesus_somang/features/layout/app_layout.dart';
 import 'package:reading_jesus_somang/data/services/database_service.dart';
 import 'package:reading_jesus_somang/data/repositories/local_reading_repository.dart';
 import 'package:reading_jesus_somang/data/services/reading_service.dart';
-import 'package:reading_jesus_somang/features/bible/screens/bible_reading_screen.dart';
 import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
@@ -112,17 +112,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 return child;
               },
               settings: settings,
-            );
-          case '/bible':
-            final args = settings.arguments as Map<String, dynamic>;
-            return MaterialPageRoute(
-              builder:
-                  (context) => BibleReadingScreen(
-                    book: args['book'],
-                    chapter: args['chapter'],
-                    endChapter: args['endChapter'],
-                    readings: args['readings'] as List<Map<String, dynamic>>,
-                  ),
             );
           case '/calendar':
             return MaterialPageRoute(

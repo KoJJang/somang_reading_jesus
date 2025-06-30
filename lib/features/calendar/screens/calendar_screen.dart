@@ -8,6 +8,10 @@ import '../../../data/services/reading_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/logger_util.dart';
+import '../../../features/services/rjesus_service.dart';
+import '../../../features/services/models/rjesus_content.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../data/models/reading_completion.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -22,6 +26,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   ReadingPlan? _selectedDayPlan;
   Map<DateTime, bool> _completionStatus = {};
   Map<String, int> _monthStatus = {'completed': 0, 'total': 0, 'remaining': 0};
+  bool _isCompletedSelectedDay = false;
+  bool _isLoading = false;
+  final _readingService = ReadingService();
 
   @override
   void initState() {
@@ -30,6 +37,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _loadReadingPlan(_selectedDay!);
     initializeDateFormatting('ko_KR');
     _loadMonthCompletions(_focusedDay);
+    _checkSelectedDayCompletion();
   }
 
   Future<void> _loadReadingPlan(DateTime date) async {
@@ -38,6 +46,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
       setState(() {
         _selectedDayPlan = plan;
       });
+
+      // 선택된 날짜의 완료 상태 확인
+      if (plan != null) {
+        final isCompleted = await _readingService.isCompleted(
+          ReadingPlanService.startYear,
+          plan.week,
+          plan.day,
+        );
+        setState(() {
+          _isCompletedSelectedDay = isCompleted;
+        });
+      }
     } catch (e, stackTrace) {
       LoggerUtil.error('Failed to load reading plan', e, stackTrace);
       if (mounted) {
@@ -122,6 +142,65 @@ class _CalendarScreenState extends State<CalendarScreen> {
       LoggerUtil.error('Failed to load month completions', e, stackTrace);
       if (mounted) {
         LoggerUtil.showErrorSnackBar(context, '완료 상태를 불러오는데 실패했습니다.');
+      }
+    }
+  }
+
+  Future<void> _checkSelectedDayCompletion() async {
+    if (_selectedDayPlan != null) {
+      final isCompleted = await _readingService.isCompleted(
+        ReadingPlanService.startYear,
+        _selectedDayPlan!.week,
+        _selectedDayPlan!.day,
+      );
+      setState(() {
+        _isCompletedSelectedDay = isCompleted;
+      });
+    }
+  }
+
+  Future<void> _markSelectedDayCompleted() async {
+    if (_selectedDayPlan != null && _selectedDay != null) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final completion = ReadingCompletion(
+        date: _selectedDay!,
+        year: _selectedDay!.year,
+        week: _selectedDayPlan!.week,
+        day: _selectedDayPlan!.day,
+        readings: _selectedDayPlan!.readings,
+      );
+
+      await _readingService.markAsCompleted(completion);
+
+      // 완료 상태 업데이트
+      final dateKey = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        _selectedDay!.day,
+      );
+      _completionStatus[dateKey] = true;
+
+      setState(() {
+        _isCompletedSelectedDay = true;
+        _isLoading = false;
+      });
+
+      // 월간 상태도 다시 계산
+      _calculateMonthStatus(_focusedDay);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${DateFormat('MM월 dd일').format(_selectedDay!)} 말씀을 완료했습니다!',
+            ),
+            duration: const Duration(milliseconds: 1500),
+            backgroundColor: const Color(0xFF059669),
+          ),
+        );
       }
     }
   }
@@ -245,7 +324,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
             if (_selectedDayPlan != null)
-              _DailyReadingPlan(plan: _selectedDayPlan!),
+              _SelectedDayActions(
+                plan: _selectedDayPlan!,
+                selectedDay: _selectedDay!,
+                isCompleted: _isCompletedSelectedDay,
+                isLoading: _isLoading,
+                onMarkCompleted: _markSelectedDayCompleted,
+              ),
             // 월간 통독 현황
             _MonthlyReadingStatus(
               completionRate: completionRate,
@@ -312,10 +397,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 }
 
-class _DailyReadingPlan extends StatelessWidget {
+class _SelectedDayActions extends StatelessWidget {
   final ReadingPlan plan;
+  final DateTime selectedDay;
+  final bool isCompleted;
+  final bool isLoading;
+  final Function() onMarkCompleted;
 
-  const _DailyReadingPlan({required this.plan});
+  const _SelectedDayActions({
+    required this.plan,
+    required this.selectedDay,
+    required this.isCompleted,
+    required this.isLoading,
+    required this.onMarkCompleted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -329,75 +424,368 @@ class _DailyReadingPlan extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${plan.week}주 ${plan.day}일차',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
-            ),
+          // 날짜와 권/강/일차 정보
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MM월 dd일 (E)', 'ko_KR').format(selectedDay),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              FutureBuilder(
+                future: RJesusService.instance.getReadingByDate(selectedDay),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    final reading = snapshot.data!;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4F46E5).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${reading.volume}권 ${reading.chapter}강 ${reading.day}일차',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4F46E5),
+                        ),
+                      ),
+                    );
+                  }
+                  // 기본값으로 plan의 정보 사용
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4F46E5).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${plan.volume}권 ${plan.chapter}강 ${plan.day}일차',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4F46E5),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 12),
+
+          // 읽기 범위
           ...plan.readings.map((reading) {
             final endText =
                 reading['start'] == reading['end']
                     ? '${reading['start']}장'
                     : '${reading['start']}-${reading['end']}장';
             return Padding(
-              padding: const EdgeInsets.only(bottom: 1),
+              padding: const EdgeInsets.only(bottom: 4),
               child: Text(
                 '${reading['book']} $endText',
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color.fromARGB(255, 66, 58, 209),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
                 ),
               ),
             );
           }).toList(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                if (plan.readings.isNotEmpty) {
-                  final firstReading = plan.readings[0];
-                  final readingsWithMeta =
-                      plan.readings.map((r) {
-                        final reading = Map<String, dynamic>.from(r);
-                        reading['week'] = plan.week;
-                        reading['day'] = plan.day;
-                        return reading;
-                      }).toList();
 
-                  Navigator.pushNamed(
-                    context,
-                    '/bible',
-                    arguments: {
-                      'book': firstReading['book'],
-                      'chapter': firstReading['start'] as int,
-                      'endChapter': firstReading['end'] as int,
-                      'readings': readingsWithMeta,
-                    },
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4F46E5),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 20),
+
+          // 액션 버튼들 (그리드)
+          Row(
+            children: [
+              // 오늘의 말씀 (유튜브)
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.play_circle_filled,
+                  iconColor: Colors.red,
+                  iconBackground: Colors.red.withOpacity(0.1),
+                  title: '오늘의 말씀',
+                  subtitle: '유튜브 강의',
+                  onTap: () async {
+                    final reading = await RJesusService.instance
+                        .getReadingByDate(selectedDay);
+                    if (reading != null) {
+                      try {
+                        final Uri uri = Uri.parse(reading.url);
+                        await launchUrl(uri, mode: LaunchMode.platformDefault);
+                      } catch (e) {
+                        try {
+                          final Uri uri = Uri.parse(reading.url);
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.inAppBrowserView,
+                          );
+                        } catch (fallbackError) {
+                          LoggerUtil.error('Failed to launch URL', {
+                            'url': reading.url,
+                            'originalError': e.toString(),
+                            'fallbackError': fallbackError.toString(),
+                          });
+                        }
+                      }
+                    }
+                  },
                 ),
-                elevation: 0,
               ),
-              child: const Text(
-                '지금 읽기',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              const SizedBox(width: 8),
+
+              // 일별 해설
+              Expanded(
+                child: _ActionButton(
+                  icon: Icons.image,
+                  iconColor: Colors.green,
+                  iconBackground: Colors.green.withOpacity(0.1),
+                  title: '일별 해설',
+                  subtitle: '해설 이미지',
+                  onTap: () => _showExplanationDialog(context, selectedDay),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // 완료
+              Expanded(
+                child: _ActionButton(
+                  icon:
+                      isCompleted
+                          ? Icons.check_circle
+                          : Icons.check_circle_outline,
+                  iconColor:
+                      isCompleted
+                          ? const Color(0xFF059669)
+                          : const Color(0xFF6B7280),
+                  iconBackground:
+                      isCompleted
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.grey.withOpacity(0.1),
+                  title: '완료',
+                  subtitle: isCompleted ? '완료됨' : '미완료',
+                  isLoading: isLoading,
+                  onTap: () {
+                    if (isCompleted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('이미 완료된 말씀입니다'),
+                          duration: Duration(milliseconds: 500),
+                        ),
+                      );
+                    } else {
+                      onMarkCompleted();
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExplanationDialog(BuildContext context, DateTime date) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppSizes.radiusL),
+                color: Colors.white,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppBar(
+                    title: Text('${DateFormat('MM월 dd일').format(date)} 해설'),
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.paddingM),
+                      child: FutureBuilder<String?>(
+                        future: _getExplanationImagePath(date),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          if (!snapshot.hasData || snapshot.data == null) {
+                            return Container(
+                              color: AppColors.textSecondary.withOpacity(0.1),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.image_not_supported,
+                                    size: 64,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    '해설 이미지가 준비되지 않았습니다',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: AppSizes.fontL,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return InteractiveViewer(
+                            child: Image.asset(
+                              snapshot.data!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppColors.textSecondary.withOpacity(
+                                    0.1,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.image_not_supported,
+                                        size: 64,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        '해설 이미지가 준비되지 않았습니다',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: AppSizes.fontL,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  Future<String?> _getExplanationImagePath(DateTime date) async {
+    final reading = await RJesusService.instance.getReadingByDate(date);
+    if (reading != null) {
+      final volume = reading.volume;
+      final chapter = reading.chapter;
+      final day = reading.day;
+
+      final folderName = '${volume}권${chapter}강';
+      final fileName = '${volume}권${chapter}강_성경읽기_${day}.jpg';
+
+      return 'assets/images/summary/$folderName/$fileName';
+    }
+    return null;
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final String title;
+  final String subtitle;
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.title,
+    required this.subtitle,
+    this.isLoading = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child:
+                  isLoading
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

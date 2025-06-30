@@ -27,19 +27,19 @@ class ReadingPlan {
     final diffDays = now.difference(weekStartDate).inDays;
     final currentDay = diffDays + 1;
 
+    final scheduleData = _getScheduleData(currentWeek);
+    if (scheduleData == null) return null;
+
     final readings = ReadingSchedule.getReadingsByWeekAndDay(
       currentWeek,
       currentDay,
     );
     if (readings == null) return null;
 
-    final volume = ((currentWeek - 1) ~/ 15) + 1;
-    final chapter = ((currentWeek - 1) % 15) + 1;
-
     return ReadingPlan(
       week: currentWeek,
-      volume: volume,
-      chapter: chapter,
+      volume: scheduleData['volume']!,
+      chapter: scheduleData['chapter']!,
       day: currentDay,
       readings: readings,
     );
@@ -52,18 +52,32 @@ class ReadingPlan {
   ) {
     if (day > 6 || week > 45) return null;
 
+    final scheduleData = _getScheduleData(week);
+    if (scheduleData == null) return null;
+
     final readings = ReadingSchedule.getReadingsByWeekAndDay(week, day);
     if (readings == null) return null;
 
-    final volume = ((week - 1) ~/ 15) + 1;
-    final chapter = ((week - 1) % 15) + 1;
-
     return ReadingPlan(
       week: week,
-      volume: volume,
-      chapter: chapter,
+      volume: scheduleData['volume']!,
+      chapter: scheduleData['chapter']!,
       day: day,
       readings: readings,
     );
+  }
+
+  static Map<String, int>? _getScheduleData(int week) {
+    try {
+      final weekSchedule = ReadingSchedule.schedule.firstWhere(
+        (s) => s['week'] == week,
+      );
+      return {
+        'volume': weekSchedule['volume'],
+        'chapter': weekSchedule['chapter'],
+      };
+    } catch (e) {
+      return null;
+    }
   }
 }

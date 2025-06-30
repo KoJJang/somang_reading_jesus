@@ -113,8 +113,50 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/summary/1권1강/
+    - assets/images/summary/1권2강/
+    - assets/images/summary/1권3강/
+    - assets/images/summary/1권4강/
+    - assets/images/summary/1권5강/
+    - assets/images/summary/1권6강/
+    - assets/images/summary/1권7강/
+    - assets/images/summary/2권1강/
+    - assets/images/summary/2권2강/
+    - assets/images/summary/2권3강/
+    - assets/images/summary/2권4강/
+    - assets/images/summary/2권5강/
+    - assets/images/summary/2권6강/
+    - assets/images/summary/2권7강/
+    - assets/images/summary/3권1강/
+    - assets/images/summary/3권2강/
+    - assets/images/summary/3권3강/
+    - assets/images/summary/3권4강/
+    - assets/images/summary/3권5강/
+    - assets/images/summary/3권6강/
+    - assets/images/summary/3권7강/
+    - assets/images/summary/4권1강/
+    - assets/images/summary/4권2강/
+    - assets/images/summary/4권3강/
+    - assets/images/summary/4권4강/
+    - assets/images/summary/4권5강/
+    - assets/images/summary/4권6강/
+    - assets/images/summary/4권7강/
+    - assets/images/summary/5권1강/
+    - assets/images/summary/5권2강/
+    - assets/images/summary/5권3강/
+    - assets/images/summary/5권4강/
+    - assets/images/summary/5권5강/
+    - assets/images/summary/5권6강/
+    - assets/images/summary/5권7강/
+    - assets/images/summary/6권1강/
+    - assets/images/summary/6권2강/
+    - assets/images/summary/6권3강/
+    - assets/images/summary/6권4강/
+    - assets/images/summary/6권5강/
+    - assets/images/summary/6권6강/
+    - assets/images/summary/6권7강/
     - assets/data/
-    - assets/data/bible2.db  # 데이터베이스 파일 경로 추가
+    - assets/data/bible2.db
   
   # fonts:
     # 나중에 폰트를 추가할 때 여기에 등록하시면 됩니다
