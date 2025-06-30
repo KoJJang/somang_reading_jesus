@@ -118,7 +118,7 @@ class ReadingCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       // 유튜브 링크 정보
                       Text(
-                        '탭하여 유튜브에서 강의 듣기',
+                        '탭하여 유튜브에서 말씀 듣기',
                         style: TextStyle(
                           fontSize: AppSizes.fontM,
                           color: AppColors.textSecondary,

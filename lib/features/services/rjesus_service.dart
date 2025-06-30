@@ -131,7 +131,25 @@ class RJesusService {
     return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$dateStr.png';
   }
 
-  // 오늘의 읽기 일정에 맞는 일별 설명 이미지 URL 생성
+  // 오늘의 읽기 일정에 맞는 일별 설명 이미지 경로 생성 (로컬 assets)
+  Future<String?> getTodaysExplanationImagePath() async {
+    final todaysReading = await getTodaysReading();
+    if (todaysReading != null) {
+      // 로컬 assets 경로 생성
+      // 예: assets/images/summary/4권1강/4권1강_성경읽기_2.jpg
+      final volume = todaysReading.volume;
+      final chapter = todaysReading.chapter;
+      final day = todaysReading.day;
+
+      final folderName = '${volume}권${chapter}강';
+      final fileName = '${volume}권${chapter}강_성경읽기_${day}.jpg';
+
+      return 'assets/images/summary/$folderName/$fileName';
+    }
+    return null;
+  }
+
+  // 오늘의 읽기 일정에 맞는 일별 설명 이미지 URL 생성 (GitHub - 백업용)
   Future<String?> getTodaysExplanationImageUrl() async {
     final todaysReading = await getTodaysReading();
     if (todaysReading != null) {

@@ -421,10 +421,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
             const SizedBox(height: 4),
-            // WeeklyProgressCard에 키 전달
-            WeeklyProgressCard(key: _weeklyProgressKey),
-            const SizedBox(height: 16),
-            // 새로운 RJesus 콘텐츠 - 주간 해설과 일별 해설을 통독 일정 스타일로 배치
+            // 주간 해설과 일별 해설 그리드
             Row(
               children: [
                 // 주간 해설
@@ -556,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         child: FutureBuilder<String?>(
                                           future:
                                               RJesusService.instance
-                                                  .getTodaysExplanationImageUrl(),
+                                                  .getTodaysExplanationImagePath(),
                                           builder: (context, snapshot) {
                                             if (snapshot.connectionState ==
                                                 ConnectionState.waiting) {
@@ -601,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             }
 
                                             return InteractiveViewer(
-                                              child: Image.network(
+                                              child: Image.asset(
                                                 snapshot.data!,
                                                 fit: BoxFit.contain,
                                                 errorBuilder: (
@@ -609,40 +606,106 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                   error,
                                                   stackTrace,
                                                 ) {
-                                                  return Container(
-                                                    color: AppColors
-                                                        .textSecondary
-                                                        .withOpacity(0.1),
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Icon(
-                                                          Icons
-                                                              .image_not_supported,
-                                                          size: 64,
-                                                          color:
-                                                              AppColors
-                                                                  .textSecondary,
+                                                  // 로컬 이미지 실패 시 네트워크 이미지로 폴백
+                                                  return FutureBuilder<String?>(
+                                                    future:
+                                                        RJesusService.instance
+                                                            .getTodaysExplanationImageUrl(),
+                                                    builder: (
+                                                      context,
+                                                      urlSnapshot,
+                                                    ) {
+                                                      if (urlSnapshot.hasData &&
+                                                          urlSnapshot.data !=
+                                                              null) {
+                                                        return Image.network(
+                                                          urlSnapshot.data!,
+                                                          fit: BoxFit.contain,
+                                                          errorBuilder: (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return Container(
+                                                              color: AppColors
+                                                                  .textSecondary
+                                                                  .withOpacity(
+                                                                    0.1,
+                                                                  ),
+                                                              child: Column(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons
+                                                                        .image_not_supported,
+                                                                    size: 64,
+                                                                    color:
+                                                                        AppColors
+                                                                            .textSecondary,
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    height: 16,
+                                                                  ),
+                                                                  Text(
+                                                                    '오늘의 해설 이미지가 준비되지 않았습니다',
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                    style: TextStyle(
+                                                                      fontSize:
+                                                                          AppSizes
+                                                                              .fontL,
+                                                                      color:
+                                                                          AppColors
+                                                                              .textSecondary,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        );
+                                                      }
+                                                      return Container(
+                                                        color: AppColors
+                                                            .textSecondary
+                                                            .withOpacity(0.1),
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Icon(
+                                                              Icons
+                                                                  .image_not_supported,
+                                                              size: 64,
+                                                              color:
+                                                                  AppColors
+                                                                      .textSecondary,
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 16,
+                                                            ),
+                                                            Text(
+                                                              '오늘의 해설 이미지가 준비되지 않았습니다',
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: TextStyle(
+                                                                fontSize:
+                                                                    AppSizes
+                                                                        .fontL,
+                                                                color:
+                                                                    AppColors
+                                                                        .textSecondary,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
-                                                        const SizedBox(
-                                                          height: 16,
-                                                        ),
-                                                        Text(
-                                                          '오늘의 해설 이미지가 준비되지 않았습니다',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style: TextStyle(
-                                                            fontSize:
-                                                                AppSizes.fontL,
-                                                            color:
-                                                                AppColors
-                                                                    .textSecondary,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
+                                                      );
+                                                    },
                                                   );
                                                 },
                                               ),
@@ -704,6 +767,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
+            // 이번 주 진행 현황
+            WeeklyProgressCard(key: _weeklyProgressKey),
             const SizedBox(height: 24),
             const DailyPlan(),
             const SizedBox(height: 24),

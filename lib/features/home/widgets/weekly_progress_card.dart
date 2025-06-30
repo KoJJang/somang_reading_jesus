@@ -122,7 +122,6 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         //     color: Color(0xFF111827),
         //   ),
         // ),
-        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
