@@ -405,44 +405,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     const SizedBox(height: 20),
                   ],
 
-                  // 앱 심사자를 위한 테스트 계정 정보
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFC7D2FE)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'App 심사를 위한 안내',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFF4F46E5),
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          '테스트용 전화번호: 010-1234-5678',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        Text(
-                          '테스트용 인증 코드: 123456',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          '위 정보로 로그인하시면 앱의 모든 기능을 테스트하실 수 있습니다.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   // 안내 메시지
                   const Text(
                     '서비스 이용을 위해\n휴대폰 번호를 인증해 주세요',
