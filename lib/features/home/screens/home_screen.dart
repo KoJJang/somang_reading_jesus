@@ -4,20 +4,13 @@ import '../widgets/daily_plan.dart';
 import '../widgets/weekly_progress_card.dart';
 import '../widgets/weekly_commentary_card.dart';
 import '../widgets/daily_explanation_card.dart';
+import '../widgets/schedule_card.dart';
+import '../widgets/completion_card.dart';
 import '../../../data/services/reading_service.dart';
-import '../../../data/models/reading_completion.dart';
-import '../../../features/services/reading_plan_service.dart';
 import '../../../features/auth/screens/phone_auth_screen.dart';
 import '../../../features/auth/controllers/user_service.dart';
 import '../../../features/auth/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/utils/logger_util.dart';
-import '../../../core/constants/app_sizes.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../features/services/rjesus_service.dart';
-import '../../../features/services/models/rjesus_content.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,15 +22,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<WeeklyProgressCardState> _weeklyProgressKey =
       GlobalKey<WeeklyProgressCardState>();
-  bool _isCompletedToday = false;
-  bool _isLoading = true;
   final _readingService = ReadingService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final _userService = UserService();
   UserProfile? _userProfile;
   bool _isLoadingProfile = true;
   bool get _isAuthenticated => _auth.currentUser != null;
-  final _dateFormat = DateFormat('yyyy년 MM월 dd일');
   Map<String, dynamic>? _readingStats;
   DateTime? _lastUpdatedDate;
 
@@ -46,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _lastUpdatedDate = DateTime.now();
-    _checkTodayCompletion();
     _loadUserProfile();
     _loadReadingStats();
 
@@ -76,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _isLoadingProfile = true;
         });
         _loadUserProfile();
-        _checkTodayCompletion();
         _loadReadingStats();
         _weeklyProgressKey.currentState?.loadWeeklyProgress();
       }
@@ -127,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // 날짜가 변경되었거나 처음 로드하는 경우
     if (lastUpdated == null || today.isAfter(lastUpdated)) {
       _lastUpdatedDate = now;
-      _checkTodayCompletion();
       _loadReadingStats();
     }
   }
@@ -145,67 +132,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         setState(() {
           _readingStats = null;
         });
-      }
-    }
-  }
-
-  Future<void> _checkTodayCompletion() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final plan = await ReadingPlanService().getTodaysPlan();
-    final isCompleted = await _readingService.isCompleted(
-      ReadingPlanService.startYear,
-      plan?.week ?? 0,
-      plan?.day ?? 0,
-    );
-
-    if (mounted) {
-      setState(() {
-        _isCompletedToday = isCompleted;
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _markAsCompleted() async {
-    final plan = await ReadingPlanService().getTodaysPlan();
-    if (plan != null) {
-      final completion = ReadingCompletion(
-        date: DateTime.now(),
-        year: DateTime.now().year,
-        week: plan.week,
-        day: plan.day,
-        readings: plan.readings,
-      );
-
-      setState(() {
-        _isLoading = true;
-      });
-
-      await _readingService.markAsCompleted(completion);
-
-      if (_isAuthenticated) {
-        await _loadReadingStats();
-      }
-
-      if (mounted) {
-        setState(() {
-          _isCompletedToday = true;
-          _isLoading = false;
-        });
-
-        // WeeklyProgressCard 갱신
-        _weeklyProgressKey.currentState?.loadWeeklyProgress();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('오늘의 말씀을 완료했습니다!'),
-            duration: Duration(milliseconds: 1500),
-            backgroundColor: Color(0xFF059669),
-          ),
-        );
       }
     }
   }
@@ -267,7 +193,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // 추가: 화면이 다시 포커스를 받을 때 호출될 함수
   void _refreshAllData() {
-    _checkTodayCompletion();
     _loadReadingStats();
     _weeklyProgressKey.currentState?.loadWeeklyProgress();
   }
@@ -280,143 +205,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  // 완료 상태 변경 시 호출되는 콜백
+  void _onCompletionChanged() {
+    _loadReadingStats();
+    _weeklyProgressKey.currentState?.loadWeeklyProgress();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 화면에 진입할 때마다 데이터 갱신 제거
-
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // 오늘의 말씀 카드 (이전 디자인)
+            // 오늘의 말씀 카드
             const ReadingCard(),
             const SizedBox(height: 4),
             // 통독 일정과 완료 그리드
             Row(
               children: [
                 // 통독 일정
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/calendar');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.calendar_today,
-                              color: Color(0xFFFCD34D),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '통독 일정',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            '날짜별 읽기 분량',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(child: ScheduleCard()),
                 const SizedBox(width: 4),
                 // 완료
                 Expanded(
-                  child:
-                      _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : GestureDetector(
-                            onTap: () {
-                              if (_isCompletedToday) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('이미 오늘의 말씀을 완료하셨습니다'),
-                                    duration: Duration(milliseconds: 500),
-                                  ),
-                                );
-                                return;
-                              }
-                              _markAsCompleted();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(0.1),
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      Icons.check_circle_outline,
-                                      color:
-                                          _isCompletedToday
-                                              ? const Color(0xFF059669)
-                                              : const Color(0xFF22C55E),
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    '완료',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color:
-                                          _isCompletedToday
-                                              ? const Color(0xFF059669)
-                                              : Colors.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _isCompletedToday
-                                        ? '오늘 읽기 완료!'
-                                        : '오늘 읽으셨나요?',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                  child: CompletionCard(
+                    onCompletionChanged: _onCompletionChanged,
+                  ),
                 ),
               ],
             ),
@@ -425,346 +241,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Row(
               children: [
                 // 주간 해설
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final commentary =
-                          await RJesusService.instance.getThisWeeksCommentary();
-                      if (commentary != null) {
-                        try {
-                          final Uri uri = Uri.parse(commentary.url);
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.platformDefault,
-                          );
-                        } catch (e) {
-                          try {
-                            final Uri uri = Uri.parse(commentary.url);
-                            await launchUrl(
-                              uri,
-                              mode: LaunchMode.inAppBrowserView,
-                            );
-                          } catch (fallbackError) {
-                            LoggerUtil.error('Failed to launch URL', {
-                              'url': commentary.url,
-                              'originalError': e.toString(),
-                              'fallbackError': fallbackError.toString(),
-                            });
-                          }
-                        }
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.library_books,
-                              color: Colors.blue,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '주간 해설',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          FutureBuilder<WeeklyCommentary?>(
-                            future:
-                                RJesusService.instance.getThisWeeksCommentary(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData && snapshot.data != null) {
-                                final commentary = snapshot.data!;
-                                return Text(
-                                  '${commentary.volume}권 ${commentary.chapter}강',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
-                                );
-                              }
-                              return const Text(
-                                '준비 중입니다',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(child: WeeklyCommentaryCard()),
                 const SizedBox(width: 4),
                 // 일별 해설
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return Dialog(
-                            backgroundColor: Colors.transparent,
-                            child: GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                    AppSizes.radiusL,
-                                  ),
-                                  color: Colors.white,
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    AppBar(
-                                      title: const Text('오늘의 해설'),
-                                      backgroundColor: Colors.transparent,
-                                      elevation: 0,
-                                      leading: IconButton(
-                                        icon: const Icon(Icons.close),
-                                        onPressed:
-                                            () => Navigator.of(context).pop(),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(
-                                          AppSizes.paddingM,
-                                        ),
-                                        child: FutureBuilder<String?>(
-                                          future:
-                                              RJesusService.instance
-                                                  .getTodaysExplanationImagePath(),
-                                          builder: (context, snapshot) {
-                                            if (snapshot.connectionState ==
-                                                ConnectionState.waiting) {
-                                              return const Center(
-                                                child:
-                                                    CircularProgressIndicator(),
-                                              );
-                                            }
-
-                                            if (!snapshot.hasData ||
-                                                snapshot.data == null) {
-                                              return Container(
-                                                color: AppColors.textSecondary
-                                                    .withOpacity(0.1),
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Icon(
-                                                      Icons.image_not_supported,
-                                                      size: 64,
-                                                      color:
-                                                          AppColors
-                                                              .textSecondary,
-                                                    ),
-                                                    const SizedBox(height: 16),
-                                                    Text(
-                                                      '오늘의 해설 이미지가 준비되지 않았습니다',
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: TextStyle(
-                                                        fontSize:
-                                                            AppSizes.fontL,
-                                                        color:
-                                                            AppColors
-                                                                .textSecondary,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }
-
-                                            return InteractiveViewer(
-                                              child: Image.asset(
-                                                snapshot.data!,
-                                                fit: BoxFit.contain,
-                                                errorBuilder: (
-                                                  context,
-                                                  error,
-                                                  stackTrace,
-                                                ) {
-                                                  // 로컬 이미지 실패 시 네트워크 이미지로 폴백
-                                                  return FutureBuilder<String?>(
-                                                    future:
-                                                        RJesusService.instance
-                                                            .getTodaysExplanationImageUrl(),
-                                                    builder: (
-                                                      context,
-                                                      urlSnapshot,
-                                                    ) {
-                                                      if (urlSnapshot.hasData &&
-                                                          urlSnapshot.data !=
-                                                              null) {
-                                                        return Image.network(
-                                                          urlSnapshot.data!,
-                                                          fit: BoxFit.contain,
-                                                          errorBuilder: (
-                                                            context,
-                                                            error,
-                                                            stackTrace,
-                                                          ) {
-                                                            return Container(
-                                                              color: AppColors
-                                                                  .textSecondary
-                                                                  .withOpacity(
-                                                                    0.1,
-                                                                  ),
-                                                              child: Column(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .center,
-                                                                children: [
-                                                                  Icon(
-                                                                    Icons
-                                                                        .image_not_supported,
-                                                                    size: 64,
-                                                                    color:
-                                                                        AppColors
-                                                                            .textSecondary,
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    height: 16,
-                                                                  ),
-                                                                  Text(
-                                                                    '오늘의 해설 이미지가 준비되지 않았습니다',
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .center,
-                                                                    style: TextStyle(
-                                                                      fontSize:
-                                                                          AppSizes
-                                                                              .fontL,
-                                                                      color:
-                                                                          AppColors
-                                                                              .textSecondary,
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            );
-                                                          },
-                                                        );
-                                                      }
-                                                      return Container(
-                                                        color: AppColors
-                                                            .textSecondary
-                                                            .withOpacity(0.1),
-                                                        child: Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            Icon(
-                                                              Icons
-                                                                  .image_not_supported,
-                                                              size: 64,
-                                                              color:
-                                                                  AppColors
-                                                                      .textSecondary,
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 16,
-                                                            ),
-                                                            Text(
-                                                              '오늘의 해설 이미지가 준비되지 않았습니다',
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                              style: TextStyle(
-                                                                fontSize:
-                                                                    AppSizes
-                                                                        .fontL,
-                                                                color:
-                                                                    AppColors
-                                                                        .textSecondary,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.image,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '일별 해설',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            '탭하여 크게 보기',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(child: DailyExplanationCard()),
               ],
             ),
             const SizedBox(height: 6),

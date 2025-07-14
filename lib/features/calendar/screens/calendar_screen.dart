@@ -428,8 +428,11 @@ class _SelectedDayActions extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // 읽기 범위
               Text(
-                DateFormat('MM월 dd일 (E)', 'ko_KR').format(selectedDay),
+                plan.readings.length == 1
+                    ? '${plan.readings[0]['book']} ${plan.readings[0]['start']}-${plan.readings[0]['end']}장'
+                    : '${plan.readings.first['book']} ${plan.readings.first['start']}장- ${plan.readings.last['book']} ${plan.readings.last['end']}장',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -444,7 +447,7 @@ class _SelectedDayActions extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 6,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4F46E5).withOpacity(0.1),
@@ -460,51 +463,14 @@ class _SelectedDayActions extends StatelessWidget {
                       ),
                     );
                   }
-                  // 기본값으로 plan의 정보 사용
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4F46E5).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${plan.volume}권 ${plan.chapter}강 ${plan.day}일차',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF4F46E5),
-                      ),
-                    ),
-                  );
+                  return const SizedBox.shrink();
                 },
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // 읽기 범위
-          ...plan.readings.map((reading) {
-            final endText =
-                reading['start'] == reading['end']
-                    ? '${reading['start']}장'
-                    : '${reading['start']}-${reading['end']}장';
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                '${reading['book']} $endText',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF374151),
-                ),
-              ),
-            );
-          }).toList(),
-
-          const SizedBox(height: 20),
+          // const SizedBox(height: 5),
 
           // 액션 버튼들 (그리드)
           Row(
