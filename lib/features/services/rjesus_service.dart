@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'models/rjesus_content.dart';
+import '../../config/schedule_config.dart';
 
 class RJesusService {
   static RJesusService? _instance;
@@ -71,11 +72,12 @@ class RJesusService {
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
     final readings = await getDailyReadings();
-    final today = DateTime.now();
+    // 오프셋이 적용된 오늘 날짜 사용
+    final adjustedToday = ScheduleConfig.getAdjustedToday();
 
-    // 오늘 날짜와 일치하는 읽기 찾기
+    // 조정된 날짜와 일치하는 읽기 찾기
     for (final reading in readings) {
-      if (_isSameDate(reading.date, today)) {
+      if (_isSameDate(reading.date, adjustedToday)) {
         return reading;
       }
     }
@@ -86,9 +88,11 @@ class RJesusService {
   // 특정 날짜의 읽기 데이터 가져오기
   Future<DailyReading?> getReadingByDate(DateTime date) async {
     final readings = await getDailyReadings();
+    // 오프셋이 적용된 날짜 사용
+    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
 
     for (final reading in readings) {
-      if (_isSameDate(reading.date, date)) {
+      if (_isSameDate(reading.date, adjustedDate)) {
         return reading;
       }
     }
@@ -126,8 +130,10 @@ class RJesusService {
 
   // 일별 설명 이미지 URL 생성
   String getDailyExplanationImageUrl(DateTime date) {
+    // 오프셋이 적용된 날짜 사용
+    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
     final dateStr =
-        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        "${adjustedDate.year}-${adjustedDate.month.toString().padLeft(2, '0')}-${adjustedDate.day.toString().padLeft(2, '0')}";
     return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$dateStr.png';
   }
 
