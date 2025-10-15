@@ -85,4 +85,29 @@ class ScheduleConfig {
   static DateTime getAdjustedToday() {
     return getAdjustedDate(DateTime.now());
   }
+
+  /// 일정 종료일 계산 (45주차 마지막 날)
+  /// 
+  /// 실제 종료일: 2025년 12월 12일 (금요일)
+  /// 45주차의 마지막 읽기 날짜
+  static DateTime getScheduleEndDate() {
+    // 45주차 월요일 = 시작일 + 44주(308일)
+    final week45Monday = startDate.add(const Duration(days: 44 * 7));
+    // 45주차 금요일 = 월요일 + 4일 (월화수목금)
+    final week45Friday = week45Monday.add(const Duration(days: 4));
+    
+    // 휴식 주 일수 추가
+    final totalBreakDays = breakWeeks.length * 7;
+    
+    return week45Friday.add(Duration(days: totalBreakDays));
+  }
+
+  /// 특정 날짜가 일정 종료 후인지 확인
+  static bool isAfterScheduleEnd(DateTime date) {
+    final endDate = getScheduleEndDate();
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final normalizedEnd = DateTime(endDate.year, endDate.month, endDate.day);
+    
+    return normalizedDate.isAfter(normalizedEnd);
+  }
 }

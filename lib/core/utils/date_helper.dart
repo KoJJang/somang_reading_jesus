@@ -52,4 +52,10 @@ class DateHelper {
 
   /// 휴식 주 목록
   static List<DateTime> get breakWeeks => ScheduleConfig.breakWeeks;
+
+  /// 일정 종료일
+  static DateTime getScheduleEndDate() => ScheduleConfig.getScheduleEndDate();
+
+  /// 특정 날짜가 일정 종료 후인지 확인
+  static bool isAfterScheduleEnd(DateTime date) => ScheduleConfig.isAfterScheduleEnd(date);
 }

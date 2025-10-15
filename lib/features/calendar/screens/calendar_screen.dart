@@ -80,8 +80,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       date.isBefore(endDate.add(const Duration(days: 1)));
       date = date.add(const Duration(days: 1))
     ) {
-      // 일요일이거나 읽기 계획이 없는 날은 제외
-      if (date.weekday == DateTime.sunday) continue;
+      // 일요일, 휴식 주, 일정 종료 후는 제외
+      if (date.weekday == DateTime.sunday || 
+          DateHelper.isBreakWeek(date) || 
+          DateHelper.isAfterScheduleEnd(date)) continue;
 
       final dateKey = DateTime(date.year, date.month, date.day);
       final isFutureDate = date.isAfter(DateTime.now());
@@ -348,8 +350,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildCalendarCell(DateTime date, {bool isToday = false}) {
-    // 일요일이나 휴식 주는 회색으로 표시 (선택 불가)
-    if (date.weekday == DateTime.sunday || DateHelper.isBreakWeek(date)) {
+    // 일요일, 휴식 주, 일정 종료 후는 회색으로 표시 (선택 불가)
+    if (date.weekday == DateTime.sunday || 
+        DateHelper.isBreakWeek(date) || 
+        DateHelper.isAfterScheduleEnd(date)) {
       return Center(
         child: Text('${date.day}', style: TextStyle(color: Colors.grey[400])),
       );
@@ -899,7 +903,10 @@ class _BreakWeekMessage extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(8),
@@ -918,10 +925,7 @@ class _BreakWeekMessage extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             '이번 주는 편안한 휴식을 취하세요',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9CA3AF),
-            ),
+            style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
           ),
         ],
       ),
