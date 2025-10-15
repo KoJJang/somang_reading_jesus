@@ -69,11 +69,11 @@ class ScheduleConfig {
     // 날짜 이전의 모든 휴식 주를 카운트
     for (final breakWeek in breakWeeks) {
       final weekStart = _getWeekStart(breakWeek);
-      final weekEnd = weekStart.add(const Duration(days: 5)); // 토요일까지 (월~토)
+      final weekEnd = weekStart.add(const Duration(days: 6)); // 일요일까지 (월~일)
 
-      // 휴식 주의 종료일(토요일)이 현재 날짜보다 이전이면 6일을 뺌
+      // 휴식 주 전체(일요일 포함)가 현재 날짜보다 이전이면 7일을 뺌
       if (weekEnd.isBefore(date)) {
-        breakDaysToSubtract += 6; // 월~토 6일
+        breakDaysToSubtract += 7; // 일~토 7일 (일요일 포함 전체 주)
       }
     }
 
