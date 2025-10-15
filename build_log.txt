@@ -1,0 +1,7 @@
+Warning: Building for device with codesigning disabled. You will have to manually codesign before deploying to device.
+Building com.somangchurch.readingjesus for device (ios-release)...
+Running pod install...                                             13.4s
+Running Xcode build...                                          
+ └─Compiling, linking and signing...                        12.8s
+Xcode build done.                                           254.4s
+✓ Built build/ios/iphoneos/Runner.app (421.0MB)
