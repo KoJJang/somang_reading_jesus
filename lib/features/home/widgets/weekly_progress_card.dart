@@ -36,7 +36,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
       // 이번 주가 휴식 주인지 확인
       final today = DateTime.now();
       final isBreakWeek = ScheduleConfig.isBreakWeek(today);
-      
+
       // 오늘의 계획을 가져와서 현재 주차를 파악
       final todayPlan = await ReadingPlanService().getTodaysPlan();
       if (todayPlan == null && !isBreakWeek) {
@@ -53,7 +53,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         });
         return;
       }
-      
+
       // 휴식 주인 경우 특별 처리
       if (isBreakWeek) {
         setState(() {
@@ -79,20 +79,37 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
 
       // 각 요일별 완료 여부 개별적으로 확인하여 저장
       int completedCount = 0;
+
+      // 이번 주 월요일 날짜 계산
+      final now = DateTime.now();
+      final monday = now.subtract(Duration(days: now.weekday - 1));
+
       for (int day = 1; day <= 6; day++) {
         final dayIndex = day - 1; // 배열 인덱스는 0부터 시작
 
         // 이번 주 현재 요일까지만 확인
         if (day <= _totalDaysThisWeek) {
-          final isCompleted = await _readingService.isCompleted(
-            ReadingPlanService.startYear,
-            todayPlan!.week,
-            day,
-          );
-          _dayCompletionStatus[dayIndex] = isCompleted;
+          // 해당 요일의 실제 날짜 계산
+          final dateForDay = monday.add(Duration(days: day - 1));
 
-          if (isCompleted) {
-            completedCount++;
+          // 해당 날짜의 일정 가져오기 (휴식 주 반영)
+          final planForDay = await ReadingPlanService().getPlanForDate(
+            dateForDay,
+          );
+
+          if (planForDay != null) {
+            final isCompleted = await _readingService.isCompleted(
+              ReadingPlanService.startYear,
+              planForDay.week,
+              planForDay.day,
+            );
+            _dayCompletionStatus[dayIndex] = isCompleted;
+
+            if (isCompleted) {
+              completedCount++;
+            }
+          } else {
+            _dayCompletionStatus[dayIndex] = false;
           }
         } else {
           // 아직 오지 않은 요일은 완료되지 않은 상태로 설정
@@ -166,32 +183,32 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                   )
                   : _currentWeek == 0
                   ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.beach_access,
-                          size: 48,
-                          color: Colors.purple[400],
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.beach_access,
+                        size: 48,
+                        color: Colors.purple[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '이번 주는 휴식 주간입니다',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.purple[900],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '이번 주는 휴식 주간입니다',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.purple[900],
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '편안한 휴식을 취하세요 🌟',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.purple[700],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '편안한 휴식을 취하세요 🌟',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.purple[700],
-                          ),
-                        ),
-                      ],
-                    )
+                      ),
+                    ],
+                  )
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
