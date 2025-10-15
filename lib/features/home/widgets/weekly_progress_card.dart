@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../features/services/reading_plan_service.dart';
 import '../../../features/services/models/reading_plan.dart';
+import '../../../config/schedule_config.dart';
 
 class WeeklyProgressCard extends StatefulWidget {
   const WeeklyProgressCard({super.key});
@@ -32,10 +33,14 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
     });
 
     try {
+      // 이번 주가 휴식 주인지 확인
+      final today = DateTime.now();
+      final isBreakWeek = ScheduleConfig.isBreakWeek(today);
+      
       // 오늘의 계획을 가져와서 현재 주차를 파악
       final todayPlan = await ReadingPlanService().getTodaysPlan();
-      if (todayPlan == null) {
-        // 오늘이 일요일이거나 계획이 없는 경우
+      if (todayPlan == null && !isBreakWeek) {
+        // 오늘이 일요일이거나 계획이 없는 경우 (휴식 주 제외)
         setState(() {
           _isLoading = false;
           _progressPercentage = 0.0;
@@ -48,8 +53,23 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         });
         return;
       }
+      
+      // 휴식 주인 경우 특별 처리
+      if (isBreakWeek) {
+        setState(() {
+          _isLoading = false;
+          _progressPercentage = 0.0;
+          _completedDays = 0;
+          _totalDaysThisWeek = 0;
+          _currentWeek = 0; // 휴식 주 표시
+          for (int i = 0; i < _dayCompletionStatus.length; i++) {
+            _dayCompletionStatus[i] = false;
+          }
+        });
+        return;
+      }
 
-      _currentWeek = todayPlan.week;
+      _currentWeek = todayPlan!.week;
 
       // 현재 요일 (1-월, 2-화, ... 6-토, 7-일)
       final currentDayOfWeek = DateTime.now().weekday;
@@ -66,7 +86,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         if (day <= _totalDaysThisWeek) {
           final isCompleted = await _readingService.isCompleted(
             ReadingPlanService.startYear,
-            todayPlan.week,
+            todayPlan!.week,
             day,
           );
           _dayCompletionStatus[dayIndex] = isCompleted;
@@ -144,6 +164,34 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                       child: CircularProgressIndicator(),
                     ),
                   )
+                  : _currentWeek == 0
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.beach_access,
+                          size: 48,
+                          color: Colors.purple[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '이번 주는 휴식 주간입니다',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.purple[900],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '편안한 휴식을 취하세요 🌟',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.purple[700],
+                          ),
+                        ),
+                      ],
+                    )
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
