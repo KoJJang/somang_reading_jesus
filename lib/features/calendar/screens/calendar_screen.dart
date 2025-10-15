@@ -880,35 +880,47 @@ class _BreakWeekMessage extends StatelessWidget {
       margin: const EdgeInsets.all(AppSizes.paddingM),
       padding: const EdgeInsets.all(AppSizes.paddingL),
       decoration: BoxDecoration(
-        color: Colors.purple[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.purple[200]!),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.beach_access, size: 48, color: Colors.purple[400]),
-          const SizedBox(height: 12),
-          Text(
-            '휴식 주간입니다',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.purple[900],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MM월 dd일').format(selectedDay),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '휴식 주간',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            DateFormat('MM월 dd일').format(selectedDay),
-            style: TextStyle(fontSize: 16, color: Colors.purple[700]),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '이번 주는 휴식 주간입니다.\n편안한 휴식을 취하세요! 🌟',
-            textAlign: TextAlign.center,
+          const SizedBox(height: 16),
+          const Text(
+            '이번 주는 편안한 휴식을 취하세요',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.purple[800],
-              height: 1.5,
+              color: Color(0xFF9CA3AF),
             ),
           ),
         ],
