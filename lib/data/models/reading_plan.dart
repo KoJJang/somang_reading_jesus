@@ -25,7 +25,8 @@ class ReadingPlan {
     final now = DateTime.now();
 
     // 일요일이거나 휴식 주이면 null 반환
-    if (now.weekday == DateTime.sunday || DateHelper.isBreakWeek(now)) return null;
+    if (now.weekday == DateTime.sunday || DateHelper.isBreakWeek(now))
+      return null;
 
     // 휴식 주를 고려한 조정된 날짜로 계산
     final adjustedNow = DateHelper.getAdjustedDate(now);

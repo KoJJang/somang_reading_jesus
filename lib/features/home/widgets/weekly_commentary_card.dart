@@ -70,7 +70,7 @@ class WeeklyCommentaryCard extends StatelessWidget {
                   );
                 }
                 return const Text(
-                  '준비 중입니다',
+                  '오늘은 쉬는 날입니다',
                   style: TextStyle(fontSize: 14, color: Colors.black54),
                 );
               },

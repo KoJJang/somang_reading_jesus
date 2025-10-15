@@ -17,6 +17,7 @@ class ScheduleConfig {
   static final List<DateTime> breakWeeks = [
     DateTime(2025, 8, 3), // 1차 휴식 주 (8/3 ~ 8/9)
     DateTime(2025, 10, 5), // 2차 휴식 주 (10/5 ~ 10/11)
+    DateTime(2025, 10, 12), // 3차 휴식 주 (10/12 ~ 10/18)
   ];
 
   /// 특정 날짜가 휴식 주에 해당하는지 확인

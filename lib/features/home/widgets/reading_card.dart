@@ -91,7 +91,7 @@ class ReadingCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '주일은 교회에서 예배드리는 날입니다',
+                          '편안한 휴식을 취하세요 🌟',
                           style: TextStyle(
                             fontSize: AppSizes.fontM,
                             color: AppColors.textSecondary,

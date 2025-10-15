@@ -24,7 +24,7 @@ class _QuickAccessGridState extends State<QuickAccessGrid> {
 
   Future<void> _checkTodayCompletion() async {
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (DateHelper.isBreakWeek(today)) {
       if (mounted) {
@@ -102,7 +102,7 @@ class _QuickAccessGridState extends State<QuickAccessGrid> {
 
   Future<void> _markAsCompleted() async {
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (DateHelper.isBreakWeek(today)) {
       if (context.mounted) {

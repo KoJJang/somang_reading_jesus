@@ -179,97 +179,85 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                       child: CircularProgressIndicator(),
                     ),
                   )
-                  : _currentWeek == 0
-                  ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.beach_access,
-                        size: 48,
-                        color: Colors.purple[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '이번 주는 휴식 주간입니다',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple[900],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '편안한 휴식을 취하세요 🌟',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.purple[700],
-                        ),
-                      ),
-                    ],
-                  )
                   : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 주차 및 진행률 정보
+                      // 주차 및 진행률 정보 (휴식 주간 포함)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '$_currentWeek주차',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF4F46E5),
-                            ),
-                          ),
-                          Text(
-                            '$progressPercent% 완료',
+                            _currentWeek == 0 ? '휴식 주간' : '$_currentWeek주차',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color:
-                                  progressPercent == 100
-                                      ? const Color(0xFF059669)
-                                      : const Color(0xFF111827),
+                                  _currentWeek == 0
+                                      ? const Color(0xFF6B7280)
+                                      : const Color(0xFF4F46E5),
                             ),
                           ),
+                          if (_currentWeek != 0)
+                            Text(
+                              '$progressPercent% 완료',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    progressPercent == 100
+                                        ? const Color(0xFF059669)
+                                        : const Color(0xFF111827),
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
-                      // 진행 게이지
+                      // 진행 게이지 (휴식 주간에는 회색으로)
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
                           color: const Color(0xFFE5E7EB),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Row(
-                          children: [
-                            Flexible(
-                              flex: (_progressPercentage * 100).round(),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFF4F46E5),
-                                      progressPercent == 100
-                                          ? const Color(0xFF059669)
-                                          : const Color(0xFF818CF8),
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
+                        child:
+                            _currentWeek == 0
+                                ? Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD1D5DB),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
-                                  borderRadius: BorderRadius.circular(6),
+                                )
+                                : Row(
+                                  children: [
+                                    Flexible(
+                                      flex: (_progressPercentage * 100).round(),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              const Color(0xFF4F46E5),
+                                              progressPercent == 100
+                                                  ? const Color(0xFF059669)
+                                                  : const Color(0xFF818CF8),
+                                            ],
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Flexible(
+                                      flex:
+                                          100 -
+                                          (_progressPercentage * 100).round(),
+                                      child: Container(),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ),
-                            Flexible(
-                              flex: 100 - (_progressPercentage * 100).round(),
-                              child: Container(),
-                            ),
-                          ],
-                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -296,33 +284,44 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
 
                       // 하단 상태 설명
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            '현재 ',
+                      if (_currentWeek == 0)
+                        const Center(
+                          child: Text(
+                            '이번 주는 편안한 휴식을 취하세요',
                             style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFF6B7280),
                             ),
                           ),
-                          Text(
-                            '$_completedDays일',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF4F46E5),
+                        )
+                      else
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '현재 ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' / $_totalDaysThisWeek일 완료',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
+                            Text(
+                              '$_completedDays일',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF4F46E5),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                            Text(
+                              ' / $_totalDaysThisWeek일 완료',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
         ),
@@ -338,7 +337,11 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
     final Color bgColor;
     final Color textColor;
 
-    if (!isActive) {
+    // 휴식 주간인 경우 모든 요일을 동일한 회색으로 표시
+    if (_currentWeek == 0) {
+      bgColor = const Color(0xFFF3F4F6);
+      textColor = const Color(0xFF9CA3AF);
+    } else if (!isActive) {
       // 아직 요일이 오지 않음 (미래)
       bgColor = const Color(0xFFF3F4F6);
       textColor = const Color(0xFF9CA3AF);

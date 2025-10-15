@@ -30,7 +30,7 @@ class _CompletionCardState extends State<CompletionCard> {
     });
 
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (DateHelper.isBreakWeek(today)) {
       if (mounted) {
@@ -59,7 +59,7 @@ class _CompletionCardState extends State<CompletionCard> {
 
   Future<void> _markAsCompleted() async {
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (DateHelper.isBreakWeek(today)) {
       if (mounted) {
