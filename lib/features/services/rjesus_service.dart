@@ -72,17 +72,19 @@ class RJesusService {
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (ScheduleConfig.isBreakWeek(today)) {
       return null;
     }
-    
-    final readings = await getDailyReadings();
 
-    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 오늘 날짜 그대로 사용
+    final readings = await getDailyReadings();
+    // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
+    final adjustedToday = ScheduleConfig.getAdjustedDate(today);
+
+    // 조정된 날짜와 일치하는 읽기 찾기
     for (final reading in readings) {
-      if (_isSameDate(reading.date, today)) {
+      if (_isSameDate(reading.date, adjustedToday)) {
         return reading;
       }
     }
@@ -96,12 +98,13 @@ class RJesusService {
     if (ScheduleConfig.isBreakWeek(date)) {
       return null;
     }
-    
-    final readings = await getDailyReadings();
 
-    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 날짜 그대로 사용
+    final readings = await getDailyReadings();
+    // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
+    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
+
     for (final reading in readings) {
-      if (_isSameDate(reading.date, date)) {
+      if (_isSameDate(reading.date, adjustedDate)) {
         return reading;
       }
     }
@@ -139,9 +142,10 @@ class RJesusService {
 
   // 일별 설명 이미지 URL 생성
   String getDailyExplanationImageUrl(DateTime date) {
-    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 날짜 그대로 사용
+    // 휴식 주를 고려한 조정된 날짜 사용
+    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
     final dateStr =
-        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        "${adjustedDate.year}-${adjustedDate.month.toString().padLeft(2, '0')}-${adjustedDate.day.toString().padLeft(2, '0')}";
     return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$dateStr.png';
   }
 

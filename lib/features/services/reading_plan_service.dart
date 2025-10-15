@@ -18,14 +18,16 @@ class ReadingPlanService {
       return null;
     }
 
-    // CSV가 이미 휴식 주를 반영하고 있으므로 날짜 그대로 사용
-    final diffWeeks = date.difference(_startDate).inDays ~/ 7;
+    // 휴식 주를 고려한 조정된 날짜로 일정 계산
+    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
+    
+    final diffWeeks = adjustedDate.difference(_startDate).inDays ~/ 7;
     final currentWeek = diffWeeks + 1;
 
     if (currentWeek > 45) return null;
 
     final weekStartDate = _startDate.add(Duration(days: diffWeeks * 7));
-    final diffDays = date.difference(weekStartDate).inDays;
+    final diffDays = adjustedDate.difference(weekStartDate).inDays;
     final currentDay = diffDays + 1;
 
     return ReadingPlan.calculatePlanForWeekAndDay(
