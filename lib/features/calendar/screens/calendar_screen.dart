@@ -81,9 +81,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       date = date.add(const Duration(days: 1))
     ) {
       // 일요일, 휴식 주, 일정 종료 후는 제외
-      if (date.weekday == DateTime.sunday || 
-          DateHelper.isBreakWeek(date) || 
-          DateHelper.isAfterScheduleEnd(date)) continue;
+      if (date.weekday == DateTime.sunday ||
+          DateHelper.isBreakWeek(date) ||
+          DateHelper.isAfterScheduleEnd(date))
+        continue;
 
       final dateKey = DateTime(date.year, date.month, date.day);
       final isFutureDate = date.isAfter(DateTime.now());
@@ -351,8 +352,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildCalendarCell(DateTime date, {bool isToday = false}) {
     // 일요일, 휴식 주, 일정 종료 후는 회색으로 표시 (선택 불가)
-    if (date.weekday == DateTime.sunday || 
-        DateHelper.isBreakWeek(date) || 
+    if (date.weekday == DateTime.sunday ||
+        DateHelper.isBreakWeek(date) ||
         DateHelper.isAfterScheduleEnd(date)) {
       return Center(
         child: Text('${date.day}', style: TextStyle(color: Colors.grey[400])),

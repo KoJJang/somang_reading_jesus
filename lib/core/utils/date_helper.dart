@@ -57,5 +57,6 @@ class DateHelper {
   static DateTime getScheduleEndDate() => ScheduleConfig.getScheduleEndDate();
 
   /// 특정 날짜가 일정 종료 후인지 확인
-  static bool isAfterScheduleEnd(DateTime date) => ScheduleConfig.isAfterScheduleEnd(date);
+  static bool isAfterScheduleEnd(DateTime date) =>
+      ScheduleConfig.isAfterScheduleEnd(date);
 }
