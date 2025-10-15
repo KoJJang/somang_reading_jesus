@@ -12,6 +12,7 @@ import '../../../features/services/rjesus_service.dart';
 import '../../../features/services/models/rjesus_content.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/reading_completion.dart';
+import '../../../config/schedule_config.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -330,7 +331,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 isCompleted: _isCompletedSelectedDay,
                 isLoading: _isLoading,
                 onMarkCompleted: _markSelectedDayCompleted,
-              ),
+              )
+            else if (_selectedDay != null &&
+                ScheduleConfig.isBreakWeek(_selectedDay!))
+              _BreakWeekMessage(selectedDay: _selectedDay!),
             // 월간 통독 현황
             _MonthlyReadingStatus(
               completionRate: completionRate,
@@ -345,7 +349,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildCalendarCell(DateTime date, {bool isToday = false}) {
-    if (date.weekday == DateTime.sunday) {
+    // 일요일이나 휴식 주는 회색으로 표시 (선택 불가)
+    if (date.weekday == DateTime.sunday || ScheduleConfig.isBreakWeek(date)) {
       return Center(
         child: Text('${date.day}', style: TextStyle(color: Colors.grey[400])),
       );
@@ -858,6 +863,54 @@ class _MonthlyReadingStatus extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakWeekMessage extends StatelessWidget {
+  final DateTime selectedDay;
+
+  const _BreakWeekMessage({required this.selectedDay});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(AppSizes.paddingM),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
+      decoration: BoxDecoration(
+        color: Colors.purple[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.purple[200]!),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.beach_access, size: 48, color: Colors.purple[400]),
+          const SizedBox(height: 12),
+          Text(
+            '휴식 주간입니다',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.purple[900],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            DateFormat('MM월 dd일').format(selectedDay),
+            style: TextStyle(fontSize: 16, color: Colors.purple[700]),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '이번 주는 휴식 주간입니다.\n편안한 휴식을 취하세요! 🌟',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.purple[800],
+              height: 1.5,
+            ),
           ),
         ],
       ),

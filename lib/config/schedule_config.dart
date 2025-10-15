@@ -1,31 +1,80 @@
 /// 리딩 지저스 일정 설정
 ///
-/// 일정이 지연되거나 변경될 때 이 파일의 설정을 수정하면 됩니다.
+/// 일정이 변경되거나 휴식 주가 추가될 때 이 파일의 설정을 수정하면 됩니다.
 class ScheduleConfig {
-  /// 일정 지연 일수
-  ///
-  /// 양수: 일정이 지연된 경우 (예: 14 = 2주 지연)
-  /// 음수: 일정이 앞당겨진 경우 (예: -7 = 1주 앞당김)
-  /// 0: 원래 일정대로 진행
-  ///
-  /// 예시 1 - 2주 지연:
-  /// - 현재 날짜: 10월 15일
-  /// - delayDays = 14 (2주 지연)
-  /// - 실제 조회되는 일정: 10월 1일의 일정 (사도행전 21-22장)
-  ///
-  /// 예시 2 - 지연 없음:
-  /// - 현재 날짜: 10월 15일
-  /// - delayDays = 0
-  /// - 실제 조회되는 일정: 10월 15일의 일정 (고린도전서 9-12장)
-  static const int delayDays = 14;
-
   /// 일정 시작일
   /// 리딩 지저스가 시작된 날짜
   static final DateTime startDate = DateTime(2025, 1, 20);
 
-  /// 오프셋이 적용된 현재 날짜 계산
+  /// 휴식 주 설정
+  ///
+  /// 각 항목은 휴식 주의 시작일을 나타냅니다.
+  /// 월요일부터 토요일까지 전체 주가 휴식으로 처리됩니다.
+  ///
+  /// 예시:
+  /// - DateTime(2025, 8, 3): 8월 3일이 속한 주(8/3 월요일 ~ 8/9 일요일)가 휴식
+  /// - DateTime(2025, 10, 5): 10월 5일이 속한 주(10/5 일요일 포함)가 휴식
+  static final List<DateTime> breakWeeks = [
+    DateTime(2025, 8, 3), // 1차 휴식 주 (8/3 ~ 8/9)
+    DateTime(2025, 10, 5), // 2차 휴식 주 (10/5 ~ 10/11)
+  ];
+
+  /// 특정 날짜가 휴식 주에 해당하는지 확인
+  static bool isBreakWeek(DateTime date) {
+    // 일요일은 원래 쉬는 날이므로 일단 제외 (아래 로직에서 휴식주 일요일은 체크됨)
+    for (final breakWeek in breakWeeks) {
+      // 해당 주의 월요일 찾기
+      final weekStart = _getWeekStart(breakWeek);
+      final weekEnd = weekStart.add(const Duration(days: 6)); // 일요일까지 포함
+
+      // 날짜를 자정 기준으로 정규화
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      final normalizedStart = DateTime(
+        weekStart.year,
+        weekStart.month,
+        weekStart.day,
+      );
+      final normalizedEnd = DateTime(weekEnd.year, weekEnd.month, weekEnd.day);
+
+      if ((normalizedDate.isAtSameMomentAs(normalizedStart) ||
+              normalizedDate.isAfter(normalizedStart)) &&
+          (normalizedDate.isAtSameMomentAs(normalizedEnd) ||
+              normalizedDate.isBefore(normalizedEnd))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// 주의 시작일(월요일) 계산
+  static DateTime _getWeekStart(DateTime date) {
+    // 일요일(7)이면 다음 날(월요일)
+    if (date.weekday == DateTime.sunday) {
+      return date.add(const Duration(days: 1));
+    }
+    // 월요일(1)이 아니면 해당 주 월요일로 이동
+    return date.subtract(Duration(days: date.weekday - 1));
+  }
+
+  /// 휴식 주를 고려한 실제 읽기 날짜 계산
+  ///
+  /// 현재 날짜에서 그 이전의 휴식 주 수를 빼서 실제 읽어야 할 날짜를 계산합니다.
   static DateTime getAdjustedDate(DateTime date) {
-    return date.subtract(Duration(days: delayDays));
+    int breakDaysToSubtract = 0;
+
+    // 날짜 이전의 모든 휴식 주를 카운트
+    for (final breakWeek in breakWeeks) {
+      final weekStart = _getWeekStart(breakWeek);
+      final weekEnd = weekStart.add(const Duration(days: 6)); // 일요일까지
+
+      // 휴식 주의 종료일이 현재 날짜보다 이전이면 해당 주 전체(월~토 6일)를 뺌
+      // (일요일은 원래 읽기 일정이 없으므로 6일만 계산)
+      if (weekEnd.isBefore(date)) {
+        breakDaysToSubtract += 6; // 월~토 6일
+      }
+    }
+
+    return date.subtract(Duration(days: breakDaysToSubtract));
   }
 
   /// 오프셋이 적용된 오늘 날짜 계산

@@ -71,6 +71,13 @@ class RJesusService {
 
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
+    final today = DateTime.now();
+    
+    // 휴식 주인지 확인
+    if (ScheduleConfig.isBreakWeek(today)) {
+      return null;
+    }
+    
     final readings = await getDailyReadings();
     // 오프셋이 적용된 오늘 날짜 사용
     final adjustedToday = ScheduleConfig.getAdjustedToday();
@@ -87,6 +94,11 @@ class RJesusService {
 
   // 특정 날짜의 읽기 데이터 가져오기
   Future<DailyReading?> getReadingByDate(DateTime date) async {
+    // 휴식 주인지 확인
+    if (ScheduleConfig.isBreakWeek(date)) {
+      return null;
+    }
+    
     final readings = await getDailyReadings();
     // 오프셋이 적용된 날짜 사용
     final adjustedDate = ScheduleConfig.getAdjustedDate(date);
