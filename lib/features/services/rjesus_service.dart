@@ -71,12 +71,12 @@ class RJesusService {
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
     final today = DateTime.now();
-    
+
     // 휴식 주인지 확인
     if (DateHelper.isBreakWeek(today)) {
       return null;
     }
-    
+
     final readings = await getDailyReadings();
     // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
     final adjustedToday = DateHelper.getAdjustedToday();

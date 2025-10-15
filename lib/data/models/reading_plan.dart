@@ -1,4 +1,5 @@
 import 'reading_schedule.dart';
+import '../../core/utils/date_helper.dart';
 
 class ReadingPlan {
   final int week; // 주차 (1-45)
@@ -23,18 +24,21 @@ class ReadingPlan {
   static ReadingPlan? calculateCurrentPlan(DateTime startDate) {
     final now = DateTime.now();
 
-    // 일요일이면 null 반환
-    if (now.weekday == DateTime.sunday) return null;
+    // 일요일이거나 휴식 주이면 null 반환
+    if (now.weekday == DateTime.sunday || DateHelper.isBreakWeek(now)) return null;
+
+    // 휴식 주를 고려한 조정된 날짜로 계산
+    final adjustedNow = DateHelper.getAdjustedDate(now);
 
     // 시작일로부터 경과된 주 수 계산
-    final diffWeeks = now.difference(startDate).inDays ~/ 7;
+    final diffWeeks = adjustedNow.difference(startDate).inDays ~/ 7;
     final currentWeek = diffWeeks + 1;
 
     if (currentWeek > 45) return null; // 45주 초과
 
     // 현재 주의 시작일로부터 경과된 일 수 계산
     final weekStartDate = startDate.add(Duration(days: diffWeeks * 7));
-    final diffDays = now.difference(weekStartDate).inDays;
+    final diffDays = adjustedNow.difference(weekStartDate).inDays;
     final currentDay = diffDays + 1;
 
     // volume과 chapter 계산

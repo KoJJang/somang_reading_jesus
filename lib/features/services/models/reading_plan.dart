@@ -1,4 +1,5 @@
 import '../../../data/models/reading_schedule.dart';
+import '../../../core/utils/date_helper.dart';
 
 class ReadingPlan {
   final int week;
@@ -17,14 +18,17 @@ class ReadingPlan {
 
   static ReadingPlan? calculateCurrentPlan(DateTime startDate) {
     final now = DateTime.now();
-    if (now.weekday == DateTime.sunday) return null;
+    if (now.weekday == DateTime.sunday || DateHelper.isBreakWeek(now)) return null;
 
-    final diffWeeks = now.difference(startDate).inDays ~/ 7;
+    // 휴식 주를 고려한 조정된 날짜로 계산
+    final adjustedNow = DateHelper.getAdjustedDate(now);
+
+    final diffWeeks = adjustedNow.difference(startDate).inDays ~/ 7;
     final currentWeek = diffWeeks + 1;
     if (currentWeek > 45) return null;
 
     final weekStartDate = startDate.add(Duration(days: diffWeeks * 7));
-    final diffDays = now.difference(weekStartDate).inDays;
+    final diffDays = adjustedNow.difference(weekStartDate).inDays;
     final currentDay = diffDays + 1;
 
     final scheduleData = _getScheduleData(currentWeek);

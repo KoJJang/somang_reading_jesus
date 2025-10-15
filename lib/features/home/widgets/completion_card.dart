@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../features/services/reading_plan_service.dart';
+import '../../../core/utils/date_helper.dart';
 
 class CompletionCard extends StatefulWidget {
   final VoidCallback? onCompletionChanged;
@@ -28,6 +29,19 @@ class _CompletionCardState extends State<CompletionCard> {
       _isLoading = true;
     });
 
+    final today = DateTime.now();
+    
+    // 휴식 주인지 확인
+    if (DateHelper.isBreakWeek(today)) {
+      if (mounted) {
+        setState(() {
+          _isCompletedToday = false;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     final plan = await ReadingPlanService().getTodaysPlan();
     final isCompleted = await _readingService.isCompleted(
       ReadingPlanService.startYear,
@@ -44,11 +58,26 @@ class _CompletionCardState extends State<CompletionCard> {
   }
 
   Future<void> _markAsCompleted() async {
+    final today = DateTime.now();
+    
+    // 휴식 주인지 확인
+    if (DateHelper.isBreakWeek(today)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('이번 주는 휴식 주간입니다'),
+            duration: Duration(milliseconds: 1500),
+          ),
+        );
+      }
+      return;
+    }
+
     final plan = await ReadingPlanService().getTodaysPlan();
     if (plan != null) {
       final completion = ReadingCompletion(
-        date: DateTime.now(),
-        year: DateTime.now().year,
+        date: today,
+        year: today.year,
         week: plan.week,
         day: plan.day,
         readings: plan.readings,
