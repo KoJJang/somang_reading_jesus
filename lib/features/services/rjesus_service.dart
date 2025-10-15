@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'models/rjesus_content.dart';
-import '../../config/schedule_config.dart';
+import '../../core/utils/date_helper.dart';
 
 class RJesusService {
   static RJesusService? _instance;
@@ -72,19 +71,19 @@ class RJesusService {
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
     final today = DateTime.now();
-
+    
     // 휴식 주인지 확인
-    if (ScheduleConfig.isBreakWeek(today)) {
+    if (DateHelper.isBreakWeek(today)) {
       return null;
     }
-
+    
     final readings = await getDailyReadings();
     // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
-    final adjustedToday = ScheduleConfig.getAdjustedDate(today);
+    final adjustedToday = DateHelper.getAdjustedToday();
 
     // 조정된 날짜와 일치하는 읽기 찾기
     for (final reading in readings) {
-      if (_isSameDate(reading.date, adjustedToday)) {
+      if (DateHelper.isSameDate(reading.date, adjustedToday)) {
         return reading;
       }
     }
@@ -95,16 +94,16 @@ class RJesusService {
   // 특정 날짜의 읽기 데이터 가져오기
   Future<DailyReading?> getReadingByDate(DateTime date) async {
     // 휴식 주인지 확인
-    if (ScheduleConfig.isBreakWeek(date)) {
+    if (DateHelper.isBreakWeek(date)) {
       return null;
     }
 
     final readings = await getDailyReadings();
     // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
-    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
+    final adjustedDate = DateHelper.getAdjustedDate(date);
 
     for (final reading in readings) {
-      if (_isSameDate(reading.date, adjustedDate)) {
+      if (DateHelper.isSameDate(reading.date, adjustedDate)) {
         return reading;
       }
     }
@@ -133,17 +132,10 @@ class RJesusService {
     return null;
   }
 
-  // 날짜 비교 헬퍼 함수
-  bool _isSameDate(DateTime date1, DateTime date2) {
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        date1.day == date2.day;
-  }
-
   // 일별 설명 이미지 URL 생성
   String getDailyExplanationImageUrl(DateTime date) {
     // 휴식 주를 고려한 조정된 날짜 사용
-    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
+    final adjustedDate = DateHelper.getAdjustedDate(date);
     final dateStr =
         "${adjustedDate.year}-${adjustedDate.month.toString().padLeft(2, '0')}-${adjustedDate.day.toString().padLeft(2, '0')}";
     return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$dateStr.png';

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../features/services/reading_plan_service.dart';
-import '../../../features/services/models/reading_plan.dart';
-import '../../../config/schedule_config.dart';
+import '../../../core/utils/date_helper.dart';
 
 class WeeklyProgressCard extends StatefulWidget {
   const WeeklyProgressCard({super.key});
@@ -35,7 +34,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
     try {
       // 이번 주가 휴식 주인지 확인
       final today = DateTime.now();
-      final isBreakWeek = ScheduleConfig.isBreakWeek(today);
+      final isBreakWeek = DateHelper.isBreakWeek(today);
 
       // 오늘의 계획을 가져와서 현재 주차를 파악
       final todayPlan = await ReadingPlanService().getTodaysPlan();
@@ -81,8 +80,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
       int completedCount = 0;
 
       // 이번 주 월요일 날짜 계산
-      final now = DateTime.now();
-      final monday = now.subtract(Duration(days: now.weekday - 1));
+      final monday = DateHelper.getThisWeekMonday();
 
       for (int day = 1; day <= 6; day++) {
         final dayIndex = day - 1; // 배열 인덱스는 0부터 시작

@@ -9,10 +9,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/logger_util.dart';
 import '../../../features/services/rjesus_service.dart';
-import '../../../features/services/models/rjesus_content.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/reading_completion.dart';
-import '../../../config/schedule_config.dart';
+import '../../../core/utils/date_helper.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -333,7 +332,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 onMarkCompleted: _markSelectedDayCompleted,
               )
             else if (_selectedDay != null &&
-                ScheduleConfig.isBreakWeek(_selectedDay!))
+                DateHelper.isBreakWeek(_selectedDay!))
               _BreakWeekMessage(selectedDay: _selectedDay!),
             // 월간 통독 현황
             _MonthlyReadingStatus(
@@ -350,7 +349,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildCalendarCell(DateTime date, {bool isToday = false}) {
     // 일요일이나 휴식 주는 회색으로 표시 (선택 불가)
-    if (date.weekday == DateTime.sunday || ScheduleConfig.isBreakWeek(date)) {
+    if (date.weekday == DateTime.sunday || DateHelper.isBreakWeek(date)) {
       return Center(
         child: Text('${date.day}', style: TextStyle(color: Colors.grey[400])),
       );
