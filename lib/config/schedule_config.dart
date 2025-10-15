@@ -17,16 +17,19 @@ class ScheduleConfig {
   static final List<DateTime> breakWeeks = [
     DateTime(2025, 8, 3), // 1차 휴식 주 (8/3 ~ 8/9)
     DateTime(2025, 10, 5), // 2차 휴식 주 (10/5 ~ 10/11)
-    DateTime(2025, 12, 8), // 3차 휴식 주 (12/8 ~ 12/14)
   ];
 
   /// 특정 날짜가 휴식 주에 해당하는지 확인
   static bool isBreakWeek(DateTime date) {
-    // 일요일은 원래 쉬는 날이므로 일단 제외 (아래 로직에서 휴식주 일요일은 체크됨)
+    // 일요일은 원래 쉬는 날이므로 휴식 주 체크 불필요
+    if (date.weekday == DateTime.sunday) {
+      return false;
+    }
+
     for (final breakWeek in breakWeeks) {
       // 해당 주의 월요일 찾기
       final weekStart = _getWeekStart(breakWeek);
-      final weekEnd = weekStart.add(const Duration(days: 6)); // 일요일까지 포함
+      final weekEnd = weekStart.add(const Duration(days: 5)); // 토요일까지 (월~토)
 
       // 날짜를 자정 기준으로 정규화
       final normalizedDate = DateTime(date.year, date.month, date.day);
@@ -66,10 +69,9 @@ class ScheduleConfig {
     // 날짜 이전의 모든 휴식 주를 카운트
     for (final breakWeek in breakWeeks) {
       final weekStart = _getWeekStart(breakWeek);
-      final weekEnd = weekStart.add(const Duration(days: 6)); // 일요일까지
+      final weekEnd = weekStart.add(const Duration(days: 5)); // 토요일까지 (월~토)
 
-      // 휴식 주의 종료일이 현재 날짜보다 이전이면 해당 주 전체(월~토 6일)를 뺌
-      // (일요일은 원래 읽기 일정이 없으므로 6일만 계산)
+      // 휴식 주의 종료일(토요일)이 현재 날짜보다 이전이면 6일을 뺌
       if (weekEnd.isBefore(date)) {
         breakDaysToSubtract += 6; // 월~토 6일
       }

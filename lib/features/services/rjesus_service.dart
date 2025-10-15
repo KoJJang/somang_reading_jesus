@@ -79,12 +79,10 @@ class RJesusService {
     }
     
     final readings = await getDailyReadings();
-    // 오프셋이 적용된 오늘 날짜 사용
-    final adjustedToday = ScheduleConfig.getAdjustedToday();
 
-    // 조정된 날짜와 일치하는 읽기 찾기
+    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 오늘 날짜 그대로 사용
     for (final reading in readings) {
-      if (_isSameDate(reading.date, adjustedToday)) {
+      if (_isSameDate(reading.date, today)) {
         return reading;
       }
     }
@@ -100,11 +98,10 @@ class RJesusService {
     }
     
     final readings = await getDailyReadings();
-    // 오프셋이 적용된 날짜 사용
-    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
 
+    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 날짜 그대로 사용
     for (final reading in readings) {
-      if (_isSameDate(reading.date, adjustedDate)) {
+      if (_isSameDate(reading.date, date)) {
         return reading;
       }
     }
@@ -142,10 +139,9 @@ class RJesusService {
 
   // 일별 설명 이미지 URL 생성
   String getDailyExplanationImageUrl(DateTime date) {
-    // 오프셋이 적용된 날짜 사용
-    final adjustedDate = ScheduleConfig.getAdjustedDate(date);
+    // CSV 파일이 이미 휴식 주를 반영하고 있으므로 날짜 그대로 사용
     final dateStr =
-        "${adjustedDate.year}-${adjustedDate.month.toString().padLeft(2, '0')}-${adjustedDate.day.toString().padLeft(2, '0')}";
+        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
     return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$dateStr.png';
   }
 
