@@ -58,16 +58,15 @@ class UserService {
         );
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
-        await _currentUserDoc!.update(updatedProfile.toMap());
+        // ✅ merge로 업데이트하여, 앱/관리자 웹에서 추가한 필드를 덮어쓰지 않도록 보장
+        await _currentUserDoc!.set(updatedProfile.toMap(), SetOptions(merge: true));
       } else {
         // 새 프로필 생성
-        final Map<String, dynamic> profileData = {
-          'uid': currentUserId!,
-          'phoneNumber': user.phoneNumber,
-          'name': name,
-          'createdAt': DateTime.now(),
-          'updatedAt': DateTime.now(),
-        };
+        final Map<String, dynamic> profileData = UserProfile(
+          uid: currentUserId!,
+          phoneNumber: user.phoneNumber ?? '',
+          name: name,
+        ).toMap();
 
         // 생년월일이 제공된 경우에만 추가
         if (birthDate != null) {
@@ -75,7 +74,7 @@ class UserService {
         }
 
         LoggerUtil.info('새 사용자 프로필 생성: $currentUserId');
-        await _currentUserDoc!.set(profileData);
+        await _currentUserDoc!.set(profileData, SetOptions(merge: true));
       }
     } catch (e) {
       LoggerUtil.error('프로필 저장 중 오류: $e');
