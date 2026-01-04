@@ -47,8 +47,10 @@ class UserService {
     required String uid,
     required String churchId,
   }) async {
-    final DocumentReference<Map<String, dynamic>> docRef =
-        _memberYearProfileDoc(scheduleYear: scheduleYear, uid: uid);
+    final DocumentReference<Map<String, dynamic>> docRef = _memberYearProfileDoc(
+      scheduleYear: scheduleYear,
+      uid: uid,
+    );
 
     final Map<String, dynamic> data = <String, dynamic>{
       'uid': uid,
@@ -95,10 +97,7 @@ class UserService {
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
         // ✅ merge로 업데이트하여, 앱/관리자 웹에서 추가한 필드를 덮어쓰지 않도록 보장
-        await _currentUserDoc!.set(
-          updatedProfile.toMap(),
-          SetOptions(merge: true),
-        );
+        await _currentUserDoc!.set(updatedProfile.toMap(), SetOptions(merge: true));
 
         // ✅ 신규 요구사항: 현재 연도 member profile 보장(없으면 생성)
         final int scheduleYear = _getScheduleYearForNow();

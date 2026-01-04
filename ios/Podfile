@@ -31,10 +31,6 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Firebase Phone Auth / AppCheck can require reCAPTCHA Enterprise on iOS.
-  # This fixes: recaptcha-sdk-not-linked
-  pod 'RecaptchaEnterprise'
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
