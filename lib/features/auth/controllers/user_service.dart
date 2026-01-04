@@ -28,13 +28,7 @@ class UserService {
       currentUserId != null ? _usersCollection.doc(currentUserId) : null;
 
   int _getScheduleYearForNow() {
-    final int nowYear = DateTime.now().year;
-    final List<int> years = DateHelper.availableScheduleYears;
-    if (years.contains(nowYear)) {
-      return nowYear;
-    }
-    // fallback: 가장 최근 연도
-    return years.isNotEmpty ? years.last : nowYear;
+    return DateHelper.getScheduleYear(DateTime.now());
   }
 
   DocumentReference<Map<String, dynamic>> _memberYearProfileDoc({

@@ -32,13 +32,61 @@ class ScheduleConfig {
     return years;
   }
 
+  static DateTime _normalize(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  /// 특정 날짜가 속한 "스케줄 연도" 계산
+  ///
+  /// - 스케줄이 다음 해까지 이어질 수 있으므로 `date.year`를 그대로 쓰면 틀릴 수 있습니다.
+  /// - 예: 2025 스케줄이 2026년 1월까지 이어지면, 2026-01-05는 "2025 스케줄"에 속합니다.
+  static int getScheduleYearForDate(DateTime date) {
+    final List<int> years = availableYears;
+    if (years.isEmpty) {
+      return date.year;
+    }
+
+    final DateTime normalizedDate = _normalize(date);
+
+    // 1) 스케줄 범위(start~end)에 포함되는 연도가 있으면 그 연도를 반환
+    for (final int year in years) {
+      final _ReadingSchedule schedule = _scheduleForYear(year);
+      final DateTime start = _normalize(schedule.startDate);
+      final DateTime end = _normalize(getScheduleEndDateForYear(year));
+      final bool isAfterOrSameStart =
+          normalizedDate.isAtSameMomentAs(start) || normalizedDate.isAfter(start);
+      final bool isBeforeOrSameEnd =
+          normalizedDate.isAtSameMomentAs(end) || normalizedDate.isBefore(end);
+      if (isAfterOrSameStart && isBeforeOrSameEnd) {
+        return year;
+      }
+    }
+
+    // 2) 어떤 범위에도 속하지 않으면, startDate가 가장 가까운 "이전" 스케줄을 선택
+    int? bestYear;
+    DateTime? bestStart;
+    for (final int year in years) {
+      final DateTime start = _normalize(_scheduleForYear(year).startDate);
+      if (start.isAfter(normalizedDate)) {
+        continue;
+      }
+      if (bestStart == null || start.isAfter(bestStart)) {
+        bestStart = start;
+        bestYear = year;
+      }
+    }
+
+    // 3) 날짜가 모든 스케줄 시작일보다 이전이면 가장 첫 스케줄로 fallback
+    return bestYear ?? years.first;
+  }
+
   static _ReadingSchedule _scheduleForYear(int year) {
     // 지정된 연도가 없으면 가장 오래된 일정으로 fallback (앱 크래시 방지)
     return _schedules[year] ?? _schedules[availableYears.first]!;
   }
 
   static _ReadingSchedule _scheduleForDate(DateTime date) {
-    return _scheduleForYear(date.year);
+    return _scheduleForYear(getScheduleYearForDate(date));
   }
 
   /// (호환용) "현재 날짜" 기준 일정 시작일

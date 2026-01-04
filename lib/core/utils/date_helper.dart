@@ -8,7 +8,8 @@ class DateHelper {
   static List<int> get availableScheduleYears => ScheduleConfig.availableYears;
 
   /// 특정 날짜가 속한 일정 연도
-  static int getScheduleYear(DateTime date) => date.year;
+  static int getScheduleYear(DateTime date) =>
+      ScheduleConfig.getScheduleYearForDate(date);
 
   /// 특정 연도의 일정 시작일
   static DateTime getScheduleStartDateForYear(int year) =>
