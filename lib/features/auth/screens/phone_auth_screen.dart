@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:reading_jesus_somang/core/constants/theme.dart';
 import '../controllers/user_service.dart';
 import '../../../core/utils/logger_util.dart';
 import '../controllers/auth_service.dart';
@@ -91,13 +91,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   }
 
   // Firebase 에러 메시지를 사용자 친화적인 메시지로 변환
-  String _getReadableErrorMessage(Object error) {
-    if (error is FirebaseAuthException) {
-      LoggerUtil.error(
-        'Phone auth error',
-        {'code': error.code, 'message': error.message},
-      );
-      switch (error.code) {
+  String _getReadableErrorMessage(Exception e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
         case 'invalid-phone-number':
           return '올바른 휴대폰 번호 형식이 아닙니다.';
         case 'invalid-verification-code':
@@ -112,26 +108,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           return '네트워크 연결이 불안정합니다. 인터넷 연결을 확인해주세요.';
         case 'session-expired':
           return '인증 세션이 만료되었습니다. 인증번호를 다시 요청해주세요.';
-        case 'captcha-check-failed':
-          return '자동 인증(reCAPTCHA/Play Integrity) 확인에 실패했습니다. 잠시 후 다시 시도하거나 네트워크 상태를 확인해주세요.';
-        case 'invalid-app-credential':
-          return '앱 인증 정보가 올바르지 않습니다. (Firebase 설정/서명키/SHA 또는 iOS APNs 설정 확인 필요)';
-        case 'app-not-authorized':
-          return '앱이 Firebase 프로젝트에서 인증되지 않았습니다. (Android 패키지명/서명, iOS 번들ID 설정 확인 필요)';
-        case 'missing-client-identifier':
-          return '인증 환경 정보가 부족합니다. 앱을 재시작하고 다시 시도해주세요.';
-        case 'internal-error':
-          return '내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
         default:
-          if (kDebugMode) {
-            return '인증 오류 (${error.code}): ${error.message ?? 'unknown'}';
-          }
           return '인증 과정에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
       }
-    }
-    LoggerUtil.error('Phone auth unknown error', error);
-    if (kDebugMode) {
-      return '알 수 없는 오류: ${error.toString()}';
     }
     return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
   }
@@ -179,21 +158,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               _smsVerified = true;
               _isLoading = false;
             });
-          } catch (e, stackTrace) {
-            LoggerUtil.error('verificationCompleted signIn failed', e, stackTrace);
+          } catch (e) {
             setState(() {
               _isLoading = false;
-              _errorMessage = _getReadableErrorMessage(e);
+              _errorMessage = _getReadableErrorMessage(e as Exception);
             });
           }
         },
 
         // 인증 실패 시
         verificationFailed: (FirebaseAuthException e) {
-          LoggerUtil.error(
-            'verificationFailed',
-            {'code': e.code, 'message': e.message},
-          );
           setState(() {
             _isLoading = false;
             _errorMessage = _getReadableErrorMessage(e);
@@ -214,11 +188,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         },
         timeout: const Duration(seconds: 120),
       );
-    } catch (e, stackTrace) {
-      LoggerUtil.error('verifyPhoneNumber threw', e, stackTrace);
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = _getReadableErrorMessage(e);
+        _errorMessage = _getReadableErrorMessage(e as Exception);
       });
     }
   }
@@ -282,11 +255,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           _errorMessage = '인증에 실패했습니다. 다시 시도해주세요.';
         });
       }
-    } catch (e, stackTrace) {
-      LoggerUtil.error('verifySmsCode failed', e, stackTrace);
+    } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = _getReadableErrorMessage(e);
+        _errorMessage = _getReadableErrorMessage(e as Exception);
       });
     }
   }
