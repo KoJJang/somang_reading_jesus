@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.1+1
+version: 1.0.2+12
 
 environment:
   sdk: ^3.7.0
@@ -89,12 +89,6 @@ flutter:
   fonts:
     - family: Pretendard
       fonts:
-        - asset: assets/fonts/Pretendard-Thin.otf
-          weight: 100
-        - asset: assets/fonts/Pretendard-ExtraLight.otf
-          weight: 200
-        - asset: assets/fonts/Pretendard-Light.otf
-          weight: 300
         - asset: assets/fonts/Pretendard-Regular.otf
           weight: 400
         - asset: assets/fonts/Pretendard-Medium.otf
@@ -103,10 +97,6 @@ flutter:
           weight: 600
         - asset: assets/fonts/Pretendard-Bold.otf
           weight: 700
-        - asset: assets/fonts/Pretendard-ExtraBold.otf
-          weight: 800
-        - asset: assets/fonts/Pretendard-Black.otf
-          weight: 900
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

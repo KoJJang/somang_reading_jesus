@@ -43,8 +43,9 @@ class _CompletionCardState extends State<CompletionCard> {
     }
 
     final plan = await ReadingPlanService().getTodaysPlan();
+    final scheduleYear = ReadingPlanService.scheduleYearForDate(today);
     final isCompleted = await _readingService.isCompleted(
-      ReadingPlanService.startYear,
+      scheduleYear,
       plan?.week ?? 0,
       plan?.day ?? 0,
     );
@@ -75,9 +76,10 @@ class _CompletionCardState extends State<CompletionCard> {
 
     final plan = await ReadingPlanService().getTodaysPlan();
     if (plan != null) {
+      final scheduleYear = ReadingPlanService.scheduleYearForDate(today);
       final completion = ReadingCompletion(
         date: today,
-        year: today.year,
+        year: scheduleYear,
         week: plan.week,
         day: plan.day,
         readings: plan.readings,

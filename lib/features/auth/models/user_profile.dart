@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum UserRole { member, leader, admin }
+
 class UserProfile {
   final String uid;
   final String phoneNumber;
@@ -8,7 +10,11 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isTestUser;
-  final bool isAdmin;
+  final String churchId;
+  final String? affiliation;
+  final UserRole role;
+  final String? memo;
+  final bool isActive;
 
   UserProfile({
     required this.uid,
@@ -16,11 +22,43 @@ class UserProfile {
     required this.name,
     this.birthDate,
     this.isTestUser = false,
-    this.isAdmin = false,
+    this.churchId = 'somang',
+    this.affiliation,
+    this.role = UserRole.member,
+    this.memo,
+    this.isActive = true,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) : this.createdAt = createdAt ?? DateTime.now(),
-       this.updatedAt = updatedAt ?? DateTime.now();
+  }) : createdAt = createdAt ?? DateTime.now(),
+       updatedAt = updatedAt ?? DateTime.now();
+
+  static DateTime _parseTimestampOrNow(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return DateTime.now();
+  }
+
+  static UserRole _parseRole(dynamic value) {
+    final String raw = (value ?? '').toString();
+    if (raw == 'admin') return UserRole.admin;
+    if (raw == 'leader') return UserRole.leader;
+    return UserRole.member;
+  }
+
+  static String _roleToString(UserRole role) {
+    switch (role) {
+      case UserRole.admin:
+        return 'admin';
+      case UserRole.leader:
+        return 'leader';
+      case UserRole.member:
+        return 'member';
+    }
+  }
 
   // Firestore에서 데이터를 가져올 때 사용하는 팩토리 생성자
   factory UserProfile.fromMap(Map<String, dynamic> map) {
@@ -35,9 +73,13 @@ class UserProfile {
       name: map['name'] ?? '',
       birthDate: birthDate,
       isTestUser: map['isTestUser'] ?? false,
-      isAdmin: map['isAdmin'] ?? false,
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
+      churchId: map['churchId'] ?? 'somang',
+      affiliation: map['affiliation'],
+      role: _parseRole(map['role']),
+      memo: map['memo'],
+      isActive: map['isActive'] ?? true,
+      createdAt: _parseTimestampOrNow(map['createdAt']),
+      updatedAt: _parseTimestampOrNow(map['updatedAt']),
     );
   }
 
@@ -50,12 +92,20 @@ class UserProfile {
       'createdAt': createdAt,
       'updatedAt': DateTime.now(),
       'isTestUser': isTestUser,
-      'isAdmin': isAdmin,
+      'churchId': churchId,
+      'role': _roleToString(role),
+      'isActive': isActive,
     };
 
     // birthDate가 null이 아닌 경우에만 추가
     if (birthDate != null) {
       map['birthDate'] = birthDate;
+    }
+    if (affiliation != null) {
+      map['affiliation'] = affiliation;
+    }
+    if (memo != null) {
+      map['memo'] = memo;
     }
 
     return map;
@@ -66,16 +116,24 @@ class UserProfile {
     String? name,
     DateTime? birthDate,
     bool? isTestUser,
-    bool? isAdmin,
+    String? churchId,
+    String? affiliation,
+    UserRole? role,
+    String? memo,
+    bool? isActive,
   }) {
     return UserProfile(
-      uid: this.uid,
-      phoneNumber: this.phoneNumber,
+      uid: uid,
+      phoneNumber: phoneNumber,
       name: name ?? this.name,
       birthDate: birthDate ?? this.birthDate,
       isTestUser: isTestUser ?? this.isTestUser,
-      isAdmin: isAdmin ?? this.isAdmin,
-      createdAt: this.createdAt,
+      churchId: churchId ?? this.churchId,
+      affiliation: affiliation ?? this.affiliation,
+      role: role ?? this.role,
+      memo: memo ?? this.memo,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
   }

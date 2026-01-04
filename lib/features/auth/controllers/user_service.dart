@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../../../core/utils/logger_util.dart';
+import '../../../core/utils/date_helper.dart';
 
 class UserService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -25,6 +26,41 @@ class UserService {
   // 현재 사용자의 문서 레퍼런스
   DocumentReference? get _currentUserDoc =>
       currentUserId != null ? _usersCollection.doc(currentUserId) : null;
+
+  int _getScheduleYearForNow() {
+    return DateHelper.getScheduleYear(DateTime.now());
+  }
+
+  DocumentReference<Map<String, dynamic>> _memberYearProfileDoc({
+    required int scheduleYear,
+    required String uid,
+  }) {
+    return _firestore
+        .collection('member_year_profiles')
+        .doc(scheduleYear.toString())
+        .collection('users')
+        .doc(uid);
+  }
+
+  Future<void> _ensureMemberYearProfile({
+    required int scheduleYear,
+    required String uid,
+    required String churchId,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> docRef =
+        _memberYearProfileDoc(scheduleYear: scheduleYear, uid: uid);
+
+    final Map<String, dynamic> data = <String, dynamic>{
+      'uid': uid,
+      'scheduleYear': scheduleYear,
+      'churchId': churchId,
+      'teamId': null,
+      'isTeamLeader': false,
+      'updatedAt': DateTime.now(),
+    };
+
+    await docRef.set(data, SetOptions(merge: true));
+  }
 
   // 사용자 프로필 생성 또는 업데이트
   Future<void> saveUserProfile({
@@ -74,18 +110,27 @@ class UserService {
         );
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
-        await _currentUserDoc!.update(updatedProfile.toMap());
+        // ✅ merge로 업데이트하여, 앱/관리자 웹에서 추가한 필드를 덮어쓰지 않도록 보장
+        await _currentUserDoc!.set(
+          updatedProfile.toMap(),
+          SetOptions(merge: true),
+        );
+
+        // ✅ 신규 요구사항: 현재 연도 member profile 보장(없으면 생성)
+        final int scheduleYear = _getScheduleYearForNow();
+        await _ensureMemberYearProfile(
+          scheduleYear: scheduleYear,
+          uid: currentUserId!,
+          churchId: updatedProfile.churchId,
+        );
       } else {
         // 새 프로필 생성
-        final Map<String, dynamic> profileData = {
-          'uid': currentUserId!,
-          'phoneNumber': effectivePhoneNumber,
-          'name': name,
-          'createdAt': DateTime.now(),
-          'updatedAt': DateTime.now(),
-          'isAdmin': shouldBeAdmin, // 관리자 여부 설정
-          'isTestUser': false,
-        };
+        final UserProfile profile = UserProfile(
+          uid: currentUserId!,
+          phoneNumber: user.phoneNumber ?? '',
+          name: name,
+        );
+        final Map<String, dynamic> profileData = profile.toMap();
 
         // 생년월일이 제공된 경우에만 추가
         if (birthDate != null) {
@@ -93,7 +138,15 @@ class UserService {
         }
 
         LoggerUtil.info('새 사용자 프로필 생성: $currentUserId');
-        await _currentUserDoc!.set(profileData);
+        await _currentUserDoc!.set(profileData, SetOptions(merge: true));
+
+        // ✅ 신규 가입: 현재 연도 member profile 생성
+        final int scheduleYear = _getScheduleYearForNow();
+        await _ensureMemberYearProfile(
+          scheduleYear: scheduleYear,
+          uid: currentUserId!,
+          churchId: profile.churchId,
+        );
       }
     } catch (e) {
       LoggerUtil.error('프로필 저장 중 오류: $e');
@@ -151,7 +204,17 @@ class UserService {
 
       if (docSnapshot.exists) {
         final userData = docSnapshot.data() as Map<String, dynamic>;
-        return UserProfile.fromMap(userData);
+        final UserProfile profile = UserProfile.fromMap(userData);
+
+        // ✅ 기존 유저 마이그레이션: 연도 profile 없으면 자동 생성(기본값)
+        final int scheduleYear = _getScheduleYearForNow();
+        await _ensureMemberYearProfile(
+          scheduleYear: scheduleYear,
+          uid: currentUserId!,
+          churchId: profile.churchId,
+        );
+
+        return profile;
       }
 
       return null;
