@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:reading_jesus_somang/core/constants/theme.dart';
 import '../controllers/user_service.dart';
 import '../../../core/utils/logger_util.dart';
 import '../controllers/auth_service.dart';
+import '../controllers/otp_auth_service.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -24,8 +24,13 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
   final AuthService _authService = AuthService();
+  final OtpAuthService _otpAuthService = OtpAuthService(
+    // TODO: 배포 후 실제 Functions base URL로 교체
+    // 예) https://<region>-reading-jesus-somang.cloudfunctions.net
+    baseUrl: 'https://asia-northeast3-reading-jesus-somang.cloudfunctions.net',
+  );
 
-  String? _verificationId;
+  String? _otpRequestId;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -90,31 +95,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     super.dispose();
   }
 
-  // Firebase 에러 메시지를 사용자 친화적인 메시지로 변환
-  String _getReadableErrorMessage(Exception e) {
-    if (e is FirebaseAuthException) {
-      switch (e.code) {
-        case 'invalid-phone-number':
-          return '올바른 휴대폰 번호 형식이 아닙니다.';
-        case 'invalid-verification-code':
-          return '인증번호가 올바르지 않습니다.';
-        case 'too-many-requests':
-          return '너무 많은 요청을 보냈습니다. 잠시 후 다시 시도해주세요.';
-        case 'quota-exceeded':
-          return '서비스 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
-        case 'operation-not-allowed':
-          return '휴대폰 인증 서비스를 사용할 수 없습니다.';
-        case 'network-request-failed':
-          return '네트워크 연결이 불안정합니다. 인터넷 연결을 확인해주세요.';
-        case 'session-expired':
-          return '인증 세션이 만료되었습니다. 인증번호를 다시 요청해주세요.';
-        default:
-          return '인증 과정에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      }
-    }
-    return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-  }
-
   // 전화번호 인증 시작
   Future<void> _verifyPhoneNumber() async {
     if (!_formKey.currentState!.validate()) {
@@ -146,52 +126,17 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     final phoneNumber = '+82$phoneInput';
 
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-
-        // SMS 코드가 자동으로 검색되었을 때 (주로 안드로이드에서 발생)
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          try {
-            await _auth.signInWithCredential(credential);
-            setState(() {
-              _phoneVerified = true;
-              _smsVerified = true;
-              _isLoading = false;
-            });
-          } catch (e) {
-            setState(() {
-              _isLoading = false;
-              _errorMessage = _getReadableErrorMessage(e as Exception);
-            });
-          }
-        },
-
-        // 인증 실패 시
-        verificationFailed: (FirebaseAuthException e) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = _getReadableErrorMessage(e);
-          });
-        },
-
-        // 인증 코드가 전송됨
-        codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
-            _phoneVerified = true;
-            _isLoading = false;
-          });
-        },
-
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-        timeout: const Duration(seconds: 120),
-      );
-    } catch (e) {
+      final requestId = await _otpAuthService.requestOtp(phone: phoneNumber);
+      setState(() {
+        _otpRequestId = requestId;
+        _phoneVerified = true;
+        _isLoading = false;
+      });
+    } catch (e, stackTrace) {
+      LoggerUtil.error('requestOtp failed', e, stackTrace);
       setState(() {
         _isLoading = false;
-        _errorMessage = _getReadableErrorMessage(e as Exception);
+        _errorMessage = '인증번호 전송에 실패했습니다. 잠시 후 다시 시도해주세요.';
       });
     }
   }
@@ -207,7 +152,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       _errorMessage = null;
     });
 
-    if (_verificationId == null || _verificationId!.isEmpty) {
+    if (_otpRequestId == null || _otpRequestId!.isEmpty) {
       setState(() {
         _isLoading = false;
         _errorMessage = '인증번호를 다시 요청해주세요.';
@@ -226,14 +171,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       return;
     }
 
-    // 실제 Firebase 인증 로직
     try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: smsCode,
+      final userCredential = await _otpAuthService.verifyOtp(
+        requestId: _otpRequestId!,
+        otp: smsCode,
       );
-
-      final userCredential = await _auth.signInWithCredential(credential);
 
       if (userCredential.user != null) {
         // 인증 성공, 프로필 확인
@@ -255,10 +197,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           _errorMessage = '인증에 실패했습니다. 다시 시도해주세요.';
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      LoggerUtil.error('verifyOtp failed', e, stackTrace);
       setState(() {
         _isLoading = false;
-        _errorMessage = _getReadableErrorMessage(e as Exception);
+        _errorMessage = '인증번호가 올바르지 않거나 만료되었습니다.';
       });
     }
   }
