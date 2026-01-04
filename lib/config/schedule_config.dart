@@ -54,7 +54,8 @@ class ScheduleConfig {
       final DateTime start = _normalize(schedule.startDate);
       final DateTime end = _normalize(getScheduleEndDateForYear(year));
       final bool isAfterOrSameStart =
-          normalizedDate.isAtSameMomentAs(start) || normalizedDate.isAfter(start);
+          normalizedDate.isAtSameMomentAs(start) ||
+          normalizedDate.isAfter(start);
       final bool isBeforeOrSameEnd =
           normalizedDate.isAtSameMomentAs(end) || normalizedDate.isBefore(end);
       if (isAfterOrSameStart && isBeforeOrSameEnd) {

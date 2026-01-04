@@ -93,10 +93,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   // Firebase 에러 메시지를 사용자 친화적인 메시지로 변환
   String _getReadableErrorMessage(Object error) {
     if (error is FirebaseAuthException) {
-      LoggerUtil.error(
-        'Phone auth error',
-        {'code': error.code, 'message': error.message},
-      );
+      LoggerUtil.error('Phone auth error', {
+        'code': error.code,
+        'message': error.message,
+      });
       switch (error.code) {
         case 'invalid-phone-number':
           return '올바른 휴대폰 번호 형식이 아닙니다.';
@@ -180,7 +180,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               _isLoading = false;
             });
           } catch (e, stackTrace) {
-            LoggerUtil.error('verificationCompleted signIn failed', e, stackTrace);
+            LoggerUtil.error(
+              'verificationCompleted signIn failed',
+              e,
+              stackTrace,
+            );
             setState(() {
               _isLoading = false;
               _errorMessage = _getReadableErrorMessage(e);
@@ -190,10 +194,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
         // 인증 실패 시
         verificationFailed: (FirebaseAuthException e) {
-          LoggerUtil.error(
-            'verificationFailed',
-            {'code': e.code, 'message': e.message},
-          );
+          LoggerUtil.error('verificationFailed', {
+            'code': e.code,
+            'message': e.message,
+          });
           setState(() {
             _isLoading = false;
             _errorMessage = _getReadableErrorMessage(e);
