@@ -110,7 +110,7 @@ class AppTheme {
       prefixIconColor: primaryColor,
       suffixIconColor: primaryColor,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -165,10 +165,10 @@ class AppTheme {
       bodySmall: TextStyle(fontSize: 12, color: textSecondaryColor),
     ),
     checkboxTheme: CheckboxThemeData(
-      fillColor: MaterialStateProperty.resolveWith<Color>((
-        Set<MaterialState> states,
+      fillColor: WidgetStateProperty.resolveWith<Color>((
+        Set<WidgetState> states,
       ) {
-        if (states.contains(MaterialState.selected)) {
+        if (states.contains(WidgetState.selected)) {
           return primaryColor;
         }
         return Colors.transparent;

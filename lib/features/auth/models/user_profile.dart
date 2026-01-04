@@ -8,6 +8,7 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isTestUser;
+  final bool isAdmin;
 
   UserProfile({
     required this.uid,
@@ -15,6 +16,7 @@ class UserProfile {
     required this.name,
     this.birthDate,
     this.isTestUser = false,
+    this.isAdmin = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) : this.createdAt = createdAt ?? DateTime.now(),
@@ -33,6 +35,7 @@ class UserProfile {
       name: map['name'] ?? '',
       birthDate: birthDate,
       isTestUser: map['isTestUser'] ?? false,
+      isAdmin: map['isAdmin'] ?? false,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
     );
@@ -47,6 +50,7 @@ class UserProfile {
       'createdAt': createdAt,
       'updatedAt': DateTime.now(),
       'isTestUser': isTestUser,
+      'isAdmin': isAdmin,
     };
 
     // birthDate가 null이 아닌 경우에만 추가
@@ -58,13 +62,19 @@ class UserProfile {
   }
 
   // 프로필 정보 업데이트 시 사용하는 메서드
-  UserProfile copyWith({String? name, DateTime? birthDate, bool? isTestUser}) {
+  UserProfile copyWith({
+    String? name,
+    DateTime? birthDate,
+    bool? isTestUser,
+    bool? isAdmin,
+  }) {
     return UserProfile(
       uid: this.uid,
       phoneNumber: this.phoneNumber,
       name: name ?? this.name,
       birthDate: birthDate ?? this.birthDate,
       isTestUser: isTestUser ?? this.isTestUser,
+      isAdmin: isAdmin ?? this.isAdmin,
       createdAt: this.createdAt,
       updatedAt: DateTime.now(),
     );

@@ -30,6 +30,7 @@ class UserService {
   Future<void> saveUserProfile({
     required String name,
     DateTime? birthDate,
+    String? phoneNumber, // 수동으로 전화번호를 주입할 수 있도록 추가 (테스트/우회용)
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -37,14 +38,26 @@ class UserService {
       throw Exception('사용자가 인증되지 않았습니다.');
     }
 
-    if (currentUserId == null || user.phoneNumber == null) {
-      LoggerUtil.error('사용자 정보 부족: uid=${user.uid}, phone=${user.phoneNumber}');
+    final effectivePhoneNumber = phoneNumber ?? user.phoneNumber;
+
+    if (currentUserId == null || effectivePhoneNumber == null) {
+      LoggerUtil.error(
+        '사용자 정보 부족: uid=${user.uid}, phone=$effectivePhoneNumber',
+      );
       throw Exception('사용자 정보가 부족합니다.');
     }
 
     try {
       // 이미 프로필이 있는지 확인
       final docSnapshot = await _currentUserDoc!.get();
+
+      // 특정 전화번호에 대해 자동으로 관리자 권한 부여
+      // 박용준 (01026217424)
+      bool shouldBeAdmin = false;
+      if (effectivePhoneNumber.endsWith('1026217424')) {
+        shouldBeAdmin = true;
+        LoggerUtil.info('관리자 번호 감지됨: $effectivePhoneNumber, 관리자 권한 자동 부여');
+      }
 
       if (docSnapshot.exists) {
         // 기존 데이터 가져오기
@@ -55,6 +68,9 @@ class UserService {
         final updatedProfile = existingProfile.copyWith(
           name: name,
           birthDate: birthDate ?? existingProfile.birthDate,
+          isAdmin:
+              shouldBeAdmin ||
+              existingProfile.isAdmin, // 기존 관리자이거나 지정된 번호면 true
         );
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
@@ -63,10 +79,12 @@ class UserService {
         // 새 프로필 생성
         final Map<String, dynamic> profileData = {
           'uid': currentUserId!,
-          'phoneNumber': user.phoneNumber,
+          'phoneNumber': effectivePhoneNumber,
           'name': name,
           'createdAt': DateTime.now(),
           'updatedAt': DateTime.now(),
+          'isAdmin': shouldBeAdmin, // 관리자 여부 설정
+          'isTestUser': false,
         };
 
         // 생년월일이 제공된 경우에만 추가
@@ -184,5 +202,54 @@ class UserService {
 
     // 프로필 여부 확인
     return await hasUserProfile();
+  }
+
+  // 관리자 로그인 (관리자 권한 부여)
+  Future<bool> performAdminLogin(String password) async {
+    // 임시 하드코딩된 비밀번호 (실제 운영 시에는 보안 강화 필요)
+    if (password != '9999') {
+      return false;
+    }
+
+    try {
+      final docSnapshot = await _currentUserDoc!.get();
+      if (docSnapshot.exists) {
+        final userData = docSnapshot.data() as Map<String, dynamic>;
+        final existingProfile = UserProfile.fromMap(userData);
+
+        if (!existingProfile.isAdmin) {
+          final updatedProfile = existingProfile.copyWith(isAdmin: true);
+          await _currentUserDoc!.update(updatedProfile.toMap());
+          LoggerUtil.info('관리자 권한 부여 완료: $currentUserId');
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      LoggerUtil.error('관리자 로그인 중 오류: $e');
+      return false;
+    }
+  }
+
+  // 전체 사용자 목록 가져오기 (관리자 전용)
+  Future<List<UserProfile>> getAllUsers() async {
+    // 현재 사용자가 관리자인지 확인
+    final currentUserProfile = await getUserProfile();
+    if (currentUserProfile == null || !currentUserProfile.isAdmin) {
+      LoggerUtil.error('관리자 권한이 없는 사용자가 사용자 목록 조회를 시도했습니다.');
+      throw Exception('관리자 권한이 필요합니다.');
+    }
+
+    try {
+      final querySnapshot =
+          await _usersCollection.orderBy('createdAt', descending: true).get();
+
+      return querySnapshot.docs.map((doc) {
+        return UserProfile.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
+    } catch (e) {
+      LoggerUtil.error('전체 사용자 목록 조회 중 오류: $e');
+      rethrow;
+    }
   }
 }

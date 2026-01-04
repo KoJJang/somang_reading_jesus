@@ -7,6 +7,7 @@ import '../models/user_profile.dart';
 import '../../../core/constants/theme.dart';
 import '../../../data/services/reading_service.dart';
 import '../controllers/auth_service.dart';
+import '../../admin/screens/admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -579,6 +580,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // 관리자 로그인 다이얼로그 표시
+  Future<void> _showAdminLoginDialog() async {
+    final TextEditingController passwordController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('관리자 접근'),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              hintText: '비밀번호를 입력하세요',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('취소'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('확인'),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                final password = passwordController.text;
+                final success = await _userService.performAdminLogin(password);
+
+                if (success && mounted) {
+                  // 성공 시 프로필 갱신 및 대시보드 이동
+                  await _loadUserProfile();
+                  // 여기서 context는 _ProfileScreenState의 context를 참조합니다.
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminDashboardScreen(),
+                      ),
+                    );
+                  }
+                } else if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('비밀번호가 올바르지 않거나 권한 부여 실패')),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -783,6 +841,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: _login,
                       ),
                     ],
+
+                    const Divider(),
+
+                    // 관리자 메뉴 (이미 관리자인 경우 표시)
+                    if (_userProfile?.isAdmin == true)
+                      ListTile(
+                        leading: const Icon(
+                          Icons.admin_panel_settings,
+                          color: Colors.indigo,
+                        ),
+                        title: const Text(
+                          '관리자 대시보드',
+                          style: TextStyle(
+                            color: Colors.indigo,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => const AdminDashboardScreen(),
+                            ),
+                          );
+                        },
+                      ),
+
+                    const SizedBox(height: 20),
+                    Center(
+                      child: GestureDetector(
+                        onDoubleTap: _showAdminLoginDialog, // 시크릿 진입
+                        onLongPress: _showAdminLoginDialog, // 시크릿 진입
+                        child: const Text(
+                          'App Version 1.0.0',
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),

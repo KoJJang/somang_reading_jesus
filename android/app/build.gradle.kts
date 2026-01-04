@@ -46,10 +46,16 @@ android {
     // Add signing configs
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+            val keyAliasProp = keystoreProperties["keyAlias"] as? String
+            if (keyAliasProp != null) {
+                keyAlias = keyAliasProp
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            } else {
+                 // Fallback for debug builds or missing keys
+                 // potentially do nothing or set dummy values if valid not required for sync
+            }
         }
     }
 
@@ -58,7 +64,7 @@ android {
         applicationId = "com.somangchurch.readingjesus"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
