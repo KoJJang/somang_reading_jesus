@@ -4,6 +4,20 @@ import '../../config/schedule_config.dart';
 ///
 /// 휴식 주를 고려한 날짜 계산을 중앙에서 관리합니다.
 class DateHelper {
+  /// 사용 가능한 일정 연도 목록 (예: 2025, 2026)
+  static List<int> get availableScheduleYears => ScheduleConfig.availableYears;
+
+  /// 특정 날짜가 속한 일정 연도
+  static int getScheduleYear(DateTime date) => date.year;
+
+  /// 특정 연도의 일정 시작일
+  static DateTime getScheduleStartDateForYear(int year) =>
+      ScheduleConfig.getStartDateForYear(year);
+
+  /// 특정 날짜(연도)의 일정 시작일
+  static DateTime getScheduleStartDateForDate(DateTime date) =>
+      ScheduleConfig.getStartDateForDate(date);
+
   /// 특정 날짜가 휴식 주인지 확인
   static bool isBreakWeek(DateTime date) {
     return ScheduleConfig.isBreakWeek(date);
@@ -56,7 +70,15 @@ class DateHelper {
   /// 일정 종료일
   static DateTime getScheduleEndDate() => ScheduleConfig.getScheduleEndDate();
 
+  /// 특정 연도의 일정 종료일
+  static DateTime getScheduleEndDateForYear(int year) =>
+      ScheduleConfig.getScheduleEndDateForYear(year);
+
   /// 특정 날짜가 일정 종료 후인지 확인
   static bool isAfterScheduleEnd(DateTime date) =>
       ScheduleConfig.isAfterScheduleEnd(date);
+
+  /// 특정 날짜가 일정 시작 전인지 확인
+  static bool isBeforeScheduleStart(DateTime date) =>
+      ScheduleConfig.isBeforeScheduleStart(date);
 }

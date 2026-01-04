@@ -37,8 +37,9 @@ class _QuickAccessGridState extends State<QuickAccessGrid> {
     }
 
     final plan = await ReadingPlanService().getTodaysPlan();
+    final scheduleYear = ReadingPlanService.scheduleYearForDate(today);
     final isCompleted = await _readingService.isCompleted(
-      ReadingPlanService.startYear,
+      scheduleYear,
       plan?.week ?? 0,
       plan?.day ?? 0,
     );

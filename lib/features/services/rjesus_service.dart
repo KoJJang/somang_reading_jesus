@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'models/rjesus_content.dart';
 import '../../core/utils/date_helper.dart';
+import 'reading_plan_service.dart';
 
 class RJesusService {
   static RJesusService? _instance;
@@ -70,45 +71,30 @@ class RJesusService {
 
   // 오늘의 읽기 데이터 가져오기
   Future<DailyReading?> getTodaysReading() async {
-    final today = DateTime.now();
-
-    // 휴식 주인지 확인
-    if (DateHelper.isBreakWeek(today)) {
-      return null;
-    }
-
-    final readings = await getDailyReadings();
-    // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
-    final adjustedToday = DateHelper.getAdjustedToday();
-
-    // 조정된 날짜와 일치하는 읽기 찾기
-    for (final reading in readings) {
-      if (DateHelper.isSameDate(reading.date, adjustedToday)) {
-        return reading;
-      }
-    }
-
-    return null;
+    return getReadingByDate(DateTime.now());
   }
 
   // 특정 날짜의 읽기 데이터 가져오기
   Future<DailyReading?> getReadingByDate(DateTime date) async {
-    // 휴식 주인지 확인
-    if (DateHelper.isBreakWeek(date)) {
+    // 일요일/휴식 주/일정 범위 밖은 읽기 없음
+    if (date.weekday == DateTime.sunday ||
+        DateHelper.isBreakWeek(date) ||
+        DateHelper.isBeforeScheduleStart(date) ||
+        DateHelper.isAfterScheduleEnd(date)) {
       return null;
     }
 
+    // ✅ 핵심 수정:
+    // `url_list.csv`는 2025 날짜로 되어 있으므로, 2026에서는 날짜 매칭이 불가능합니다.
+    // 대신 "주차/일차"로 인덱스를 계산해서 동일 커리큘럼의 행을 가져옵니다.
+    final plan = await ReadingPlanService().getPlanForDate(date);
+    if (plan == null) return null;
+
     final readings = await getDailyReadings();
-    // 휴식 주를 고려한 조정된 날짜로 CSV에서 찾기
-    final adjustedDate = DateHelper.getAdjustedDate(date);
+    final index = (plan.week - 1) * 6 + (plan.day - 1); // 0-based
+    if (index < 0 || index >= readings.length) return null;
 
-    for (final reading in readings) {
-      if (DateHelper.isSameDate(reading.date, adjustedDate)) {
-        return reading;
-      }
-    }
-
-    return null;
+    return readings[index];
   }
 
   // 이번 주 해설 가져오기 (오늘의 읽기와 같은 권/장 기준)

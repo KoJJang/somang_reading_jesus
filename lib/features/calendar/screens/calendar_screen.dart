@@ -29,15 +29,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _isCompletedSelectedDay = false;
   bool _isLoading = false;
   final _readingService = ReadingService();
+  late int _viewYear;
+
+  DateTime get _calendarFirstDay => DateTime(_viewYear, 1, 1);
+  DateTime get _calendarLastDay => DateTime(_viewYear, 12, 31);
 
   @override
   void initState() {
     super.initState();
+    _viewYear = _focusedDay.year;
     _selectedDay = _focusedDay;
     _loadReadingPlan(_selectedDay!);
     initializeDateFormatting('ko_KR');
     _loadMonthCompletions(_focusedDay);
     _checkSelectedDayCompletion();
+  }
+
+  void _setViewYear(int year) {
+    final scheduleStart = DateHelper.getScheduleStartDateForYear(year);
+    setState(() {
+      _viewYear = year;
+      _focusedDay = scheduleStart;
+      _selectedDay = scheduleStart;
+      _selectedDayPlan = null;
+      _isCompletedSelectedDay = false;
+      _completionStatus = {};
+    });
+
+    _loadReadingPlan(_selectedDay!);
+    _loadMonthCompletions(_focusedDay);
   }
 
   Future<void> _loadReadingPlan(DateTime date) async {
@@ -49,8 +69,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       // 선택된 날짜의 완료 상태 확인
       if (plan != null) {
+        final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
         final isCompleted = await _readingService.isCompleted(
-          ReadingPlanService.startYear,
+          scheduleYear,
           plan.week,
           plan.day,
         );
@@ -80,11 +101,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       date.isBefore(endDate.add(const Duration(days: 1)));
       date = date.add(const Duration(days: 1))
     ) {
-      // 일요일, 휴식 주, 일정 종료 후는 제외
+      // 일요일, 휴식 주, 일정 종료 후, 일정 시작 전은 제외
       if (date.weekday == DateTime.sunday ||
           DateHelper.isBreakWeek(date) ||
-          DateHelper.isAfterScheduleEnd(date))
+          DateHelper.isAfterScheduleEnd(date) ||
+          DateHelper.isBeforeScheduleStart(date)) {
         continue;
+      }
 
       final dateKey = DateTime(date.year, date.month, date.day);
       final isFutureDate = date.isAfter(DateTime.now());
@@ -129,8 +152,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ) {
         final plan = await ReadingPlanService().getPlanForDate(date);
         if (plan != null) {
+          final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
           final isCompleted = await service.isCompleted(
-            ReadingPlanService.startYear,
+            scheduleYear,
             plan.week,
             plan.day,
           );
@@ -151,8 +175,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _checkSelectedDayCompletion() async {
     if (_selectedDayPlan != null) {
+      final date = _selectedDay ?? DateTime.now();
+      final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
       final isCompleted = await _readingService.isCompleted(
-        ReadingPlanService.startYear,
+        scheduleYear,
         _selectedDayPlan!.week,
         _selectedDayPlan!.day,
       );
@@ -168,9 +194,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _isLoading = true;
       });
 
+      final scheduleYear = ReadingPlanService.scheduleYearForDate(
+        _selectedDay!,
+      );
       final completion = ReadingCompletion(
         date: _selectedDay!,
-        year: _selectedDay!.year,
+        year: scheduleYear,
         week: _selectedDayPlan!.week,
         day: _selectedDayPlan!.day,
         readings: _selectedDayPlan!.readings,
@@ -232,6 +261,35 @@ class _CalendarScreenState extends State<CalendarScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          if (DateHelper.availableScheduleYears.isNotEmpty)
+            PopupMenuButton<int>(
+              initialValue: _viewYear,
+              onSelected: _setViewYear,
+              itemBuilder:
+                  (context) =>
+                      DateHelper.availableScheduleYears
+                          .map(
+                            (year) => PopupMenuItem<int>(
+                              value: year,
+                              child: Text('$year'),
+                            ),
+                          )
+                          .toList(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Center(
+                  child: Text(
+                    '$_viewYear',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -246,13 +304,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 children: [
                   // 달력
                   TableCalendar(
-                    firstDay: DateTime(2025, 1, 20),
-                    lastDay: DateTime(2025, 12, 31),
+                    firstDay: _calendarFirstDay,
+                    lastDay: _calendarLastDay,
                     focusedDay: _focusedDay,
                     locale: 'ko_KR',
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                     calendarFormat: CalendarFormat.month,
                     availableGestures: AvailableGestures.none,
+                    enabledDayPredicate: (day) {
+                      if (day.weekday == DateTime.sunday) return false;
+                      if (DateHelper.isBreakWeek(day)) return false;
+                      if (DateHelper.isAfterScheduleEnd(day)) return false;
+                      if (DateHelper.isBeforeScheduleStart(day)) return false;
+                      return true;
+                    },
                     headerStyle: HeaderStyle(
                       titleCentered: true,
                       formatButtonVisible: false,
@@ -351,10 +416,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildCalendarCell(DateTime date, {bool isToday = false}) {
-    // 일요일, 휴식 주, 일정 종료 후는 회색으로 표시 (선택 불가)
+    // 일요일, 휴식 주, 일정 종료 후, 일정 시작 전은 회색으로 표시 (선택 불가)
     if (date.weekday == DateTime.sunday ||
         DateHelper.isBreakWeek(date) ||
-        DateHelper.isAfterScheduleEnd(date)) {
+        DateHelper.isAfterScheduleEnd(date) ||
+        DateHelper.isBeforeScheduleStart(date)) {
       return Center(
         child: Text('${date.day}', style: TextStyle(color: Colors.grey[400])),
       );

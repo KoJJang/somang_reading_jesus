@@ -97,7 +97,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
 
           if (planForDay != null) {
             final isCompleted = await _readingService.isCompleted(
-              ReadingPlanService.startYear,
+              ReadingPlanService.scheduleYearForDate(dateForDay),
               planForDay.week,
               planForDay.day,
             );
