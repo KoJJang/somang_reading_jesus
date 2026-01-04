@@ -1,7 +1,14 @@
+import 'package:flutter/material.dart';
+import '../features/admin/services/admin_schedule_service.dart';
+
 /// 리딩 지저스 일정 설정
 ///
 /// 일정이 변경되거나 휴식 주가 추가될 때 이 파일의 설정을 수정하면 됩니다.
 class ScheduleConfig {
+  static ScheduleConfigData? _dynamicConfig;
+  static set dynamicConfig(ScheduleConfigData? data) => _dynamicConfig = data;
+  static ScheduleConfigData? get dynamicConfig => _dynamicConfig;
+
   /// 통독 일정 정의
   ///
   /// - `year`: 일정 식별 연도 (완료 데이터 키에도 사용)
@@ -54,7 +61,8 @@ class ScheduleConfig {
       final DateTime start = _normalize(schedule.startDate);
       final DateTime end = _normalize(getScheduleEndDateForYear(year));
       final bool isAfterOrSameStart =
-          normalizedDate.isAtSameMomentAs(start) || normalizedDate.isAfter(start);
+          normalizedDate.isAtSameMomentAs(start) ||
+          normalizedDate.isAfter(start);
       final bool isBeforeOrSameEnd =
           normalizedDate.isAtSameMomentAs(end) || normalizedDate.isBefore(end);
       if (isAfterOrSameStart && isBeforeOrSameEnd) {
@@ -98,8 +106,10 @@ class ScheduleConfig {
   static DateTime getStartDateForYear(int year) =>
       _scheduleForYear(year).startDate;
 
-  static DateTime getStartDateForDate(DateTime date) =>
-      _scheduleForDate(date).startDate;
+  static DateTime getStartDateForDate(DateTime date) {
+    if (_dynamicConfig != null) return _dynamicConfig!.startDate;
+    return _scheduleForDate(date).startDate;
+  }
 
   static List<DateTime> getBreakWeeksForYear(int year) =>
       _scheduleForYear(year).breakWeeks;
@@ -109,6 +119,33 @@ class ScheduleConfig {
 
   /// 특정 날짜가 휴식 주에 해당하는지 확인
   static bool isBreakWeek(DateTime date) {
+    if (_dynamicConfig != null) {
+      // 동적 설정이 있으면 일요일 제외 및 휴일 목록 체크
+      if (date.weekday == DateTime.sunday) {
+        return false; // 일요일은 원래 스케줄에서 빠지므로 'BreakWeek'처럼 처리됨
+      }
+      for (final range in _dynamicConfig!.holidays) {
+        final normalizedStart = DateTime(
+          range.start.year,
+          range.start.month,
+          range.start.day,
+        );
+        final normalizedEnd = DateTime(
+          range.end.year,
+          range.end.month,
+          range.end.day,
+        );
+
+        if ((date.isAtSameMomentAs(normalizedStart) ||
+                date.isAfter(normalizedStart)) &&
+            (date.isAtSameMomentAs(normalizedEnd) ||
+                date.isBefore(normalizedEnd))) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     final breakWeeks = getBreakWeeksForDate(date);
 
     // 일요일은 원래 쉬는 날이므로 휴식 주 체크 불필요
@@ -154,6 +191,13 @@ class ScheduleConfig {
   ///
   /// 현재 날짜에서 그 이전의 휴식 주 수를 빼서 실제 읽어야 할 날짜를 계산합니다.
   static DateTime getAdjustedDate(DateTime date) {
+    if (_dynamicConfig != null) {
+      // 동적 설정이 있는 경우, 시작일로부터의 '읽기 가능일' 인덱스 기반으로
+      // 강제로 매칭시켜야 하므로 여기서는 단순히 date를 반환하거나
+      // 혹은 이 메서드를 호출하는 곳을 리팩토링해야 함.
+      // (ReadingPlanService는 이미 getReadingIndex를 사용하여 이 메서드를 우회합니다)
+      return date;
+    }
     final breakWeeks = getBreakWeeksForDate(date);
     int breakDaysToSubtract = 0;
 
@@ -176,21 +220,69 @@ class ScheduleConfig {
     return getAdjustedDate(DateTime.now());
   }
 
-  /// 일정 종료일 계산 (45주차 마지막 날)
-  ///
-  /// 45주차의 마지막 읽기 날짜 (금요일)
+  /// 일정 종료일 계산 (270번째 읽기 날짜)
   static DateTime getScheduleEndDateForYear(int year) {
+    if (_dynamicConfig != null) {
+      // 270일(45주 * 6일)의 읽기 기간이 끝나는 날짜 계산
+      return _getDateForReadingIndex(
+        269,
+        _dynamicConfig!.startDate,
+        _dynamicConfig!.holidays,
+      );
+    }
     final schedule = _scheduleForYear(year);
+    // ... 기존 로직 (생략 가능하지만 하드코딩된 버전도 유지)
     final startDate = schedule.startDate;
-    // 45주차 월요일 = 시작일 + 44주(308일)
     final week45Monday = startDate.add(const Duration(days: 44 * 7));
-    // 45주차 금요일 = 월요일 + 4일 (월화수목금)
-    final week45Friday = week45Monday.add(const Duration(days: 4));
-
-    // 휴식 주 일수 추가
     final totalBreakDays = schedule.breakWeeks.length * 7;
+    return week45Monday.add(Duration(days: 4 + totalBreakDays));
+  }
 
-    return week45Friday.add(Duration(days: totalBreakDays));
+  static DateTime _getDateForReadingIndex(
+    int index,
+    DateTime startDate,
+    List<DateTimeRange> holidays,
+  ) {
+    int validDaysFound = 0;
+    DateTime current = DateTime(startDate.year, startDate.month, startDate.day);
+
+    while (true) {
+      bool isReadingDay =
+          current.weekday >= DateTime.monday &&
+          current.weekday <= DateTime.saturday;
+      if (isReadingDay) {
+        bool isHoliday = false;
+        for (final range in holidays) {
+          final normalizedStart = DateTime(
+            range.start.year,
+            range.start.month,
+            range.start.day,
+          );
+          final normalizedEnd = DateTime(
+            range.end.year,
+            range.end.month,
+            range.end.day,
+          );
+
+          if ((current.isAtSameMomentAs(normalizedStart) ||
+                  current.isAfter(normalizedStart)) &&
+              (current.isAtSameMomentAs(normalizedEnd) ||
+                  current.isBefore(normalizedEnd))) {
+            isHoliday = true;
+            break;
+          }
+        }
+        if (!isHoliday) {
+          if (validDaysFound == index) return current;
+          validDaysFound++;
+        }
+      }
+      current = current.add(const Duration(days: 1));
+
+      // 무한 루프 방지 (약 2년 뒤까지만 체크)
+      if (current.isAfter(startDate.add(const Duration(days: 730))))
+        return current;
+    }
   }
 
   static DateTime getScheduleEndDateForDate(DateTime date) =>
@@ -202,8 +294,13 @@ class ScheduleConfig {
 
   /// 특정 날짜가 일정 종료 후인지 확인
   static bool isAfterScheduleEnd(DateTime date) {
-    final endDate = getScheduleEndDateForDate(date);
     final normalizedDate = DateTime(date.year, date.month, date.day);
+    if (_dynamicConfig != null) {
+      final endDate = getScheduleEndDateForYear(date.year);
+      final normalizedEnd = DateTime(endDate.year, endDate.month, endDate.day);
+      return normalizedDate.isAfter(normalizedEnd);
+    }
+    final endDate = getScheduleEndDateForDate(date);
     final normalizedEnd = DateTime(endDate.year, endDate.month, endDate.day);
 
     return normalizedDate.isAfter(normalizedEnd);
@@ -211,8 +308,8 @@ class ScheduleConfig {
 
   /// 특정 날짜가 해당 연도 통독 시작 전인지 확인
   static bool isBeforeScheduleStart(DateTime date) {
-    final startDate = getStartDateForDate(date);
     final normalizedDate = DateTime(date.year, date.month, date.day);
+    final startDate = getStartDateForDate(date);
     final normalizedStart = DateTime(
       startDate.year,
       startDate.month,

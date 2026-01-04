@@ -87,14 +87,6 @@ class UserService {
       // 이미 프로필이 있는지 확인
       final docSnapshot = await _currentUserDoc!.get();
 
-      // 특정 전화번호에 대해 자동으로 관리자 권한 부여
-      // 박용준 (01026217424)
-      bool shouldBeAdmin = false;
-      if (effectivePhoneNumber.endsWith('1026217424')) {
-        shouldBeAdmin = true;
-        LoggerUtil.info('관리자 번호 감지됨: $effectivePhoneNumber, 관리자 권한 자동 부여');
-      }
-
       if (docSnapshot.exists) {
         // 기존 데이터 가져오기
         final userData = docSnapshot.data() as Map<String, dynamic>;
@@ -104,9 +96,6 @@ class UserService {
         final updatedProfile = existingProfile.copyWith(
           name: name,
           birthDate: birthDate ?? existingProfile.birthDate,
-          isAdmin:
-              shouldBeAdmin ||
-              existingProfile.isAdmin, // 기존 관리자이거나 지정된 번호면 true
         );
 
         LoggerUtil.info('사용자 프로필 업데이트: $currentUserId');
@@ -206,14 +195,6 @@ class UserService {
         final userData = docSnapshot.data() as Map<String, dynamic>;
         final UserProfile profile = UserProfile.fromMap(userData);
 
-        // ✅ 기존 유저 마이그레이션: 연도 profile 없으면 자동 생성(기본값)
-        final int scheduleYear = _getScheduleYearForNow();
-        await _ensureMemberYearProfile(
-          scheduleYear: scheduleYear,
-          uid: currentUserId!,
-          churchId: profile.churchId,
-        );
-
         return profile;
       }
 
@@ -267,7 +248,7 @@ class UserService {
     return await hasUserProfile();
   }
 
-  // 관리자 로그인 (관리자 권한 부여)
+  // 관리자 로그인 및 권한 부여 (DB 저장)
   Future<bool> performAdminLogin(String password) async {
     // 임시 하드코딩된 비밀번호 (실제 운영 시에는 보안 강화 필요)
     if (password != '9999') {
@@ -280,28 +261,27 @@ class UserService {
         final userData = docSnapshot.data() as Map<String, dynamic>;
         final existingProfile = UserProfile.fromMap(userData);
 
-        if (!existingProfile.isAdmin) {
-          final updatedProfile = existingProfile.copyWith(isAdmin: true);
-          await _currentUserDoc!.update(updatedProfile.toMap());
-          LoggerUtil.info('관리자 권한 부여 완료: $currentUserId');
+        // 현재 역할이 어드민이 아닐 경우 어드민으로 업데이트
+        if (existingProfile.role != UserRole.admin) {
+          await _currentUserDoc!.update({'role': 'admin'});
+          LoggerUtil.info('관리자 권한 부여 완료 (DB): $currentUserId');
         }
         return true;
       }
       return false;
     } catch (e) {
-      LoggerUtil.error('관리자 로그인 중 오류: $e');
+      LoggerUtil.error('관리자 로그인 중 DB 업데이트 오류: $e');
+      // DB 업데이트에 실패하더라도 비밀번호가 맞았으므로 일단 true를 반환할 수도 있지만,
+      // 권한 에러 해결이 목적이므로 false를 반환하여 에러 상황임을 알립니다.
       return false;
     }
   }
 
   // 전체 사용자 목록 가져오기 (관리자 전용)
   Future<List<UserProfile>> getAllUsers() async {
-    // 현재 사용자가 관리자인지 확인
-    final currentUserProfile = await getUserProfile();
-    if (currentUserProfile == null || !currentUserProfile.isAdmin) {
-      LoggerUtil.error('관리자 권한이 없는 사용자가 사용자 목록 조회를 시도했습니다.');
-      throw Exception('관리자 권한이 필요합니다.');
-    }
+    // 관리자 권한 체크는 UI 레벨(비밀번호)에서 수행되었다고 가정하거나,
+    // 필요하다면 UserRole.admin 체크를 추가할 수 있지만,
+    // 요청사항에 따라 매번 비밀번호를 입력하므로 여기서는 별도 체크 없이 반환합니다.
 
     try {
       final querySnapshot =

@@ -610,12 +610,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 final password = passwordController.text;
+                // 관리자 로그인 및 권한 부여 (DB 저장)
                 final success = await _userService.performAdminLogin(password);
 
                 if (success && mounted) {
-                  // 성공 시 프로필 갱신 및 대시보드 이동
-                  await _loadUserProfile();
-                  // 여기서 context는 _ProfileScreenState의 context를 참조합니다.
+                  // 성공 시 대시보드 이동
                   if (mounted) {
                     Navigator.push(
                       context,
@@ -626,7 +625,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                 } else if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('비밀번호가 올바르지 않거나 권한 부여 실패')),
+                    const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
                   );
                 }
               },
@@ -843,31 +842,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
 
                     const Divider(),
-
-                    // 관리자 메뉴 (이미 관리자인 경우 표시)
-                    if (_userProfile?.isAdmin == true)
-                      ListTile(
-                        leading: const Icon(
-                          Icons.admin_panel_settings,
-                          color: Colors.indigo,
-                        ),
-                        title: const Text(
-                          '관리자 대시보드',
-                          style: TextStyle(
-                            color: Colors.indigo,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => const AdminDashboardScreen(),
-                            ),
-                          );
-                        },
-                      ),
 
                     const SizedBox(height: 20),
                     Center(

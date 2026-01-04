@@ -53,13 +53,14 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
       });
     } else {
       setState(() {
-        _filteredUsers = _allUsers.where((user) {
-          final nameLower = user.name.toLowerCase();
-          final phoneLower = user.phoneNumber.toLowerCase();
-          final searchLower = query.toLowerCase();
-          return nameLower.contains(searchLower) ||
-              phoneLower.contains(searchLower);
-        }).toList();
+        _filteredUsers =
+            _allUsers.where((user) {
+              final nameLower = user.name.toLowerCase();
+              final phoneLower = user.phoneNumber.toLowerCase();
+              final searchLower = query.toLowerCase();
+              return nameLower.contains(searchLower) ||
+                  phoneLower.contains(searchLower);
+            }).toList();
       });
     }
   }
@@ -83,41 +84,47 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
             ),
           ),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
                     ? Center(child: Text(_errorMessage!))
                     : ListView.builder(
-                        itemCount: _filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredUsers[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              child: Text(user.name.isNotEmpty
-                                  ? user.name[0]
-                                  : '?'),
+                      itemCount: _filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = _filteredUsers[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            child: Text(
+                              user.name.isNotEmpty ? user.name[0] : '?',
                             ),
-                            title: Text(
-                              '${user.name} ${user.isAdmin ? '(관리자)' : ''}', 
-                              style: TextStyle(
-                                fontWeight: user.isAdmin ? FontWeight.bold : FontWeight.normal
-                              )
+                          ),
+                          title: Text(
+                            '${user.name} ${user.role == UserRole.admin ? '(관리자)' : ''}',
+                            style: TextStyle(
+                              fontWeight:
+                                  user.role == UserRole.admin
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                             ),
-                            subtitle: Text(
-                                '${user.phoneNumber}\n가입일: ${DateFormat('yyyy-MM-dd').format(user.createdAt)}'),
-                            isThreeLine: true,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AdminUserDetailScreen(user: user),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
+                          ),
+                          subtitle: Text(
+                            '${user.phoneNumber}\n가입일: ${DateFormat('yyyy-MM-dd').format(user.createdAt)}',
+                          ),
+                          isThreeLine: true,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) =>
+                                        AdminUserDetailScreen(user: user),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
           ),
         ],
       ),

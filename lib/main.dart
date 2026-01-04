@@ -14,6 +14,8 @@ import 'package:reading_jesus_somang/features/auth/screens/profile_completion_sc
 import 'package:reading_jesus_somang/features/auth/screens/profile_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/privacy_policy_screen.dart';
 import 'firebase_options.dart';
+import 'package:reading_jesus_somang/config/schedule_config.dart';
+import 'package:reading_jesus_somang/features/admin/services/admin_schedule_service.dart';
 
 void main() async {
   // Flutter 엔진과 위젯 바인딩 초기화
@@ -45,6 +47,14 @@ void main() async {
   // 로컬 저장소 초기화 (마이그레이션 실행)
   final localRepo = LocalReadingRepository();
   await localRepo.initialize();
+
+  // 일정 설정 초기화 (Firestore에서 로드)
+  try {
+    final scheduleService = AdminScheduleService();
+    ScheduleConfig.dynamicConfig = await scheduleService.getScheduleConfig();
+  } catch (e) {
+    debugPrint('일정 설정 로드 오류: $e');
+  }
 
   runApp(const MyApp());
 }

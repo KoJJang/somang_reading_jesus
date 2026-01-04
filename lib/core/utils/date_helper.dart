@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../../config/schedule_config.dart';
 
 /// 날짜 관련 유틸리티 클래스
@@ -79,7 +80,67 @@ class DateHelper {
   static bool isAfterScheduleEnd(DateTime date) =>
       ScheduleConfig.isAfterScheduleEnd(date);
 
-  /// 특정 날짜가 일정 시작 전인지 확인
+  /// 특정 날짜가 해당 연도 통독 시작 전인지 확인
   static bool isBeforeScheduleStart(DateTime date) =>
       ScheduleConfig.isBeforeScheduleStart(date);
+
+  /// 시작일로부터 특정 날짜까지의 '실제 읽기 가능일' 수 계산 (연속 인덱스)
+  /// 월~금만 포함하며, 휴일 목록에 포함된 날은 제외합니다.
+  static int getReadingIndex(
+    DateTime targetDate,
+    DateTime startDate,
+    List<DateTimeRange> holidays,
+  ) {
+    if (targetDate.isBefore(startDate)) return -1;
+
+    int readingDays = 0;
+    DateTime current = DateTime(startDate.year, startDate.month, startDate.day);
+    final normalizedTarget = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    );
+
+    while (!current.isAfter(normalizedTarget)) {
+      // 월~토(1~6) 인지 확인
+      bool isReadingDay =
+          current.weekday >= DateTime.monday &&
+          current.weekday <= DateTime.saturday;
+
+      if (isReadingDay) {
+        // 휴일인지 확인 (범위 체크)
+        bool isHoliday = false;
+        for (final range in holidays) {
+          final normalizedStart = DateTime(
+            range.start.year,
+            range.start.month,
+            range.start.day,
+          );
+          final normalizedEnd = DateTime(
+            range.end.year,
+            range.end.month,
+            range.end.day,
+          );
+
+          if ((current.isAtSameMomentAs(normalizedStart) ||
+                  current.isAfter(normalizedStart)) &&
+              (current.isAtSameMomentAs(normalizedEnd) ||
+                  current.isBefore(normalizedEnd))) {
+            isHoliday = true;
+            break;
+          }
+        }
+
+        if (!isHoliday) {
+          // 타겟 날짜 당일이면 그 전까지의 개수 + 1이 아니라,
+          // 0-based index를 위해 현재까지의 readingDays를 반환하고 루프 종료 가능
+          // 하지만 여기서는 전체 개수를 세고 마지막에 -1 하는 방식이 더 명확할 수 있음
+          readingDays++;
+        }
+      }
+      current = current.add(const Duration(days: 1));
+    }
+
+    return readingDays - 1; // 0-based index
+  }
 }
