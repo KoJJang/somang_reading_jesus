@@ -7,7 +7,6 @@ import '../widgets/daily_explanation_card.dart';
 import '../widgets/schedule_card.dart';
 import '../widgets/completion_card.dart';
 import '../../../data/services/reading_service.dart';
-import '../../../features/auth/screens/phone_auth_screen.dart';
 import '../../../features/auth/controllers/user_service.dart';
 import '../../../features/auth/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -152,42 +151,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _isLoadingProfile = false;
         });
       }
-    }
-  }
-
-  void _navigateToPhoneAuth() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PhoneAuthScreen()),
-    );
-
-    if (result == true && mounted) {
-      setState(() {
-        _isLoadingProfile = true;
-      });
-      await _loadUserProfile();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('인증이 완료되었습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Future<void> _signOut() async {
-    await _auth.signOut();
-    if (mounted) {
-      setState(() {
-        _userProfile = null;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('로그아웃 되었습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
     }
   }
 

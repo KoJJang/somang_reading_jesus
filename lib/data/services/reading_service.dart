@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:logger/logger.dart';
 
 import '../models/reading_completion.dart';
 import '../repositories/synced_reading_repository.dart';
@@ -13,7 +12,6 @@ class ReadingService {
   static final ReadingService _instance = ReadingService._internal();
   final SyncedReadingRepository _repository;
   final FirebaseAuth _auth;
-  final _logger = Logger();
 
   /// 팩토리 생성자 - 싱글톤 패턴
   factory ReadingService() {
@@ -30,6 +28,11 @@ class ReadingService {
   /// 통독 완료 표시 (로컬에 저장, 인증된 경우 Firebase에도 저장)
   Future<void> markAsCompleted(ReadingCompletion completion) async {
     await _repository.markAsCompleted(completion);
+  }
+
+  /// 통독 완료 취소 (로컬에서 취소 후, 인증된 경우 Firebase에서도 취소)
+  Future<void> unmarkCompleted(int year, int week, int day) async {
+    await _repository.unmarkCompleted(year, week, day);
   }
 
   /// 특정 날짜의 통독 완료 여부 확인 (로컬 데이터 우선)

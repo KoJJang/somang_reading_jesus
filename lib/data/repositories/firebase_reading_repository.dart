@@ -53,6 +53,23 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
   }
 
   @override
+  Future<void> unmarkCompleted(int year, int week, int day) async {
+    if (_userId == null) {
+      return;
+    }
+
+    try {
+      final docId = '${year}_${week}_${day}';
+      await _completionsCollection!.doc(docId).delete();
+      _logger.i('Firebase 통독 완료 취소: $docId');
+      // NOTE: stats/summary는 현재 증분 방식이라 여기서는 되돌리지 않음(정합성 개선은 2차 작업).
+    } catch (e) {
+      _logger.e('Firebase 통독 완료 취소 중 오류: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> isCompleted(int year, int week, int day) async {
     if (_userId == null) {
       return false;

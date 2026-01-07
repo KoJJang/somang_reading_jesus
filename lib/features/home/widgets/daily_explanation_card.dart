@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../features/services/rjesus_service.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_sizes.dart';
+import '../../../core/widgets/explanation_image_dialog.dart';
 
 class DailyExplanationCard extends StatelessWidget {
   const DailyExplanationCard({super.key});
@@ -63,154 +62,11 @@ class DailyExplanationCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                color: Colors.white,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppBar(
-                    title: const Text('오늘의 해설'),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.paddingM),
-                      child: FutureBuilder<String?>(
-                        future:
-                            RJesusService.instance
-                                .getTodaysExplanationImagePath(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          if (!snapshot.hasData || snapshot.data == null) {
-                            return Container(
-                              color: AppColors.textSecondary.withOpacity(0.1),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.image_not_supported,
-                                    size: 64,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    '오늘의 해설 이미지가 준비되지 않았습니다',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: AppSizes.fontL,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return InteractiveViewer(
-                            child: Image.asset(
-                              snapshot.data!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                // 로컬 이미지 실패 시 네트워크 이미지로 폴백
-                                return FutureBuilder<String?>(
-                                  future:
-                                      RJesusService.instance
-                                          .getTodaysExplanationImageUrl(),
-                                  builder: (context, urlSnapshot) {
-                                    if (urlSnapshot.hasData &&
-                                        urlSnapshot.data != null) {
-                                      return Image.network(
-                                        urlSnapshot.data!,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (
-                                          context,
-                                          error,
-                                          stackTrace,
-                                        ) {
-                                          return Container(
-                                            color: AppColors.textSecondary
-                                                .withOpacity(0.1),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Icon(
-                                                  Icons.image_not_supported,
-                                                  size: 64,
-                                                  color:
-                                                      AppColors.textSecondary,
-                                                ),
-                                                const SizedBox(height: 16),
-                                                Text(
-                                                  '오늘의 해설 이미지가 준비되지 않았습니다',
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                    fontSize: AppSizes.fontL,
-                                                    color:
-                                                        AppColors.textSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    }
-                                    return Container(
-                                      color: AppColors.textSecondary
-                                          .withOpacity(0.1),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.image_not_supported,
-                                            size: 64,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            '오늘의 해설 이미지가 준비되지 않았습니다',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: AppSizes.fontL,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return ExplanationImageDialog(
+          title: '오늘의 해설',
+          imagePathFuture:
+              RJesusService.instance.getTodaysExplanationImagePath(),
+          imageUrlFuture: RJesusService.instance.getTodaysExplanationImageUrl(),
         );
       },
     );

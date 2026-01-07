@@ -16,6 +16,7 @@ class CompletionCard extends StatefulWidget {
 class _CompletionCardState extends State<CompletionCard> {
   bool _isCompletedToday = false;
   bool _isLoading = true;
+  bool _isRestDay = false;
   final _readingService = ReadingService();
 
   @override
@@ -31,11 +32,18 @@ class _CompletionCardState extends State<CompletionCard> {
 
     final today = DateTime.now();
 
-    // 휴식 주인지 확인
-    if (DateHelper.isBreakWeek(today)) {
+    final isRestDay =
+        today.weekday == DateTime.sunday ||
+        DateHelper.isBreakWeek(today) ||
+        DateHelper.isBeforeScheduleStart(today) ||
+        DateHelper.isAfterScheduleEnd(today);
+
+    // 쉬는 날(일요일/휴식주/일정 범위 외)이면 완료 체크 불필요
+    if (isRestDay) {
       if (mounted) {
         setState(() {
           _isCompletedToday = false;
+          _isRestDay = true;
           _isLoading = false;
         });
       }
@@ -43,16 +51,27 @@ class _CompletionCardState extends State<CompletionCard> {
     }
 
     final plan = await ReadingPlanService().getTodaysPlan();
+    if (plan == null) {
+      if (mounted) {
+        setState(() {
+          _isCompletedToday = false;
+          _isRestDay = true;
+          _isLoading = false;
+        });
+      }
+      return;
+    }
     final scheduleYear = ReadingPlanService.scheduleYearForDate(today);
     final isCompleted = await _readingService.isCompleted(
       scheduleYear,
-      plan?.week ?? 0,
-      plan?.day ?? 0,
+      plan.week,
+      plan.day,
     );
 
     if (mounted) {
       setState(() {
         _isCompletedToday = isCompleted;
+        _isRestDay = false;
         _isLoading = false;
       });
     }
@@ -61,12 +80,16 @@ class _CompletionCardState extends State<CompletionCard> {
   Future<void> _markAsCompleted() async {
     final today = DateTime.now();
 
-    // 휴식 주인지 확인
-    if (DateHelper.isBreakWeek(today)) {
+    // 쉬는 날이면 완료 처리 불가
+    if (_isRestDay ||
+        today.weekday == DateTime.sunday ||
+        DateHelper.isBreakWeek(today) ||
+        DateHelper.isBeforeScheduleStart(today) ||
+        DateHelper.isAfterScheduleEnd(today)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('이번 주는 휴식 주간입니다'),
+            content: Text('오늘은 쉬는 날입니다'),
             duration: Duration(milliseconds: 1500),
           ),
         );
@@ -127,6 +150,15 @@ class _CompletionCardState extends State<CompletionCard> {
 
     return GestureDetector(
       onTap: () {
+        if (_isRestDay) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('오늘은 쉬는 날입니다'),
+              duration: Duration(milliseconds: 800),
+            ),
+          );
+          return;
+        }
         if (_isCompletedToday) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -175,7 +207,9 @@ class _CompletionCardState extends State<CompletionCard> {
             ),
             const SizedBox(height: 4),
             Text(
-              _isCompletedToday ? '오늘 읽기 완료!' : '오늘 읽으셨나요?',
+              _isCompletedToday
+                  ? '오늘 읽기 완료!'
+                  : (_isRestDay ? '오늘은 쉬는 날입니다' : '오늘 읽으셨나요?'),
               style: const TextStyle(fontSize: 14, color: Colors.black54),
             ),
           ],
