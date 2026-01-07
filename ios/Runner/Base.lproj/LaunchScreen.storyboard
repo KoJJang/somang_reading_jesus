@@ -18,11 +18,25 @@
                         <subviews>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
                             </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="리딩 지저스" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="j2h-0G-1Qk">
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="20"/>
+                                <color key="textColor" red="0.06666666667" green="0.09411764706" blue="0.1529411765" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="소망 교회" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="k7J-2k-4zD">
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="12"/>
+                                <color key="textColor" red="0.4196078431" green="0.4470588235" blue="0.5019607843" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1a2-6s-vTC"/>
                             <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4X2-HB-R7a"/>
+                            <constraint firstItem="j2h-0G-1Qk" firstAttribute="top" secondItem="YRO-k0-Ey4" secondAttribute="bottom" constant="12" id="Aq1-3o-2Mn"/>
+                            <constraint firstItem="j2h-0G-1Qk" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="C6F-1s-6kT"/>
+                            <constraint firstItem="k7J-2k-4zD" firstAttribute="top" secondItem="j2h-0G-1Qk" secondAttribute="bottom" constant="4" id="H3D-cQ-G8p"/>
+                            <constraint firstItem="k7J-2k-4zD" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="NqG-FV-1mY"/>
                         </constraints>
                     </view>
                 </viewController>

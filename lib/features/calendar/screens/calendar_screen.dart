@@ -360,6 +360,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                     calendarFormat: CalendarFormat.month,
                     availableGestures: AvailableGestures.none,
+                    daysOfWeekHeight: 30,
                     enabledDayPredicate: (day) {
                       if (day.weekday == DateTime.sunday) return false;
                       if (DateHelper.isBreakWeek(day)) return false;
@@ -388,15 +389,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       dowBuilder: (context, day) {
                         final text = DateFormat.E('ko_KR').format(day);
                         return Center(
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              color:
-                                  day.weekday == DateTime.sunday
-                                      ? Colors.red
-                                      : day.weekday == DateTime.saturday
-                                      ? Colors.blue
-                                      : const Color(0xFF111827),
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                height: 1.2,
+                                color:
+                                    day.weekday == DateTime.sunday
+                                        ? Colors.red
+                                        : day.weekday == DateTime.saturday
+                                        ? Colors.blue
+                                        : const Color(0xFF111827),
+                              ),
                             ),
                           ),
                         );
@@ -851,7 +856,7 @@ class _MonthlyReadingStatus extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '읽은 날 $completed일 · 남은 날 $remaining일 · 안 읽은 $missed일',
+            '읽은 날 $completed일 · 남은 날 $remaining일 · 안 읽은 날 $missed일',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
