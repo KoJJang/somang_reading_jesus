@@ -170,7 +170,7 @@ class _AppLayoutState extends State<AppLayout> {
                             ),
                           ),
                           Text(
-                            '${_auth.currentUser?.phoneNumber ?? ""}',
+                            _auth.currentUser?.phoneNumber ?? "",
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],

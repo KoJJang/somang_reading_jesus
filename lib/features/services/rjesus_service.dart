@@ -137,8 +137,8 @@ class RJesusService {
       final chapter = todaysReading.chapter;
       final day = todaysReading.day;
 
-      final folderName = '${volume}권${chapter}강';
-      final fileName = '${volume}권${chapter}강_성경읽기_${day}.jpg';
+      final folderName = '$volume권$chapter강';
+      final fileName = '$volume권$chapter강_성경읽기_$day.jpg';
 
       return 'assets/images/summary/$folderName/$fileName';
     }
@@ -155,9 +155,9 @@ class RJesusService {
       final chapter = todaysReading.chapter;
       final day = todaysReading.day;
 
-      final folderName = '${volume}권%20성경읽기';
-      final subfolderName = '${volume}권${chapter}강';
-      final fileName = '${volume}권${chapter}강_성경읽기_${day}.jpg';
+      final folderName = '$volume권%20성경읽기';
+      final subfolderName = '$volume권$chapter강';
+      final fileName = '$volume권$chapter강_성경읽기_$day.jpg';
 
       return 'https://raw.githubusercontent.com/inspiratives/RJesus/main/Summary/$folderName/$subfolderName/$fileName';
     }

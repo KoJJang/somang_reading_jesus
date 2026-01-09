@@ -26,7 +26,7 @@ class LocalReadingRepository implements ReadingCompletionRepository {
       final db = await _databaseService.userDatabase;
 
       // uid 컬럼이 있는지 확인
-      final result = await db.rawQuery("PRAGMA table_info(${tableName})");
+      final result = await db.rawQuery("PRAGMA table_info($tableName)");
       bool hasUidColumn = false;
 
       for (var column in result) {

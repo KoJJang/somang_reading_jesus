@@ -753,8 +753,8 @@ class _SelectedDayActions extends StatelessWidget {
       final chapter = reading.chapter;
       final day = reading.day;
 
-      final folderName = '${volume}권${chapter}강';
-      final fileName = '${volume}권${chapter}강_성경읽기_${day}.jpg';
+      final folderName = '$volume권$chapter강';
+      final fileName = '$volume권$chapter강_성경읽기_$day.jpg';
 
       return 'assets/images/summary/$folderName/$fileName';
     }
@@ -1004,8 +1004,7 @@ class _ColorTag extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _ColorTag({Key? key, required this.color, required this.label})
-    : super(key: key);
+  const _ColorTag({super.key, required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {

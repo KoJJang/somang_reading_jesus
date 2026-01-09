@@ -775,7 +775,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   horizontal: 16.0,
                                 ),
                                 child: Text(
-                                  '${_remainingCooldown}초 후에 다시 시도할 수 있습니다',
+                                  '$_remainingCooldown초 후에 다시 시도할 수 있습니다',
                                   style: const TextStyle(
                                     color: Colors.orange,
                                     fontSize: 12,

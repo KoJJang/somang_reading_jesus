@@ -59,7 +59,7 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
     }
 
     try {
-      final docId = '${year}_${week}_${day}';
+      final docId = '${year}_${week}_$day';
       final docSnapshot = await _completionsCollection!.doc(docId).get();
       return docSnapshot.exists;
     } catch (e) {

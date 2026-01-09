@@ -280,8 +280,9 @@ class ScheduleConfig {
       current = current.add(const Duration(days: 1));
 
       // 무한 루프 방지 (약 2년 뒤까지만 체크)
-      if (current.isAfter(startDate.add(const Duration(days: 730))))
+      if (current.isAfter(startDate.add(const Duration(days: 730)))) {
         return current;
+      }
     }
   }
 

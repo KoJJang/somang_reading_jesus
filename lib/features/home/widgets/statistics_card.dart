@@ -7,12 +7,12 @@ class StatisticsCard extends StatelessWidget {
   final VoidCallback onLogin;
 
   const StatisticsCard({
-    Key? key,
+    super.key,
     required this.readingStats,
     required this.isAuthenticated,
     required this.isLoading,
     required this.onLogin,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

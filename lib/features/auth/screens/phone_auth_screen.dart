@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:reading_jesus_somang/core/constants/theme.dart';
 import '../controllers/user_service.dart';
 import '../../../core/utils/logger_util.dart';
 import '../controllers/auth_service.dart';

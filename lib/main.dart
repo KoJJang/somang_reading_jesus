@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
 import 'package:reading_jesus_somang/features/layout/app_layout.dart';
