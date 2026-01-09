@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../auth/controllers/user_service.dart';
 import '../../auth/models/user_profile.dart';
 import 'admin_user_detail_screen.dart';
-import 'package:intl/intl.dart';
 
 class AdminUserListScreen extends StatefulWidget {
   const AdminUserListScreen({super.key});
@@ -65,6 +64,25 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
     }
   }
 
+  String _formatPhoneNumber(String phoneNumber) {
+    // 1. +82 제거 및 0으로 대체
+    String formatted = phoneNumber.replaceFirst('+82', '0');
+
+    // 2. 숫자만 남기기
+    formatted = formatted.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // 3. 010-0000-0000 포맷 (11자리)
+    if (formatted.length == 11 && formatted.startsWith('010')) {
+      return '${formatted.substring(0, 3)}-${formatted.substring(3, 7)}-${formatted.substring(7)}';
+    }
+    // 3-1. 010-000-0000 (구형 번호 등 10자리)
+    if (formatted.length == 10) {
+      return '${formatted.substring(0, 3)}-${formatted.substring(3, 6)}-${formatted.substring(6)}';
+    }
+
+    return formatted;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,10 +126,7 @@ class _AdminUserListScreenState extends State<AdminUserListScreen> {
                                       : FontWeight.normal,
                             ),
                           ),
-                          subtitle: Text(
-                            '${user.phoneNumber}\n가입일: ${DateFormat('yyyy-MM-dd').format(user.createdAt)}',
-                          ),
-                          isThreeLine: true,
+                          subtitle: Text(_formatPhoneNumber(user.phoneNumber)),
                           onTap: () {
                             Navigator.push(
                               context,

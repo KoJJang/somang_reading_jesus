@@ -587,7 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('관리자 접근'),
+          title: const Text('관리자 로그인'),
           content: TextField(
             controller: passwordController,
             obscureText: true,
@@ -848,7 +848,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onDoubleTap: _showAdminLoginDialog, // 시크릿 진입
                         onLongPress: _showAdminLoginDialog, // 시크릿 진입
                         child: const Text(
-                          'App Version 1.0.0',
+                          'Version 1.0.0',
                           style: TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ),

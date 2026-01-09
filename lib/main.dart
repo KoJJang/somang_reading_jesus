@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
@@ -16,9 +17,14 @@ import 'firebase_options.dart';
 import 'package:reading_jesus_somang/config/schedule_config.dart';
 import 'package:reading_jesus_somang/features/admin/services/admin_schedule_service.dart';
 
+import 'package:intl/date_symbol_data_local.dart';
+
 void main() async {
   // Flutter 엔진과 위젯 바인딩 초기화
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 한국어 날짜 형식 초기화
+  await initializeDateFormatting('ko_KR', null);
 
   // 릴리즈 모드에서는 에러만 출력하도록 설정
   if (kReleaseMode) {
@@ -47,10 +53,12 @@ void main() async {
   final localRepo = LocalReadingRepository();
   await localRepo.initialize();
 
-  // 일정 설정 초기화 (Firestore에서 로드)
+  // 일정 설정 초기화 (Firestore에서 로드 - 현재 연도 기준)
   try {
     final scheduleService = AdminScheduleService();
-    ScheduleConfig.dynamicConfig = await scheduleService.getScheduleConfig();
+    final currentYear = DateTime.now().year;
+    final config = await scheduleService.getScheduleConfig(currentYear);
+    ScheduleConfig.setDynamicConfig(currentYear, config);
   } catch (e) {
     debugPrint('일정 설정 로드 오류: $e');
   }
@@ -104,6 +112,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       title: '성경 통독',
       theme: AppTheme.themeData,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ko', 'KR')],
+      locale: const Locale('ko', 'KR'),
       home: const AppLayout(child: HomeScreen()),
       onGenerateRoute: (settings) {
         switch (settings.name) {

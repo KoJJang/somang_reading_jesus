@@ -250,8 +250,22 @@ class UserService {
 
   // 관리자 로그인 및 권한 부여 (DB 저장)
   Future<bool> performAdminLogin(String password) async {
-    // 임시 하드코딩된 비밀번호 (실제 운영 시에는 보안 강화 필요)
-    if (password != '9999') {
+    // 1. Dynamic Passcode Check from Firestore
+    String adminPasscode = '9999'; // Default fallback
+    try {
+      final configDoc =
+          await _firestore.collection('config').doc('admin').get();
+      if (configDoc.exists && configDoc.data() != null) {
+        final data = configDoc.data()!;
+        if (data.containsKey('passcode')) {
+          adminPasscode = data['passcode'] as String;
+        }
+      }
+    } catch (e) {
+      LoggerUtil.error('관리자 설정 로드 중 오류 (기본값 사용): $e');
+    }
+
+    if (password != adminPasscode) {
       return false;
     }
 

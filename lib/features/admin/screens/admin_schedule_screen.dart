@@ -13,9 +13,12 @@ class AdminScheduleScreen extends StatefulWidget {
 
 class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
   final AdminScheduleService _scheduleService = AdminScheduleService();
+  int _selectedYear = DateTime.now().year;
   DateTime _startDate = DateTime.now();
   List<DateTimeRange> _holidays = [];
   bool _isLoading = true;
+  bool _isConfigExisting = false;
+  List<int> _availableYears = [];
 
   @override
   void initState() {
@@ -24,10 +27,16 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
   }
 
   Future<void> _loadConfig() async {
-    final config = await _scheduleService.getScheduleConfig();
+    setState(() => _isLoading = true);
+    final years = await _scheduleService.getAvailableYears();
+    final config = await _scheduleService.getScheduleConfig(_selectedYear);
+
     setState(() {
-      _startDate = config.startDate;
-      _holidays = List.from(config.holidays);
+      // DB에 있는 연도 + 올해를 중복 없이 합쳐서 초기화
+      _availableYears = {...years, DateTime.now().year}.toList()..sort();
+      _isConfigExisting = config != null;
+      _startDate = config?.startDate ?? DateTime(_selectedYear, 1, 1);
+      _holidays = List.from(config?.holidays ?? []);
       _holidays.sort((a, b) => a.start.compareTo(b.start));
       _isLoading = false;
     });
@@ -40,15 +49,16 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
         startDate: _startDate,
         holidays: _holidays,
       );
-      await _scheduleService.saveScheduleConfig(config);
+      await _scheduleService.saveScheduleConfig(_selectedYear, config);
 
       // 전역 설정 업데이트 (즉시 반영)
-      ScheduleConfig.dynamicConfig = config;
+      ScheduleConfig.setDynamicConfig(_selectedYear, config);
 
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('일정 설정이 저장되었습니다.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$_selectedYear년 일정 설정이 저장되었습니다.')),
+        );
+        setState(() => _isConfigExisting = true);
       }
     } catch (e) {
       if (mounted) {
@@ -67,6 +77,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
       initialDate: _startDate,
       firstDate: DateTime(2024),
       lastDate: DateTime(2027),
+      locale: const Locale('ko', 'KR'),
     );
     if (picked != null && picked != _startDate) {
       setState(() {
@@ -82,6 +93,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
       lastDate: DateTime(2027),
       saveText: '추가',
       helpText: '휴일 범위 선택',
+      locale: const Locale('ko', 'KR'),
     );
 
     if (picked != null) {
@@ -118,6 +130,40 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '대상 연도',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        DropdownButton<int>(
+                          value: _selectedYear,
+                          items:
+                              _availableYears.map((year) {
+                                return DropdownMenuItem(
+                                  value: year,
+                                  child: Text('$year년'),
+                                );
+                              }).toList(),
+                          onChanged:
+                              _isLoading
+                                  ? null
+                                  : (value) {
+                                    if (value != null) {
+                                      setState(() => _selectedYear = value);
+                                      _loadConfig();
+                                    }
+                                  },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
                     const Text(
                       '통독 시작일 설정',
                       style: TextStyle(
@@ -128,7 +174,13 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                     const SizedBox(height: 8),
                     ListTile(
                       title: Text(
-                        DateFormat('yyyy-MM-dd (EEEE)').format(_startDate),
+                        DateFormat(
+                          'yyyy-MM-dd (E)',
+                          'ko_KR',
+                        ).format(_startDate),
+                        style: TextStyle(
+                          color: _isConfigExisting ? null : Colors.grey,
+                        ),
                       ),
                       trailing: const Icon(Icons.calendar_today),
                       shape: RoundedRectangleBorder(
@@ -158,7 +210,7 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                       ],
                     ),
                     const Text(
-                      '등록된 날짜는 통독 일정에서 제외(건너뜀)됩니다.',
+                      '등록된 날짜는 통독 일정에서 제외됩니다.',
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -181,8 +233,9 @@ class _AdminScheduleScreenState extends State<AdminScheduleScreen> {
                                         isSingleDay
                                             ? DateFormat(
                                               'yyyy-MM-dd (E)',
+                                              'ko_KR',
                                             ).format(range.start)
-                                            : '${DateFormat('MM-dd').format(range.start)} ~ ${DateFormat('MM-dd').format(range.end)}',
+                                            : '${DateFormat('yyyy-MM-dd (E)', 'ko_KR').format(range.start)} ~ ${DateFormat('yyyy-MM-dd (E)', 'ko_KR').format(range.end)}',
                                       ),
                                       trailing: IconButton(
                                         icon: const Icon(

@@ -14,12 +14,24 @@ class ReadingPlanService {
     return getPlanForDate(DateTime.now());
   }
 
+  /// 특정 연도의 설정을 미리 로드하고 캐싱합니다.
+  Future<void> ensureConfigLoaded(int year) async {
+    if (ScheduleConfig.getDynamicConfig(year) == null) {
+      final config = await _adminScheduleService.getScheduleConfig(year);
+      ScheduleConfig.setDynamicConfig(year, config);
+    }
+  }
+
   Future<ReadingPlan?> getPlanForDate(DateTime date) async {
     // 1. 일정 설정 가져오기 (캐시 우선 사용)
-    var config = ScheduleConfig.dynamicConfig;
+    final scheduleYear = DateHelper.getScheduleYear(date);
+    var config = ScheduleConfig.getDynamicConfig(scheduleYear);
     if (config == null) {
-      config = await _adminScheduleService.getScheduleConfig();
-      ScheduleConfig.dynamicConfig = config;
+      config = await _adminScheduleService.getScheduleConfig(scheduleYear);
+      ScheduleConfig.setDynamicConfig(scheduleYear, config);
+    }
+    if (config == null) {
+      return null;
     }
     final startDate = config.startDate;
 

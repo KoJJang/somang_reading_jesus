@@ -9,9 +9,18 @@ class AdminUserDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, dynamic> userData = user.toMap();
+
+    // DateTime 객체를 직접 문자열로 변환하여 JSON 인코딩 오류 방지
+    userData.forEach((key, value) {
+      if (value is DateTime) {
+        userData[key] = value.toIso8601String();
+      }
+    });
+
     // Pretty print JSON
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-    final String prettyJson = encoder.convert(user.toMap());
+    final String prettyJson = encoder.convert(userData);
 
     return Scaffold(
       appBar: AppBar(title: Text(user.name)),

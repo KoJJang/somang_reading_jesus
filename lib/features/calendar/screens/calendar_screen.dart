@@ -45,13 +45,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.initState();
     _viewYear = _focusedDay.year;
     _selectedDay = _focusedDay;
-    _loadReadingPlan(_selectedDay!);
     initializeDateFormatting('ko_KR');
-    _loadMonthCompletions(_focusedDay);
-    _checkSelectedDayCompletion();
+    _initCalendar();
   }
 
-  void _setViewYear(int year) {
+  Future<void> _initCalendar() async {
+    setState(() => _isLoading = true);
+    await ReadingPlanService().ensureConfigLoaded(_viewYear);
+    await Future.wait([
+      _loadReadingPlan(_selectedDay!),
+      _loadMonthCompletions(_focusedDay),
+    ]);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _setViewYear(int year) async {
+    setState(() => _isLoading = true);
+    await ReadingPlanService().ensureConfigLoaded(year);
     final scheduleStart = DateHelper.getScheduleStartDateForYear(year);
     setState(() {
       _viewYear = year;
@@ -62,8 +74,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _completionStatus = {};
     });
 
-    _loadReadingPlan(_selectedDay!);
-    _loadMonthCompletions(_focusedDay);
+    await Future.wait([
+      _loadReadingPlan(_selectedDay!),
+      _loadMonthCompletions(_focusedDay),
+    ]);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadReadingPlan(DateTime date) async {
@@ -177,21 +194,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
       if (mounted) {
         LoggerUtil.showErrorSnackBar(context, '완료 상태를 불러오는데 실패했습니다.');
       }
-    }
-  }
-
-  Future<void> _checkSelectedDayCompletion() async {
-    if (_selectedDayPlan != null) {
-      final date = _selectedDay ?? DateTime.now();
-      final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
-      final isCompleted = await _readingService.isCompleted(
-        scheduleYear,
-        _selectedDayPlan!.week,
-        _selectedDayPlan!.day,
-      );
-      setState(() {
-        _isCompletedSelectedDay = isCompleted;
-      });
     }
   }
 

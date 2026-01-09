@@ -60,52 +60,66 @@ class ScheduleConfigData {
 class AdminScheduleService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DocumentReference get _configDoc =>
-      _firestore.collection('config').doc('schedule');
+  DocumentReference _configDoc(int year) => _firestore
+      .collection('config')
+      .doc('schedule')
+      .collection('years')
+      .doc(year.toString());
 
   // 일정 설정 가져오기
-  Future<ScheduleConfigData> getScheduleConfig() async {
+  Future<ScheduleConfigData?> getScheduleConfig(int year) async {
     try {
-      final doc = await _configDoc.get();
+      final doc = await _configDoc(year).get();
       if (doc.exists) {
         return ScheduleConfigData.fromMap(doc.data() as Map<String, dynamic>);
       }
     } catch (e) {
-      LoggerUtil.error('일정 설정 로드 중 오류: $e');
+      LoggerUtil.error('$year년 일정 설정 로드 중 오류: $e');
     }
-    return ScheduleConfigData.defaultConfig();
+    return null;
+  }
+
+  /// 설정된 모든 연도 목록 가져오기
+  Future<List<int>> getAvailableYears() async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('config')
+              .doc('schedule')
+              .collection('years')
+              .get();
+      return snapshot.docs
+          .map((doc) => int.tryParse(doc.id))
+          .whereType<int>()
+          .toList()
+        ..sort();
+    } catch (e) {
+      LoggerUtil.error('설정 가능 연도 목록 로드 중 오류: $e');
+      return [];
+    }
   }
 
   // 일정 설정 저장하기
-  Future<void> saveScheduleConfig(ScheduleConfigData config) async {
+  Future<void> saveScheduleConfig(int year, ScheduleConfigData config) async {
     try {
-      await _configDoc.set(config.toMap(), SetOptions(merge: true));
-      LoggerUtil.info('일정 설정 저장 완료');
+      await _configDoc(year).set(config.toMap(), SetOptions(merge: true));
+      LoggerUtil.info('$year년 일정 설정 저장 완료');
     } catch (e) {
-      LoggerUtil.error('일정 설정 저장 중 오류: $e');
-      throw Exception('일정 설정을 저장하는 데 실패했습니다: $e');
+      LoggerUtil.error('$year년 일정 설정 저장 중 오류: $e');
+      throw Exception('$year년 일정을 저장하는 데 실패했습니다: $e');
     }
   }
 
   // 특정 날짜가 휴일 목록에 있는지 확인
   bool isHoliday(DateTime date, List<DateTimeRange> holidays) {
-    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final targetScore = date.year * 10000 + date.month * 100 + date.day;
     for (final range in holidays) {
-      final normalizedStart = DateTime(
-        range.start.year,
-        range.start.month,
-        range.start.day,
-      );
-      final normalizedEnd = DateTime(
-        range.end.year,
-        range.end.month,
-        range.end.day,
-      );
+      final startScore =
+          range.start.year * 10000 + range.start.month * 100 + range.start.day;
+      final endScore =
+          range.end.year * 10000 + range.end.month * 100 + range.end.day;
 
-      if ((normalizedDate.isAtSameMomentAs(normalizedStart) ||
-              normalizedDate.isAfter(normalizedStart)) &&
-          (normalizedDate.isAtSameMomentAs(normalizedEnd) ||
-              normalizedDate.isBefore(normalizedEnd))) {
+      if (targetScore >= startScore && targetScore <= endScore) {
         return true;
       }
     }

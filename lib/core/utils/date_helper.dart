@@ -66,9 +66,6 @@ class DateHelper {
   /// 시작일
   static DateTime get startDate => ScheduleConfig.startDate;
 
-  /// 휴식 주 목록
-  static List<DateTime> get breakWeeks => ScheduleConfig.breakWeeks;
-
   /// 일정 종료일
   static DateTime getScheduleEndDate() => ScheduleConfig.getScheduleEndDate();
 
@@ -110,22 +107,17 @@ class DateHelper {
       if (isReadingDay) {
         // 휴일인지 확인 (범위 체크)
         bool isHoliday = false;
+        final currentScore =
+            current.year * 10000 + current.month * 100 + current.day;
         for (final range in holidays) {
-          final normalizedStart = DateTime(
-            range.start.year,
-            range.start.month,
-            range.start.day,
-          );
-          final normalizedEnd = DateTime(
-            range.end.year,
-            range.end.month,
-            range.end.day,
-          );
+          final startScore =
+              range.start.year * 10000 +
+              range.start.month * 100 +
+              range.start.day;
+          final endScore =
+              range.end.year * 10000 + range.end.month * 100 + range.end.day;
 
-          if ((current.isAtSameMomentAs(normalizedStart) ||
-                  current.isAfter(normalizedStart)) &&
-              (current.isAtSameMomentAs(normalizedEnd) ||
-                  current.isBefore(normalizedEnd))) {
+          if (currentScore >= startScore && currentScore <= endScore) {
             isHoliday = true;
             break;
           }
