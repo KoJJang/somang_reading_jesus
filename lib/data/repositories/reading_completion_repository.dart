@@ -5,6 +5,9 @@ abstract class ReadingCompletionRepository {
   /// 통독 완료 표시
   Future<void> markAsCompleted(ReadingCompletion completion);
 
+  /// 통독 완료 취소
+  Future<void> unmarkCompleted(int year, int week, int day);
+
   /// 특정 날짜의 통독 완료 여부 확인
   Future<bool> isCompleted(int year, int week, int day);
 

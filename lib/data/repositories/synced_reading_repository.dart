@@ -113,6 +113,22 @@ class SyncedReadingRepository implements ReadingCompletionRepository {
   }
 
   @override
+  Future<void> unmarkCompleted(int year, int week, int day) async {
+    // 로컬에서 먼저 취소 (오프라인 우선)
+    await _localRepo.unmarkCompleted(year, week, day);
+
+    // 인증된 경우 Firebase에서도 취소 시도
+    if (_isAuthenticated) {
+      try {
+        await _firebaseRepo.unmarkCompleted(year, week, day);
+      } catch (e) {
+        _logger.e('Firebase 완료 취소 중 오류: $e');
+        // 로컬 취소는 완료됐으므로 Firebase 오류는 무시
+      }
+    }
+  }
+
+  @override
   Future<bool> isCompleted(int year, int week, int day) async {
     // 오프라인 우선 - 로컬에서만 확인
     return await _localRepo.isCompleted(year, week, day);

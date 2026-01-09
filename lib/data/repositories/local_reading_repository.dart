@@ -69,6 +69,22 @@ class LocalReadingRepository implements ReadingCompletionRepository {
   }
 
   @override
+  Future<void> unmarkCompleted(int year, int week, int day) async {
+    try {
+      final db = await _databaseService.userDatabase;
+      await db.delete(
+        tableName,
+        where: "year = ? AND week = ? AND day = ?",
+        whereArgs: [year, week, day],
+      );
+      _logger.i('로컬 통독 완료 취소: $year/$week/$day');
+    } catch (e) {
+      _logger.e('통독 완료 취소 중 오류: $e');
+      rethrow;
+    }
+  }
+
+  @override
   Future<bool> isCompleted(int year, int week, int day) async {
     try {
       final db = await _databaseService.userDatabase;

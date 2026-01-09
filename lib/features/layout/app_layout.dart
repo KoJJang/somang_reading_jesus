@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/screens/phone_auth_screen.dart';
 import '../auth/screens/profile_screen.dart';
+import '../auth/controllers/user_service.dart';
 
 class AppLayout extends StatefulWidget {
   final Widget child;
@@ -14,8 +15,10 @@ class AppLayout extends StatefulWidget {
 
 class _AppLayoutState extends State<AppLayout> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
   bool _isAuthenticated = false;
   late Stream<User?> _authStateStream;
+  String? _displayName;
 
   @override
   void initState() {
@@ -29,6 +32,30 @@ class _AppLayoutState extends State<AppLayout> {
     setState(() {
       _isAuthenticated = user != null;
     });
+    if (user == null) {
+      setState(() {
+        _displayName = null;
+      });
+      return;
+    }
+    _loadDisplayName();
+  }
+
+  Future<void> _loadDisplayName() async {
+    try {
+      final profile = await _userService.getUserProfile();
+      if (!mounted) return;
+      setState(() {
+        _displayName =
+            (profile?.name.trim().isNotEmpty == true) ? profile!.name : null;
+      });
+    } catch (_) {
+      // ignore: avoid_catches_without_on_clauses
+      if (!mounted) return;
+      setState(() {
+        _displayName = null;
+      });
+    }
   }
 
   @override
@@ -163,7 +190,9 @@ class _AppLayoutState extends State<AppLayout> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _auth.currentUser?.displayName ?? '인증된 사용자',
+                            _displayName ??
+                                _auth.currentUser?.displayName ??
+                                '인증된 사용자',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

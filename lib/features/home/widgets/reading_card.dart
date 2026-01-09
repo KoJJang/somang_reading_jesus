@@ -91,7 +91,7 @@ class ReadingCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '편안한 휴식을 취하세요 🌟',
+                          '편안한 휴식을 취하세요 ⛪️',
                           style: TextStyle(
                             fontSize: AppSizes.fontM,
                             color: AppColors.textSecondary,

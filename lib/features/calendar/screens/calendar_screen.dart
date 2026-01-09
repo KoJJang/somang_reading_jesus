@@ -12,6 +12,7 @@ import '../../../features/services/rjesus_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../core/utils/date_helper.dart';
+import '../../../core/widgets/explanation_image_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -25,7 +26,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _selectedDay;
   ReadingPlan? _selectedDayPlan;
   Map<DateTime, bool> _completionStatus = {};
-  Map<String, int> _monthStatus = {'completed': 0, 'total': 0, 'remaining': 0};
+  Map<String, int> _monthStatus = {
+    'completed': 0,
+    'total': 0,
+    'remaining': 0,
+    'missed': 0,
+  };
   bool _isCompletedSelectedDay = false;
   bool _isLoading = false;
   final _readingService = ReadingService();
@@ -92,9 +98,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     int completed = 0;
     int total = 0;
     int remaining = 0;
+    int missed = 0;
 
     final startDate = DateTime(month.year, month.month, 1);
     final endDate = DateTime(month.year, month.month + 1, 0);
+    final now = DateTime.now();
+    final todayKey = DateTime(now.year, now.month, now.day);
 
     for (
       var date = startDate;
@@ -110,21 +119,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
       }
 
       final dateKey = DateTime(date.year, date.month, date.day);
-      final isFutureDate = date.isAfter(DateTime.now());
       final isCompleted = _completionStatus[dateKey] == true;
 
-      if (isFutureDate) {
-        // 미래 날짜는 남은 날짜로 카운트
-        remaining++;
-        // 미래 날짜지만 완료된 경우 completed에 추가
-        if (isCompleted) {
-          completed++;
-        }
+      // ✅ 전체 달의 “읽어야 할 날”을 분모(total)로 사용
+      total++;
+      if (isCompleted) {
+        completed++;
       } else {
-        // 현재까지의 날짜만 완료율 계산에 포함
-        total++;
-        if (isCompleted) {
-          completed++;
+        final isFutureDate = dateKey.isAfter(todayKey);
+        if (isFutureDate) {
+          remaining++;
+        } else {
+          missed++;
         }
       }
     }
@@ -134,6 +140,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         'completed': completed,
         'total': total,
         'remaining': remaining,
+        'missed': missed,
       };
     });
   }
@@ -237,6 +244,48 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  Future<void> _unmarkSelectedDayCompleted() async {
+    if (_selectedDayPlan != null && _selectedDay != null) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final scheduleYear = ReadingPlanService.scheduleYearForDate(
+        _selectedDay!,
+      );
+      await _readingService.unmarkCompleted(
+        scheduleYear,
+        _selectedDayPlan!.week,
+        _selectedDayPlan!.day,
+      );
+
+      final dateKey = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        _selectedDay!.day,
+      );
+      _completionStatus.remove(dateKey);
+
+      setState(() {
+        _isCompletedSelectedDay = false;
+        _isLoading = false;
+      });
+
+      _calculateMonthStatus(_focusedDay);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${DateFormat('MM월 dd일').format(_selectedDay!)} 완료를 취소했습니다.',
+            ),
+            duration: const Duration(milliseconds: 1200),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final total = _monthStatus['total'] ?? 0;
@@ -311,6 +360,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                     calendarFormat: CalendarFormat.month,
                     availableGestures: AvailableGestures.none,
+                    daysOfWeekHeight: 30,
                     enabledDayPredicate: (day) {
                       if (day.weekday == DateTime.sunday) return false;
                       if (DateHelper.isBreakWeek(day)) return false;
@@ -339,15 +389,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       dowBuilder: (context, day) {
                         final text = DateFormat.E('ko_KR').format(day);
                         return Center(
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              color:
-                                  day.weekday == DateTime.sunday
-                                      ? Colors.red
-                                      : day.weekday == DateTime.saturday
-                                      ? Colors.blue
-                                      : const Color(0xFF111827),
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                height: 1.2,
+                                color:
+                                    day.weekday == DateTime.sunday
+                                        ? Colors.red
+                                        : day.weekday == DateTime.saturday
+                                        ? Colors.blue
+                                        : const Color(0xFF111827),
+                              ),
                             ),
                           ),
                         );
@@ -398,6 +452,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 isCompleted: _isCompletedSelectedDay,
                 isLoading: _isLoading,
                 onMarkCompleted: _markSelectedDayCompleted,
+                onUnmarkCompleted: _unmarkSelectedDayCompleted,
               )
             else if (_selectedDay != null &&
                 DateHelper.isBreakWeek(_selectedDay!))
@@ -407,6 +462,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               completionRate: completionRate,
               completed: _monthStatus['completed'] ?? 0,
               remaining: _monthStatus['remaining'] ?? 0,
+              missed: _monthStatus['missed'] ?? 0,
+              total: _monthStatus['total'] ?? 0,
             ),
             const SizedBox(height: AppSizes.paddingM), // 하단 여백 추가
           ],
@@ -478,6 +535,7 @@ class _SelectedDayActions extends StatelessWidget {
   final bool isCompleted;
   final bool isLoading;
   final Function() onMarkCompleted;
+  final Function() onUnmarkCompleted;
 
   const _SelectedDayActions({
     required this.plan,
@@ -485,6 +543,7 @@ class _SelectedDayActions extends StatelessWidget {
     required this.isCompleted,
     required this.isLoading,
     required this.onMarkCompleted,
+    required this.onUnmarkCompleted,
   });
 
   @override
@@ -557,7 +616,7 @@ class _SelectedDayActions extends StatelessWidget {
                   iconColor: Colors.red,
                   iconBackground: Colors.red.withOpacity(0.1),
                   title: '오늘의 말씀',
-                  subtitle: '유튜브 강의',
+                  subtitle: '오디오 바이블',
                   onTap: () async {
                     final reading = await RJesusService.instance
                         .getReadingByDate(selectedDay);
@@ -615,16 +674,11 @@ class _SelectedDayActions extends StatelessWidget {
                           ? Colors.green.withOpacity(0.1)
                           : Colors.grey.withOpacity(0.1),
                   title: '완료',
-                  subtitle: isCompleted ? '완료됨' : '미완료',
+                  subtitle: isCompleted ? '취소하기' : '완료하기',
                   isLoading: isLoading,
                   onTap: () {
                     if (isCompleted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('이미 완료된 말씀입니다'),
-                          duration: Duration(milliseconds: 500),
-                        ),
-                      );
+                      onUnmarkCompleted();
                     } else {
                       onMarkCompleted();
                     }
@@ -642,104 +696,11 @@ class _SelectedDayActions extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                color: Colors.white,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AppBar(
-                    title: Text('${DateFormat('MM월 dd일').format(date)} 해설'),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    leading: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.paddingM),
-                      child: FutureBuilder<String?>(
-                        future: _getExplanationImagePath(date),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          if (!snapshot.hasData || snapshot.data == null) {
-                            return Container(
-                              color: AppColors.textSecondary.withOpacity(0.1),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.image_not_supported,
-                                    size: 64,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    '해설 이미지가 준비되지 않았습니다',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: AppSizes.fontL,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return InteractiveViewer(
-                            child: Image.asset(
-                              snapshot.data!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.1,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.image_not_supported,
-                                        size: 64,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        '해설 이미지가 준비되지 않았습니다',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: AppSizes.fontL,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        return ExplanationImageDialog(
+          title: '${DateFormat('MM월 dd일').format(date)} 해설',
+          imagePathFuture: _getExplanationImagePath(date),
+          imageUrlFuture: Future.value(
+            RJesusService.instance.getDailyExplanationImageUrl(date),
           ),
         );
       },
@@ -836,15 +797,20 @@ class _MonthlyReadingStatus extends StatelessWidget {
   final int completionRate;
   final int completed;
   final int remaining;
+  final int missed;
+  final int total;
 
   const _MonthlyReadingStatus({
     required this.completionRate,
     required this.completed,
     required this.remaining,
+    required this.missed,
+    required this.total,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double progress = total > 0 ? completed / total : 0;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       padding: const EdgeInsets.all(16),
@@ -855,84 +821,48 @@ class _MonthlyReadingStatus extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '이번 달 진행률',
-            style: TextStyle(
-              fontSize: AppSizes.fontL,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$completionRate%',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontXXL,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    Text(
-                      '완료율',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontM,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  '이번 달 진행률',
+                  style: TextStyle(
+                    fontSize: AppSizes.fontL,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$completed일',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontXXL,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.completed,
-                      ),
-                    ),
-                    Text(
-                      '읽은 날',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontM,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$remaining일',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontXXL,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    Text(
-                      '남은 날',
-                      style: TextStyle(
-                        fontSize: AppSizes.fontM,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 12),
+              Text(
+                '$completionRate%',
+                style: TextStyle(
+                  fontSize: AppSizes.fontXL,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0, 1),
+              minHeight: 10,
+              backgroundColor: Colors.grey.withOpacity(0.15),
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '읽은 날 $completed일 · 남은 날 $remaining일 · 안 읽은 날 $missed일',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: AppSizes.fontM,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
