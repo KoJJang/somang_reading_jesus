@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/reading_completion.dart';
 import '../repositories/synced_reading_repository.dart';
+import '../../core/utils/date_helper.dart';
 
 /// 통독 데이터 서비스 클래스
 ///
@@ -52,7 +53,8 @@ class ReadingService {
 
   /// 통독 통계 가져오기 (Firebase에서만 조회)
   Future<Map<String, dynamic>?> getReadingStats() async {
-    return await _repository.getReadingStats();
+    final int scheduleYear = DateHelper.getScheduleYear(DateTime.now());
+    return await _repository.getReadingStatsForYear(scheduleYear);
   }
 
   /// 수동으로 Firebase에서 로컬로 데이터 동기화 실행

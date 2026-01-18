@@ -229,13 +229,13 @@ class SyncedReadingRepository implements ReadingCompletionRepository {
   }
 
   /// 통독 통계 가져오기
-  Future<Map<String, dynamic>?> getReadingStats() async {
+  Future<Map<String, dynamic>?> getReadingStatsForYear(int scheduleYear) async {
     if (!_isAuthenticated) {
       return null;
     }
 
     try {
-      return await _firebaseRepo.getReadingStats();
+      return await _firebaseRepo.getReadingStatsForYear(scheduleYear);
     } catch (e) {
       _logger.e('통독 통계 조회 중 오류: $e');
       return null;

@@ -20,8 +20,15 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
           : null;
 
   /// 사용자의 통독 통계 문서 참조
-  DocumentReference? get _statsDocument =>
+  DocumentReference? get _legacyStatsDocument =>
       _userId != null ? _firestore.doc('users/$_userId/stats/summary') : null;
+
+  DocumentReference? _statsDocumentForYear({required int scheduleYear}) {
+    if (_userId == null) {
+      return null;
+    }
+    return _firestore.doc('users/$_userId/stats/$scheduleYear');
+  }
 
   @override
   Future<void> markAsCompleted(ReadingCompletion completion) async {
@@ -43,7 +50,10 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
       });
 
       // 통계 데이터 업데이트
-      await _updateReadingStats(completion.date);
+      await _updateReadingStats(
+        scheduleYear: completion.year,
+        completionDate: completion.date,
+      );
 
       _logger.i('Firebase에 통독 완료 데이터 저장: $docId');
     } catch (e) {
@@ -128,10 +138,14 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
   }
 
   /// 통독 통계 데이터 업데이트
-  Future<void> _updateReadingStats(DateTime completionDate) async {
+  Future<void> _updateReadingStats({
+    required int scheduleYear,
+    required DateTime completionDate,
+  }) async {
     try {
       // 통계 문서 참조
-      final statsDocRef = _statsDocument;
+      final DocumentReference? statsDocRef =
+          _statsDocumentForYear(scheduleYear: scheduleYear);
       if (statsDocRef == null) return;
 
       // 트랜잭션을 사용하여 통계 업데이트
@@ -244,15 +258,28 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
   }
 
   /// 통독 통계 가져오기
-  Future<Map<String, dynamic>?> getReadingStats() async {
+  Future<Map<String, dynamic>?> getReadingStatsForYear(int scheduleYear) async {
     if (_userId == null) {
       return null;
     }
 
     try {
-      final docSnapshot = await _statsDocument!.get();
+      final DocumentReference? statsDocRef =
+          _statsDocumentForYear(scheduleYear: scheduleYear);
+      if (statsDocRef == null) {
+        return null;
+      }
+      final docSnapshot = await statsDocRef.get();
       if (docSnapshot.exists) {
         return docSnapshot.data() as Map<String, dynamic>;
+      }
+      final DocumentReference? legacyDocRef = _legacyStatsDocument;
+      if (legacyDocRef == null) {
+        return null;
+      }
+      final DocumentSnapshot legacySnapshot = await legacyDocRef.get();
+      if (legacySnapshot.exists) {
+        return legacySnapshot.data() as Map<String, dynamic>;
       }
       return null;
     } catch (e) {
