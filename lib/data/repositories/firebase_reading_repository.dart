@@ -19,7 +19,6 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
           ? _firestore.collection('users/$_userId/completions')
           : null;
 
-  /// 사용자의 통독 통계 문서 참조
   DocumentReference? get _legacyStatsDocument =>
       _userId != null ? _firestore.doc('users/$_userId/stats/summary') : null;
 
@@ -48,8 +47,6 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
         'readings': completion.readings,
         'createdAt': FieldValue.serverTimestamp(),
       });
-
-      // 통계 데이터 업데이트
       await _updateReadingStats(
         scheduleYear: completion.year,
         completionDate: completion.date,
@@ -59,6 +56,108 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
     } catch (e) {
       _logger.e('Firebase 통독 완료 표시 중 오류: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _updateReadingStats({
+    required int scheduleYear,
+    required DateTime completionDate,
+  }) async {
+    try {
+      final DocumentReference? statsDocRef = _statsDocumentForYear(
+        scheduleYear: scheduleYear,
+      );
+      if (statsDocRef == null) return;
+      await _firestore.runTransaction((transaction) async {
+        final DocumentSnapshot statsDoc = await transaction.get(statsDocRef);
+        if (statsDoc.exists) {
+          final Map<String, dynamic> data =
+              statsDoc.data() as Map<String, dynamic>;
+          final String? lastCompletedDateStr =
+              data['last_completed_date'] as String?;
+          final DateTime? lastCompletedDate =
+              lastCompletedDateStr != null
+                  ? DateTime.parse(lastCompletedDateStr)
+                  : null;
+          final int currentStreak = data['streak_current'] as int? ?? 0;
+          final int maxStreak = data['streak_max'] as int? ?? 0;
+          final int totalDays = data['total_days_completed'] as int? ?? 0;
+          int newStreak = 1;
+          if (lastCompletedDate != null) {
+            final bool isConsecutive = _isConsecutiveDay(
+              lastCompletedDate,
+              completionDate,
+            );
+            newStreak = isConsecutive ? currentStreak + 1 : 1;
+          }
+          final int newMaxStreak =
+              newStreak > maxStreak ? newStreak : maxStreak;
+          transaction.update(statsDocRef, {
+            'total_days_completed': totalDays + 1,
+            'streak_current': newStreak,
+            'streak_max': newMaxStreak,
+            'last_completed_date': completionDate.toIso8601String(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.set(statsDocRef, {
+            'total_days_completed': 1,
+            'streak_current': 1,
+            'streak_max': 1,
+            'last_completed_date': completionDate.toIso8601String(),
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      });
+      _logger.i('통독 통계 업데이트 완료');
+    } catch (e) {
+      _logger.e('통독 통계 업데이트 중 오류: $e');
+    }
+  }
+
+  bool _isConsecutiveDay(DateTime previous, DateTime current) {
+    final DateTime prevDate = DateTime(
+      previous.year,
+      previous.month,
+      previous.day,
+    );
+    final DateTime currDate = DateTime(
+      current.year,
+      current.month,
+      current.day,
+    );
+    final int difference = currDate.difference(prevDate).inDays;
+    return difference == 1;
+  }
+
+  Future<Map<String, dynamic>?> getReadingStatsForYear(int scheduleYear) async {
+    if (_userId == null) {
+      return null;
+    }
+    try {
+      final DocumentReference? statsDocRef = _statsDocumentForYear(
+        scheduleYear: scheduleYear,
+      );
+      if (statsDocRef == null) {
+        return null;
+      }
+      final DocumentSnapshot docSnapshot = await statsDocRef.get();
+      if (docSnapshot.exists) {
+        return docSnapshot.data() as Map<String, dynamic>;
+      }
+      final DocumentReference? legacyDocRef = _legacyStatsDocument;
+      if (legacyDocRef == null) {
+        return null;
+      }
+      final DocumentSnapshot legacySnapshot = await legacyDocRef.get();
+      if (legacySnapshot.exists) {
+        return legacySnapshot.data() as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      _logger.e('통독 통계 조회 중 오류: $e');
+      return null;
     }
   }
 
@@ -72,7 +171,6 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
       final docId = '${year}_${week}_${day}';
       await _completionsCollection!.doc(docId).delete();
       _logger.i('Firebase 통독 완료 취소: $docId');
-      // NOTE: stats/summary는 현재 증분 방식이라 여기서는 되돌리지 않음(정합성 개선은 2차 작업).
     } catch (e) {
       _logger.e('Firebase 통독 완료 취소 중 오류: $e');
       rethrow;
@@ -137,87 +235,6 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
     }
   }
 
-  /// 통독 통계 데이터 업데이트
-  Future<void> _updateReadingStats({
-    required int scheduleYear,
-    required DateTime completionDate,
-  }) async {
-    try {
-      // 통계 문서 참조
-      final DocumentReference? statsDocRef =
-          _statsDocumentForYear(scheduleYear: scheduleYear);
-      if (statsDocRef == null) return;
-
-      // 트랜잭션을 사용하여 통계 업데이트
-      await _firestore.runTransaction((transaction) async {
-        final statsDoc = await transaction.get(statsDocRef);
-
-        if (statsDoc.exists) {
-          // 기존 통계가 있는 경우
-          final data = statsDoc.data() as Map<String, dynamic>;
-
-          // 마지막 완료일 가져오기
-          final lastCompletedDateStr = data['last_completed_date'] as String?;
-          final lastCompletedDate =
-              lastCompletedDateStr != null
-                  ? DateTime.parse(lastCompletedDateStr)
-                  : null;
-
-          final currentStreak = data['streak_current'] as int? ?? 0;
-          final maxStreak = data['streak_max'] as int? ?? 0;
-          final totalDays = data['total_days_completed'] as int? ?? 0;
-
-          // 연속 일수(스트릭) 계산
-          int newStreak = 1; // 기본값은 1 (오늘 완료)
-          if (lastCompletedDate != null) {
-            final isConsecutive = _isConsecutiveDay(
-              lastCompletedDate,
-              completionDate,
-            );
-            newStreak = isConsecutive ? currentStreak + 1 : 1;
-          }
-
-          // 최대 스트릭 업데이트
-          final newMaxStreak = newStreak > maxStreak ? newStreak : maxStreak;
-
-          // 통계 업데이트
-          transaction.update(statsDocRef, {
-            'total_days_completed': totalDays + 1,
-            'streak_current': newStreak,
-            'streak_max': newMaxStreak,
-            'last_completed_date': completionDate.toIso8601String(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        } else {
-          // 통계가 없는 경우 새로 생성
-          transaction.set(statsDocRef, {
-            'total_days_completed': 1,
-            'streak_current': 1,
-            'streak_max': 1,
-            'last_completed_date': completionDate.toIso8601String(),
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      });
-
-      _logger.i('통독 통계 업데이트 완료');
-    } catch (e) {
-      _logger.e('통독 통계 업데이트 중 오류: $e');
-    }
-  }
-
-  /// 두 날짜가 연속된 날인지 확인
-  bool _isConsecutiveDay(DateTime previous, DateTime current) {
-    // 날짜의 시간 부분 제거 (00:00:00으로 설정)
-    final prevDate = DateTime(previous.year, previous.month, previous.day);
-    final currDate = DateTime(current.year, current.month, current.day);
-
-    // 두 날짜의 차이가 1일인지 확인
-    final difference = currDate.difference(prevDate).inDays;
-    return difference == 1;
-  }
-
   /// Firestore 쿼리 결과를 ReadingCompletion 객체 목록으로 변환
   List<ReadingCompletion> _convertQuerySnapshotToCompletions(
     QuerySnapshot querySnapshot,
@@ -255,36 +272,5 @@ class FirebaseReadingRepository implements ReadingCompletionRepository {
         readings: readings,
       );
     }).toList();
-  }
-
-  /// 통독 통계 가져오기
-  Future<Map<String, dynamic>?> getReadingStatsForYear(int scheduleYear) async {
-    if (_userId == null) {
-      return null;
-    }
-
-    try {
-      final DocumentReference? statsDocRef =
-          _statsDocumentForYear(scheduleYear: scheduleYear);
-      if (statsDocRef == null) {
-        return null;
-      }
-      final docSnapshot = await statsDocRef.get();
-      if (docSnapshot.exists) {
-        return docSnapshot.data() as Map<String, dynamic>;
-      }
-      final DocumentReference? legacyDocRef = _legacyStatsDocument;
-      if (legacyDocRef == null) {
-        return null;
-      }
-      final DocumentSnapshot legacySnapshot = await legacyDocRef.get();
-      if (legacySnapshot.exists) {
-        return legacySnapshot.data() as Map<String, dynamic>;
-      }
-      return null;
-    } catch (e) {
-      _logger.e('통독 통계 조회 중 오류: $e');
-      return null;
-    }
   }
 }

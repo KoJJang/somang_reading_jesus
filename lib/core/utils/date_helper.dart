@@ -5,7 +5,14 @@ import '../../config/schedule_config.dart';
 /// 휴식 주를 고려한 날짜 계산을 중앙에서 관리합니다.
 class DateHelper {
   /// 사용 가능한 일정 연도 목록 (예: 2025, 2026)
-  static List<int> get availableScheduleYears => ScheduleConfig.availableYears;
+  static List<int> get availableScheduleYears {
+    final int currentScheduleYear = ScheduleConfig.getScheduleYearForDate(
+      DateTime.now(),
+    );
+    return ScheduleConfig.availableYears
+        .where((int year) => year <= currentScheduleYear)
+        .toList();
+  }
 
   /// 특정 날짜가 속한 일정 연도
   static int getScheduleYear(DateTime date) =>
