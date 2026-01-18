@@ -46,6 +46,7 @@ dependencies:
   cloud_firestore: ^5.6.5
   firebase_app_check: ^0.3.2+7
   url_launcher: ^6.3.1
+  sqflite_common_ffi_web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -129,8 +130,6 @@ flutter:
     - assets/images/summary/4권3강/
     - assets/images/summary/4권4강/
     - assets/images/summary/4권5강/
-    - assets/images/summary/4권6강/
-    - assets/images/summary/4권7강/
     - assets/images/summary/5권1강/
     - assets/images/summary/5권2강/
     - assets/images/summary/5권3강/

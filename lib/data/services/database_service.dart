@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb; // Add kIsWeb
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart'; // Add web package
 import '../models/bible_verse.dart';
 import 'package:logger/logger.dart';
 
@@ -21,7 +23,10 @@ class DatabaseService {
 
   // 초기화 메서드
   Future<void> initialize() async {
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (kIsWeb) {
+      // Use web factory
+      databaseFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       // FFI 초기화
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
@@ -48,6 +53,19 @@ class DatabaseService {
   Future<Database> _initBibleDatabase() async {
     try {
       await initialize();
+
+      // Web Implementation
+      if (kIsWeb) {
+        // Warning: This creates an empty DB if not exists.
+        // Pre-populating on web requires writing to IndexedDB or VFS which is complex
+        // without proper setup. For now, we avoid the crash.
+        // Ideally, we imports the bytes via a specialized web loader.
+        _logger.w(
+          'Web Bible DB initialization: Pre-population not fully supported yet in this quick fix.',
+        );
+        return await openDatabase('bible2.db');
+      }
+
       String path = join(await getDatabasesPath(), 'bible2.db');
       _logger.d('Bible DB Path: $path');
 
@@ -70,10 +88,13 @@ class DatabaseService {
 
   Future<Database> _initUserDatabase() async {
     try {
-      String path = join(await getDatabasesPath(), 'user_data.db');
-      _logger.d(
-        'User DB absolute path: ${File(path).absolute.path}',
-      ); // 절대 경로 출력
+      String path = 'user_data.db';
+      if (!kIsWeb) {
+        path = join(await getDatabasesPath(), 'user_data.db');
+        _logger.d(
+          'User DB absolute path: ${File(path).absolute.path}',
+        ); // 절대 경로 출력
+      }
 
       return await openDatabase(
         path,
