@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
@@ -94,6 +95,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       title: '성경 통독',
       theme: AppTheme.themeData,
       debugShowCheckedModeBanner: false,
+      builder: (BuildContext context, Widget? child) {
+        final Widget safeChild = child ?? const SizedBox.shrink();
+        if (!Platform.isAndroid) return safeChild;
+        final MediaQueryData data = MediaQuery.of(context);
+        final double scaleFactor = data.textScaleFactor;
+        final double clampedScaleFactor = scaleFactor.clamp(1.0, 1.2).toDouble();
+        return MediaQuery(
+          data: data.copyWith(textScaleFactor: clampedScaleFactor),
+          child: safeChild,
+        );
+      },
       home: const AppLayout(child: HomeScreen()),
       onGenerateRoute: (settings) {
         switch (settings.name) {
