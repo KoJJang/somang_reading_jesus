@@ -50,11 +50,6 @@ class ReadingService {
     return await _repository.getCompletionsByYear(year);
   }
 
-  /// 통독 통계 가져오기 (Firebase에서만 조회)
-  Future<Map<String, dynamic>?> getReadingStats() async {
-    return await _repository.getReadingStats();
-  }
-
   /// 수동으로 Firebase에서 로컬로 데이터 동기화 실행
   Future<void> syncFromFirebase() async {
     await _repository.syncFromFirebase();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:reading_jesus_somang/features/home/screens/home_screen.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
@@ -7,6 +8,7 @@ import 'package:reading_jesus_somang/features/layout/app_layout.dart';
 import 'package:reading_jesus_somang/data/services/database_service.dart';
 import 'package:reading_jesus_somang/data/repositories/local_reading_repository.dart';
 import 'package:reading_jesus_somang/data/services/reading_service.dart';
+import 'package:reading_jesus_somang/data/services/schedule_config_service.dart';
 import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
@@ -36,6 +38,9 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase 초기화 오류: $e');
   }
+
+  // Load remote schedule configs; fall back to local defaults on failure.
+  await ScheduleConfigService().loadRemoteConfigs();
 
   // 데이터베이스 서비스 초기화
   final dbService = DatabaseService();
@@ -94,6 +99,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       title: '성경 통독',
       theme: AppTheme.themeData,
       debugShowCheckedModeBanner: false,
+      builder: (BuildContext context, Widget? child) {
+        final Widget safeChild = child ?? const SizedBox.shrink();
+        if (!Platform.isAndroid) return safeChild;
+        final MediaQueryData data = MediaQuery.of(context);
+        final double scaleFactor = data.textScaleFactor;
+        final double clampedScaleFactor =
+            scaleFactor.clamp(1.0, 1.2).toDouble();
+        return MediaQuery(
+          data: data.copyWith(textScaleFactor: clampedScaleFactor),
+          child: safeChild,
+        );
+      },
       home: const AppLayout(child: HomeScreen()),
       onGenerateRoute: (settings) {
         switch (settings.name) {

@@ -6,9 +6,6 @@ import '../widgets/weekly_commentary_card.dart';
 import '../widgets/daily_explanation_card.dart';
 import '../widgets/schedule_card.dart';
 import '../widgets/completion_card.dart';
-import '../../../data/services/reading_service.dart';
-import '../../../features/auth/controllers/user_service.dart';
-import '../../../features/auth/models/user_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,22 +18,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<WeeklyProgressCardState> _weeklyProgressKey =
       GlobalKey<WeeklyProgressCardState>();
-  final _readingService = ReadingService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final _userService = UserService();
-  UserProfile? _userProfile;
-  bool _isLoadingProfile = true;
-  bool get _isAuthenticated => _auth.currentUser != null;
-  Map<String, dynamic>? _readingStats;
-  DateTime? _lastUpdatedDate;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _lastUpdatedDate = DateTime.now();
-    _loadUserProfile();
-    _loadReadingStats();
 
     // 앱 내에서 화면 전환 시 호출되는 리스너
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final route = ModalRoute.of(context);
       if (route != null) {
         route.addScopedWillPopCallback(() async {
-          _checkForDateChange();
           _refreshAllData();
           return true;
         });
@@ -60,11 +46,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Listen to authentication state changes
     _auth.authStateChanges().listen((User? user) {
       if (mounted) {
-        setState(() {
-          _isLoadingProfile = true;
-        });
-        _loadUserProfile();
-        _loadReadingStats();
         _weeklyProgressKey.currentState?.loadWeeklyProgress();
       }
     });
@@ -80,7 +61,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _checkForDateChange();
     // 화면이 활성화될 때마다 WeeklyProgressCard 갱신
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _weeklyProgressKey.currentState?.loadWeeklyProgress();
@@ -93,70 +73,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // 앱이 다시 포그라운드로 돌아왔을 때 날짜 변경 확인
     if (state == AppLifecycleState.resumed) {
-      _checkForDateChange();
       _refreshAllData();
-    }
-  }
-
-  // 날짜 변경 여부를 확인하고 필요시 데이터 갱신
-  void _checkForDateChange() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final lastUpdated =
-        _lastUpdatedDate != null
-            ? DateTime(
-              _lastUpdatedDate!.year,
-              _lastUpdatedDate!.month,
-              _lastUpdatedDate!.day,
-            )
-            : null;
-
-    // 날짜가 변경되었거나 처음 로드하는 경우
-    if (lastUpdated == null || today.isAfter(lastUpdated)) {
-      _lastUpdatedDate = now;
-      _loadReadingStats();
-    }
-  }
-
-  Future<void> _loadReadingStats() async {
-    if (_isAuthenticated) {
-      final stats = await _readingService.getReadingStats();
-      if (mounted) {
-        setState(() {
-          _readingStats = stats;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _readingStats = null;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadUserProfile() async {
-    if (_isAuthenticated) {
-      final profile = await _userService.getUserProfile();
-      if (mounted) {
-        setState(() {
-          _userProfile = profile;
-          _isLoadingProfile = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _userProfile = null;
-          _isLoadingProfile = false;
-        });
-      }
     }
   }
 
   // 추가: 화면이 다시 포커스를 받을 때 호출될 함수
   void _refreshAllData() {
-    _loadReadingStats();
     _weeklyProgressKey.currentState?.loadWeeklyProgress();
   }
 
@@ -170,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // 완료 상태 변경 시 호출되는 콜백
   void _onCompletionChanged() {
-    _loadReadingStats();
     _weeklyProgressKey.currentState?.loadWeeklyProgress();
   }
 

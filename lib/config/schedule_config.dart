@@ -7,7 +7,7 @@ class ScheduleConfig {
   /// - `year`: 일정 식별 연도 (완료 데이터 키에도 사용)
   /// - `startDate`: 해당 연도 통독 시작일
   /// - `breakWeeks`: 휴식 주 (해당 주 전체를 휴식으로 처리; 일요일 포함 7일)
-  static final Map<int, _ReadingSchedule> _schedules = {
+  static Map<int, _ReadingSchedule> _schedules = {
     2025: _ReadingSchedule(
       year: 2025,
       startDate: DateTime(2025, 1, 20),
@@ -26,6 +26,21 @@ class ScheduleConfig {
       ],
     ),
   };
+
+  static void updateFromRemote(List<ScheduleConfigEntry> entries) {
+    if (entries.isEmpty) {
+      return;
+    }
+    final Map<int, _ReadingSchedule> updates = {
+      for (final ScheduleConfigEntry entry in entries)
+        entry.year: _ReadingSchedule(
+          year: entry.year,
+          startDate: entry.startDate,
+          breakWeeks: entry.breakWeeks,
+        ),
+    };
+    _schedules = {..._schedules, ...updates};
+  }
 
   static List<int> get availableYears {
     final years = _schedules.keys.toList()..sort();
@@ -54,7 +69,8 @@ class ScheduleConfig {
       final DateTime start = _normalize(schedule.startDate);
       final DateTime end = _normalize(getScheduleEndDateForYear(year));
       final bool isAfterOrSameStart =
-          normalizedDate.isAtSameMomentAs(start) || normalizedDate.isAfter(start);
+          normalizedDate.isAtSameMomentAs(start) ||
+          normalizedDate.isAfter(start);
       final bool isBeforeOrSameEnd =
           normalizedDate.isAtSameMomentAs(end) || normalizedDate.isBefore(end);
       if (isAfterOrSameStart && isBeforeOrSameEnd) {
@@ -228,6 +244,18 @@ class _ReadingSchedule {
   final List<DateTime> breakWeeks;
 
   const _ReadingSchedule({
+    required this.year,
+    required this.startDate,
+    required this.breakWeeks,
+  });
+}
+
+class ScheduleConfigEntry {
+  final int year;
+  final DateTime startDate;
+  final List<DateTime> breakWeeks;
+
+  const ScheduleConfigEntry({
     required this.year,
     required this.startDate,
     required this.breakWeeks,
