@@ -101,7 +101,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       builder: (BuildContext context, Widget? child) {
         final Widget safeChild = child ?? const SizedBox.shrink();
-        if (!Platform.isAndroid) return safeChild;
+        if (kIsWeb || !Platform.isAndroid) return safeChild;
         final MediaQueryData data = MediaQuery.of(context);
         final double scaleFactor = data.textScaleFactor;
         final double clampedScaleFactor =
