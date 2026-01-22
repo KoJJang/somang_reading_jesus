@@ -89,7 +89,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               '▶ 개인정보 보호책임자\n'
               '성명: 김정민\n'
               '연락처: 031-238-7545\n'
-              '이메일: somang@somang.com',
+              '이메일: yuiyui6258@gmail.com',
               style: TextStyle(fontSize: 14),
             ),
 
@@ -97,6 +97,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSectionTitle('10. 개인정보 처리방침 변경'),
             _buildText('이 개인정보 처리방침은 2025년 3월 1일부터 적용됩니다.'),
             _buildText('본 개인정보 처리방침이 변경될 경우에는 변경 내용을 앱 내 공지사항을 통해 공지할 것입니다.'),
+            _buildText(
+              '계정삭제 안내: https://kojjang.github.io/somang_reading_jesus/account-deletion/',
+            ),
 
             const SizedBox(height: 32),
           ],
