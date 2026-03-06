@@ -1,0 +1,6 @@
+app_identifier("com.somangchurch.readingjesus")
+apple_id("") # App Store Connect Apple ID (이메일)
+
+# Google Play
+json_key_file("fastlane/google_play_key.json")
+package_name("com.somangchurch.readingjesus")
