@@ -14,6 +14,7 @@ import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dar
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/privacy_policy_screen.dart';
+import 'package:reading_jesus_somang/features/team/screens/my_teams_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -148,6 +149,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           case '/privacy-policy':
             return MaterialPageRoute(
               builder: (context) => const PrivacyPolicyScreen(),
+            );
+          case '/my-teams':
+            return MaterialPageRoute(
+              builder: (context) => const MyTeamsScreen(),
             );
           default:
             return null;

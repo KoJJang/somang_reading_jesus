@@ -52,14 +52,21 @@ class UserService {
       uid: uid,
     );
 
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await docRef.get();
+
     final Map<String, dynamic> data = <String, dynamic>{
       'uid': uid,
       'scheduleYear': scheduleYear,
       'churchId': churchId,
-      'teamId': null,
-      'isTeamLeader': false,
       'updatedAt': DateTime.now(),
     };
+
+    // 문서가 없을 때만 teamIds, isTeamLeader를 기본값으로 설정
+    // 이미 있으면 관리자/시드가 설정한 값을 덮어쓰지 않음
+    if (!snapshot.exists) {
+      data['teamIds'] = [];
+      data['isTeamLeader'] = false;
+    }
 
     await docRef.set(data, SetOptions(merge: true));
   }

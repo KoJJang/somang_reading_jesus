@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +8,11 @@ import '../controllers/user_service.dart';
 import '../models/user_profile.dart';
 import '../../../data/services/reading_service.dart';
 import '../controllers/auth_service.dart';
+import '../../team/models/team.dart';
+import '../../team/services/team_service.dart';
+import '../../team/services/team_test_data_seeder.dart';
+import '../../team/services/real_team_data_importer.dart';
+import '../../../core/utils/phone_helper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,8 +25,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
   final ReadingService _readingService = ReadingService();
+  final TeamService _teamService = TeamService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   UserProfile? _userProfile;
+  List<Team> _myTeams = [];
   bool _isLoading = true;
   bool _isSyncing = false;
   final _dateFormat = DateFormat('yyyy년 MM월 dd일');
@@ -100,9 +109,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserProfile() async {
     if (_authService.isAuthenticated) {
       final profile = await _userService.getUserProfile();
+      // 팀 정보 로드
+      List<Team> myTeams = [];
+      try {
+        myTeams = await _teamService.getMyTeams();
+      } catch (_) {
+        // 팀 정보 로드 실패 시 무시
+      }
       if (mounted) {
         setState(() {
           _userProfile = profile;
+          _myTeams = myTeams;
           _isLoading = false;
         });
       }
@@ -394,7 +411,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               content:
                   _verificationId == null
                       ? Text(
-                        '계정 삭제를 위해 인증이 필요합니다.\n휴대폰 번호 $_phoneNumber로 인증 코드를 전송합니다.',
+                        '계정 삭제를 위해 인증이 필요합니다.\n휴대폰 번호 ${PhoneHelper.formatForDisplay(_phoneNumber)}로 인증 코드를 전송합니다.',
                       )
                       : Column(
                         mainAxisSize: MainAxisSize.min,
@@ -578,6 +595,220 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _buildEditableRow({
+    required String label,
+    required TextStyle style,
+    required VoidCallback onEdit,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(label, style: style),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: onEdit,
+          child: const Icon(Icons.edit, size: 16, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showEditNameDialog() async {
+    final controller = TextEditingController(
+      text: _userProfile?.name ?? '',
+    );
+    final String? newName = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('이름 수정'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: '이름을 입력하세요',
+              border: OutlineInputBorder(),
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
+    if (newName != null && newName.isNotEmpty && mounted) {
+      await _userService.saveUserProfile(
+        name: newName,
+        birthDate: _userProfile?.birthDate,
+      );
+      _loadUserProfile();
+    }
+  }
+
+  Future<void> _showEditBirthDateDialog() async {
+    final controller = TextEditingController(
+      text: _userProfile?.birthDate != null
+          ? DateFormat('yyyy-MM-dd').format(_userProfile!.birthDate!)
+          : '',
+    );
+    final String? newDateStr = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('생년월일 수정'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'YYYY-MM-DD (예: 1990-01-01)',
+              border: OutlineInputBorder(),
+              helperText: 'YYYY-MM-DD 형식으로 입력',
+            ),
+            keyboardType: TextInputType.number,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
+    if (newDateStr != null && newDateStr.isNotEmpty && mounted) {
+      try {
+        final newDate = DateFormat('yyyy-MM-dd').parse(newDateStr);
+        await _userService.saveUserProfile(
+          name: _userProfile?.name ?? '',
+          birthDate: newDate,
+        );
+        _loadUserProfile();
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('올바른 날짜 형식이 아닙니다 (YYYY-MM-DD)')),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildTeamInfoCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'TEAM',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_myTeams.isNotEmpty) ...[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final team in _myTeams)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      team.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _myTeams.length == 1
+                  ? '팀장: ${_myTeams.first.leaderName}'
+                  : '팀 ${_myTeams.length}개 소속',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await Navigator.pushNamed(context, '/my-teams');
+                  _loadUserProfile();
+                },
+                icon: const Icon(Icons.group, size: 18),
+                label: const Text('팀 현황 보기'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF6B7280),
+                  side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD1D5DB),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  '아직 팀에 배정되지 않았습니다',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -608,63 +839,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: CircleAvatar(
                                 radius: 40,
                                 backgroundColor: Colors.blue.shade100,
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: Colors.blue,
+                                child: Text(
+                                  (_userProfile?.name.isNotEmpty == true)
+                                      ? _userProfile!.name[0]
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 16),
-                            if (_userProfile != null) ...[
-                              Center(
-                                child: Text(
-                                  _userProfile!.name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            // 이름 (편집 가능)
+                            _buildEditableRow(
+                              label: (_userProfile != null &&
+                                      _userProfile!.name.trim().isNotEmpty)
+                                  ? _userProfile!.name
+                                  : '이름 미설정',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              onEdit: () => _showEditNameDialog(),
+                            ),
+                            const SizedBox(height: 8),
+                            // 전화번호
+                            Center(
+                              child: Text(
+                                PhoneHelper.formatForDisplay(
+                                  _userProfile?.phoneNumber ??
+                                      _auth.currentUser?.phoneNumber,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Center(
-                                child: Text(
-                                  _userProfile!.phoneNumber,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                  ),
-                                ),
+                            ),
+                            const SizedBox(height: 8),
+                            // 생년월일 (편집 가능)
+                            _buildEditableRow(
+                              label: _userProfile?.birthDate != null
+                                  ? '생년월일: ${DateFormat('yyyy년 MM월 dd일').format(_userProfile!.birthDate!)}'
+                                  : '생년월일: 미설정',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
                               ),
-                              const SizedBox(height: 8),
-                              Center(
-                                child: Text(
-                                  _userProfile!.birthDate != null
-                                      ? '생년월일: ${DateFormat('yyyy년 MM월 dd일').format(_userProfile!.birthDate!)}'
-                                      : '생년월일: 미설정',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ] else ...[
-                              const Center(
-                                child: Text(
-                                  '프로필 정보가 없습니다',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              onEdit: () => _showEditBirthDateDialog(),
+                            ),
                           ],
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // 팀 정보 카드
+                    if (_authService.isAuthenticated) _buildTeamInfoCard(),
+
+                    const SizedBox(height: 16),
 
                     // 데이터 동기화 설정 카드
                     Card(
@@ -782,9 +1018,339 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: _login,
                       ),
                     ],
+
+                    // ─────────────────────────────────────────────
+                    // ⚠️ DEBUG ONLY – 팀 테스트 데이터 시드 섹션
+                    // kDebugMode가 false이면 이 블록은 아예 렌더링되지 않습니다.
+                    // 삭제 시점: 팀 기능 QA 완료 후
+                    // ─────────────────────────────────────────────
+                    if (kDebugMode && _authService.isAuthenticated)
+                      _buildDebugSeedSection(),
                   ],
                 ),
               ),
     );
+  }
+
+  // ===========================================================================
+  // ⚠️ DEBUG ONLY – 테스트 데이터 생성/삭제 UI
+  // ===========================================================================
+
+  Widget _buildDebugSeedSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange.shade200),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.bug_report, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'DEBUG – 팀 테스트 데이터',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // ⚠️ 임시 – 실제 2026 팀 데이터 임포트 (Excel → JSON → Firestore)
+        OutlinedButton.icon(
+          icon: const Icon(Icons.upload_file, size: 18),
+          label: const Text('실제 팀 데이터 임포트 (2026)'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.blue.shade700,
+            side: BorderSide(color: Colors.blue.shade300),
+          ),
+          onPressed: _importRealTeamData,
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.add_circle_outline, size: 18),
+          label: const Text('수동 추가 팀만 임포트 (manualAdd)'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.teal.shade700,
+            side: BorderSide(color: Colors.teal.shade300),
+          ),
+          onPressed: _importManualTeams,
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.delete_sweep, size: 18),
+          label: const Text('2026 팀 전체 삭제 (임포트 초기화)'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red.shade700,
+            side: BorderSide(color: Colors.red.shade300),
+          ),
+          onPressed: _deleteAll2026Teams,
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '⚠️ 이 섹션은 디버그 빌드에서만 표시됩니다.',
+          style: TextStyle(fontSize: 11, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _seedTestData() async {
+    final seeder = TeamTestDataSeeder();
+    try {
+      final bool exists = await seeder.hasTestData();
+      if (exists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
+            ),
+          );
+        }
+        return;
+      }
+      await seeder.seedTestData();
+      // 프로필 새로고침 (팀 정보 반영)
+      await _loadUserProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ 테스트 팀 데이터가 생성되었습니다.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('시드 생성 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeTestData() async {
+    final seeder = TeamTestDataSeeder();
+    try {
+      await seeder.removeTestData();
+      // 프로필 새로고침
+      await _loadUserProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🗑️ 테스트 데이터가 삭제되었습니다.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('시드 삭제 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _seedComplexTestData() async {
+    final seeder = TeamTestDataSeeder();
+    try {
+      final bool exists = await seeder.hasComplexTestData();
+      if (exists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('복합 테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
+            ),
+          );
+        }
+        return;
+      }
+      await seeder.seedComplexTestData();
+      await _loadUserProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ 복합 케이스 테스트 데이터가 생성되었습니다.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('복합 시드 생성 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importRealTeamData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('실제 팀 데이터 임포트'),
+        content: const Text(
+          'assets/data/teams_2026.json 파일의 데이터를 Firestore에 반영합니다.\n\n'
+          '• 팀장/팀원 이름으로 users 컬렉션 매칭\n'
+          '• 2026년 팀 및 member_year_profiles 생성\n\n'
+          '이미 2026 팀이 있으면 중복 생성될 수 있습니다. 진행할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('임포트'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final importer = RealTeamDataImporter();
+      final result = await importer.importFromAssets();
+      await _loadUserProfile();
+
+      if (!mounted) return;
+      final message = result.errors.isEmpty
+          ? '✅ ${result.summary}'
+          : '${result.summary}\n\n미매칭: ${result.errors.take(5).join(", ")}${result.errors.length > 5 ? " 외 ${result.errors.length - 5}건" : ""}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('임포트 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importManualTeams() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('수동 추가 팀 임포트'),
+        content: const Text(
+          'teams_2026.json 에서 manualAdd: true 항목만 Firestore에 추가합니다.\n\n'
+          '기존 팀은 삭제되지 않습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('임포트'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final importer = RealTeamDataImporter();
+      final result = await importer.importManualEntriesFromAssets();
+      if (!mounted) return;
+      final message = result.errors.isEmpty
+          ? '✅ ${result.summary}'
+          : '${result.summary}\n\n미매칭: ${result.errors.take(5).join(", ")}${result.errors.length > 5 ? " 외 ${result.errors.length - 5}건" : ""}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 5)),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('임포트 실패: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteAll2026Teams() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('2026 팀 전체 삭제'),
+        content: const Text(
+          'teams 컬렉션의 2026년 팀을 모두 삭제하고,\n'
+          'member_year_profiles/2026/users 의 teamIds 필드를 초기화합니다.\n\n'
+          '임포트를 다시 실행하기 전에 이 작업을 수행하세요.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // 1) teams 컬렉션에서 year=2026, churchId=somang 팀 전체 삭제
+      final teamsSnap = await firestore
+          .collection('teams')
+          .where('year', isEqualTo: 2026)
+          .where('churchId', isEqualTo: 'somang')
+          .get();
+
+      final batch1 = firestore.batch();
+      for (final doc in teamsSnap.docs) {
+        batch1.delete(doc.reference);
+      }
+      await batch1.commit();
+
+      // 2) member_year_profiles/2026/users 의 teamIds 필드 제거
+      final profilesSnap = await firestore
+          .collection('member_year_profiles')
+          .doc('2026')
+          .collection('users')
+          .get();
+
+      // Firestore batch는 500건 제한 — 500건씩 나눠서 처리
+      const batchSize = 400;
+      for (int i = 0; i < profilesSnap.docs.length; i += batchSize) {
+        final chunk = profilesSnap.docs.skip(i).take(batchSize).toList();
+        final batch = firestore.batch();
+        for (final doc in chunk) {
+          batch.update(doc.reference, {'teamIds': FieldValue.delete()});
+        }
+        await batch.commit();
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ 팀 ${teamsSnap.docs.length}개 삭제 완료, '
+            '프로필 ${profilesSnap.docs.length}건 초기화 완료',
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('삭제 실패: $e')),
+        );
+      }
+    }
   }
 }

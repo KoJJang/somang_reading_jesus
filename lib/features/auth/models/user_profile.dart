@@ -42,6 +42,27 @@ class UserProfile {
     return DateTime.now();
   }
 
+  static DateTime? _parseBirthDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  static bool _parseBool(dynamic value, {bool defaultValue = false}) {
+    if (value == null) return defaultValue;
+    if (value is bool) return value;
+    if (value is String) return value.toLowerCase() == 'true';
+    return defaultValue;
+  }
+
   static UserRole _parseRole(dynamic value) {
     final String raw = (value ?? '').toString();
     if (raw == 'admin') return UserRole.admin;
@@ -62,22 +83,23 @@ class UserProfile {
 
   // Firestore에서 데이터를 가져올 때 사용하는 팩토리 생성자
   factory UserProfile.fromMap(Map<String, dynamic> map) {
-    // birthDate가 없을 수 있으므로 조건부로 처리
     final birthDateValue = map['birthDate'];
-    final DateTime? birthDate =
-        birthDateValue != null ? (birthDateValue as Timestamp).toDate() : null;
+    final DateTime? birthDate = _parseBirthDate(birthDateValue);
+
+    final String name = (map['name'] ?? map['displayName'] ?? map['userName'] ?? '').toString().trim();
+    final String phone = (map['phoneNumber'] ?? map['phone'] ?? '').toString();
 
     return UserProfile(
-      uid: map['uid'] ?? '',
-      phoneNumber: map['phoneNumber'] ?? '',
-      name: map['name'] ?? '',
+      uid: (map['uid'] ?? '').toString(),
+      phoneNumber: phone,
+      name: name,
       birthDate: birthDate,
-      isTestUser: map['isTestUser'] ?? false,
+      isTestUser: _parseBool(map['isTestUser']),
       churchId: map['churchId'] ?? 'somang',
       affiliation: map['affiliation'],
       role: _parseRole(map['role']),
       memo: map['memo'],
-      isActive: map['isActive'] ?? true,
+      isActive: _parseBool(map['isActive'], defaultValue: true),
       createdAt: _parseTimestampOrNow(map['createdAt']),
       updatedAt: _parseTimestampOrNow(map['updatedAt']),
     );

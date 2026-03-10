@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/screens/phone_auth_screen.dart';
 import '../auth/screens/profile_screen.dart';
 import '../auth/controllers/user_service.dart';
+import '../../core/utils/phone_helper.dart';
 
 class AppLayout extends StatefulWidget {
   final Widget child;
@@ -26,6 +27,10 @@ class _AppLayoutState extends State<AppLayout> {
     _isAuthenticated = _auth.currentUser != null;
     _authStateStream = _auth.authStateChanges();
     _authStateStream.listen(_onAuthStateChanged);
+    // 이미 인증된 상태로 앱이 시작된 경우 이름 로드
+    if (_isAuthenticated) {
+      _loadDisplayName();
+    }
   }
 
   void _onAuthStateChanged(User? user) {
@@ -116,10 +121,13 @@ class _AppLayoutState extends State<AppLayout> {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
-              onTap: () {
+              onTap: () async {
                 // Show profile or navigate to authentication screen based on auth status
                 if (_isAuthenticated) {
-                  _showProfileMenu(context);
+                  await _loadDisplayName();
+                  if (context.mounted) {
+                    _showProfileMenu(context);
+                  }
                 } else {
                   Navigator.push(
                     context,
@@ -199,7 +207,9 @@ class _AppLayoutState extends State<AppLayout> {
                             ),
                           ),
                           Text(
-                            '${_auth.currentUser?.phoneNumber ?? ""}',
+                            PhoneHelper.formatForDisplay(
+                              _auth.currentUser?.phoneNumber,
+                            ),
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],

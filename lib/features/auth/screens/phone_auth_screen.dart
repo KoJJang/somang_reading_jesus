@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reading_jesus_somang/core/constants/theme.dart';
 import '../controllers/user_service.dart';
 import '../../../core/utils/logger_util.dart';
+import '../../../core/utils/phone_helper.dart';
 import '../controllers/auth_service.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
@@ -64,11 +65,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       // 프로필이 없는 경우 인증 상태 유지
       if (!hasProfile) {
         LoggerUtil.info('프로필이 없는 인증 상태 감지: ${_auth.currentUser?.uid}');
-        // 전화번호가 있으면 표시
+        // 전화번호가 있으면 표시 (010-XXXX-XXXX 형식)
         if (_auth.currentUser?.phoneNumber != null) {
           setState(() {
-            _phoneController.text = _auth.currentUser!.phoneNumber!
-                .replaceFirst('+82', '');
+            _phoneController.text = PhoneHelper.formatForDisplay(
+              _auth.currentUser!.phoneNumber,
+            );
             _phoneVerified = true;
             _smsVerified = true;
           });
