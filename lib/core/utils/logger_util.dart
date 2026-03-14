@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -40,7 +41,7 @@ class LoggerUtil {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color(0xFFDC2626),
+        backgroundColor: AppColors.errorDark,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

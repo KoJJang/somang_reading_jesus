@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../features/services/reading_plan_service.dart';
@@ -154,7 +155,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
         //   style: TextStyle(
         //     fontSize: 18,
         //     fontWeight: FontWeight.w500,
-        //     color: Color(0xFF111827),
+        //     color: AppColors.textPrimary,
         //   ),
         // ),
         Container(
@@ -193,8 +194,8 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                               fontWeight: FontWeight.w600,
                               color:
                                   _currentWeek == 0
-                                      ? const Color(0xFF6B7280)
-                                      : const Color(0xFF4F46E5),
+                                      ? AppColors.textSecondary
+                                      : AppColors.primary,
                             ),
                           ),
                           if (_currentWeek != 0)
@@ -205,8 +206,8 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                                 fontWeight: FontWeight.w600,
                                 color:
                                     progressPercent == 100
-                                        ? const Color(0xFF059669)
-                                        : const Color(0xFF111827),
+                                        ? AppColors.completed
+                                        : AppColors.textPrimary,
                               ),
                             ),
                         ],
@@ -217,14 +218,14 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE5E7EB),
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child:
                             _currentWeek == 0
                                 ? Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFD1D5DB),
+                                    color: AppColors.disabled,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                 )
@@ -236,10 +237,10 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: [
-                                              const Color(0xFF4F46E5),
+                                              AppColors.primary,
                                               progressPercent == 100
-                                                  ? const Color(0xFF059669)
-                                                  : const Color(0xFF818CF8),
+                                                  ? AppColors.completed
+                                                  : AppColors.accent,
                                             ],
                                             begin: Alignment.centerLeft,
                                             end: Alignment.centerRight,
@@ -290,7 +291,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                             '이번 주는 편안한 휴식을 취하세요',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFF6B7280),
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         )
@@ -302,7 +303,7 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                               '현재 ',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF6B7280),
+                                color: AppColors.textSecondary,
                               ),
                             ),
                             Text(
@@ -310,14 +311,14 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF4F46E5),
+                                color: AppColors.primary,
                               ),
                             ),
                             Text(
                               ' / $_totalDaysThisWeek일 완료',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF6B7280),
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],
@@ -339,20 +340,20 @@ class WeeklyProgressCardState extends State<WeeklyProgressCard> {
 
     // 휴식 주간인 경우 모든 요일을 동일한 회색으로 표시
     if (_currentWeek == 0) {
-      bgColor = const Color(0xFFF3F4F6);
-      textColor = const Color(0xFF9CA3AF);
+      bgColor = AppColors.surfaceGray;
+      textColor = AppColors.textTertiary;
     } else if (!isActive) {
       // 아직 요일이 오지 않음 (미래)
-      bgColor = const Color(0xFFF3F4F6);
-      textColor = const Color(0xFF9CA3AF);
+      bgColor = AppColors.surfaceGray;
+      textColor = AppColors.textTertiary;
     } else if (isCompleted) {
       // 완료됨
-      bgColor = const Color(0xFFDCFCE7);
-      textColor = const Color(0xFF059669);
+      bgColor = AppColors.completedSubtle;
+      textColor = AppColors.completed;
     } else {
       // 완료되지 않음 (빨간색에서 노란색으로 변경)
-      bgColor = const Color(0xFFFFFBEB);
-      textColor = const Color(0xFFF59E0B);
+      bgColor = AppColors.warningLight;
+      textColor = AppColors.warning;
     }
 
     return Column(

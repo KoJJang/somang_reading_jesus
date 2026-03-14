@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../widgets/reading_card.dart';
 import '../widgets/daily_plan.dart';
@@ -98,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),

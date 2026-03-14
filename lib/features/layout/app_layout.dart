@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/screens/phone_auth_screen.dart';
@@ -66,7 +67,7 @@ class _AppLayoutState extends State<AppLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FF),
+      backgroundColor: AppColors.primaryLight,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -97,7 +98,7 @@ class _AppLayoutState extends State<AppLayout> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827),
+                  color: AppColors.textPrimary,
                   fontFamily: 'Pretendard',
                 ),
               ),
