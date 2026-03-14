@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 헬퍼 함수 ──────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // 현재 사용자가 팀장인지 확인 (scheduleYear 고정 — 규칙에서 동적 연도 불가)
+    function isTeamLeader(year) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/member_year_profiles/$(year)/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/member_year_profiles/$(year)/users/$(request.auth.uid)).data.isTeamLeader == true;
+    }
+
+    // ── users 컬렉션 ───────────────────────────────────────────
+    match /users/{uid} {
+      // 인증된 사용자는 전체 읽기 (팀원 이름/프로필 표시 필요)
+      allow read: if isAuth();
+      // 본인만 수정 가능
+      allow write: if isOwner(uid);
+
+      // 읽기 기록 completions
+      match /completions/{docId} {
+        allow read: if isAuth();
+        // 본인 또는 팀장이 쓸 수 있음 (팀장의 팀원 대리 완료 처리)
+        allow write: if isOwner(uid) || isTeamLeader('2026');
+      }
+
+      // 연도별 통계
+      match /stats/{year} {
+        allow read: if isAuth();
+        allow write: if isOwner(uid) || isTeamLeader(year);
+      }
+    }
+
+    // ── 팀 컬렉션 ──────────────────────────────────────────────
+    match /teams/{teamId} {
+      // 인증된 사용자 전체 읽기
+      allow read: if isAuth();
+      // 팀 생성/수정: 팀장만 (또는 임포터 — kDebugMode 에서만 실행)
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.leaderUid == request.auth.uid;
+      allow delete: if false; // 앱에서 직접 삭제 불가
+    }
+
+    // ── 연도별 멤버 프로필 ─────────────────────────────────────
+    match /member_year_profiles/{year}/users/{uid} {
+      allow read: if isAuth();
+      // 본인 또는 팀장만 수정 (임포터는 kDebugMode 에서 실행)
+      allow write: if isOwner(uid) || isTeamLeader(year);
+    }
+
+    // ── 읽기 계획 (콘텐츠) ────────────────────────────────────
+    match /reading_plans/{document=**} {
+      allow read: if isAuth();
+      allow write: if false; // 관리자 콘솔에서만 수정
+    }
+
+    // ── 기타 모든 경로: 기본 거부 ─────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
