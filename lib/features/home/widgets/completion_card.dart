@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../data/services/reading_service.dart';
 import '../../../data/models/reading_completion.dart';
@@ -127,7 +128,7 @@ class _CompletionCardState extends State<CompletionCard> {
           const SnackBar(
             content: Text('오늘의 말씀을 완료했습니다!'),
             duration: Duration(milliseconds: 1500),
-            backgroundColor: Color(0xFF059669),
+            backgroundColor: AppColors.completed,
           ),
         );
       }
@@ -183,15 +184,15 @@ class _CompletionCardState extends State<CompletionCard> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
+                color: AppColors.completedSubtle,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.check_circle_outline,
                 color:
                     _isCompletedToday
-                        ? const Color(0xFF059669)
-                        : const Color(0xFF22C55E),
+                        ? AppColors.completed
+                        : AppColors.completed,
                 size: 20,
               ),
             ),
@@ -202,7 +203,7 @@ class _CompletionCardState extends State<CompletionCard> {
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color:
-                    _isCompletedToday ? const Color(0xFF059669) : Colors.black,
+                    _isCompletedToday ? AppColors.completed : Colors.black,
               ),
             ),
             const SizedBox(height: 4),

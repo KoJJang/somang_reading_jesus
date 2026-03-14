@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 class AppTheme {
-  // 메인 색상
-  static const Color primaryColor = Color(0xFF4F46E5); // 인디고 색상
-  static const Color secondaryColor = Color(0xFF6366F1); // 보조 색상
-  static const Color accentColor = Color(0xFF818CF8); // 강조 색상
+  // ── 색상은 AppColors 에서 참조 (직접 정의 금지) ───────────────
+  static const Color primaryColor = AppColors.primary;
+  static const Color secondaryColor = AppColors.primaryMuted;
+  static const Color accentColor = AppColors.accent;
+  static const Color textPrimaryColor = AppColors.textPrimary;
+  static const Color textSecondaryColor = AppColors.textSecondary;
+  static const Color textLightColor = AppColors.textTertiary;
+  static const Color errorColor = AppColors.error;
+  static const Color successColor = AppColors.completed;
+  static const Color warningColor = AppColors.warning;
+  static const Color infoColor = AppColors.info;
 
-  // 배경 색상
-  static const Color backgroundColor = Colors.white;
-  static const Color scaffoldBackgroundColor = Color(0xFFF9FAFB);
-
-  // 텍스트 색상
-  static const Color textPrimaryColor = Color(0xFF1F2937);
-  static const Color textSecondaryColor = Color(0xFF4B5563);
-  static const Color textLightColor = Color(0xFF9CA3AF);
-
-  // 기타 색상
-  static const Color errorColor = Color(0xFFEF4444);
-  static const Color successColor = Color(0xFF10B981);
-  static const Color warningColor = Color(0xFFF59E0B);
-  static const Color infoColor = Color(0xFF3B82F6);
-
-  // 알파벳 아이콘에 사용되는 색상
+  // 알파벳 아이콘 색상 팔레트 (UI용 고정값)
   static final List<Color> alphabetColors = [
     const Color(0xFFEF4444), // Red
     const Color(0xFFF97316), // Orange
@@ -35,32 +28,32 @@ class AppTheme {
     const Color(0xFFEC4899), // Pink
   ];
 
-  // 테마 데이터
+  // ── ThemeData ─────────────────────────────────────────────────
   static ThemeData themeData = ThemeData(
     useMaterial3: true,
-    primaryColor: primaryColor,
-    primarySwatch: createMaterialColor(primaryColor),
+    primaryColor: AppColors.primary,
+    primarySwatch: createMaterialColor(AppColors.primary),
     colorScheme: ColorScheme.light(
-      primary: primaryColor,
-      secondary: secondaryColor,
-      error: errorColor,
+      primary: AppColors.primary,
+      secondary: AppColors.primaryMuted,
+      error: AppColors.error,
     ),
-    scaffoldBackgroundColor: scaffoldBackgroundColor,
+    scaffoldBackgroundColor: AppColors.background,
     appBarTheme: const AppBarTheme(
-      backgroundColor: backgroundColor,
-      foregroundColor: textPrimaryColor,
+      backgroundColor: AppColors.background,
+      foregroundColor: AppColors.textPrimary,
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color: textPrimaryColor),
+      iconTheme: IconThemeData(color: AppColors.textPrimary),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: backgroundColor,
-      selectedItemColor: primaryColor,
-      unselectedItemColor: textLightColor,
+      backgroundColor: Colors.white,
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: AppColors.textTertiary,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 2,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -69,14 +62,14 @@ class AppTheme {
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: primaryColor,
+        foregroundColor: AppColors.primary,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: primaryColor,
-        side: BorderSide(color: primaryColor),
+        foregroundColor: AppColors.primary,
+        side: const BorderSide(color: AppColors.primary),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
@@ -87,28 +80,28 @@ class AppTheme {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor, width: 2),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: errorColor),
+        borderSide: const BorderSide(color: AppColors.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: errorColor, width: 2),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
-      labelStyle: TextStyle(color: textSecondaryColor),
-      helperStyle: TextStyle(color: textLightColor),
-      prefixIconColor: primaryColor,
-      suffixIconColor: primaryColor,
+      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      helperStyle: const TextStyle(color: AppColors.textTertiary),
+      prefixIconColor: AppColors.primary,
+      suffixIconColor: AppColors.primary,
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
@@ -117,82 +110,51 @@ class AppTheme {
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
     ),
     dividerTheme: const DividerThemeData(
-      color: Color(0xFFE5E7EB),
+      color: AppColors.border,
       thickness: 1,
       space: 24,
     ),
     progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: primaryColor,
+      color: AppColors.primary,
     ),
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: textPrimaryColor,
+      backgroundColor: AppColors.textPrimary,
       contentTextStyle: const TextStyle(color: Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
-      ),
-      headlineMedium: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
-      ),
-      headlineSmall: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
-      ),
-      titleLarge: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: textPrimaryColor,
-      ),
-      titleMedium: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: textPrimaryColor,
-      ),
-      titleSmall: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: textPrimaryColor,
-      ),
-      bodyLarge: TextStyle(fontSize: 16, color: textPrimaryColor),
-      bodyMedium: TextStyle(fontSize: 14, color: textPrimaryColor),
-      bodySmall: TextStyle(fontSize: 12, color: textSecondaryColor),
+      headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+      headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+      titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+      titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      bodyLarge: TextStyle(fontSize: 16, color: AppColors.textPrimary),
+      bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimary),
+      bodySmall: TextStyle(fontSize: 12, color: AppColors.textSecondary),
     ),
     checkboxTheme: CheckboxThemeData(
-      fillColor: MaterialStateProperty.resolveWith<Color>((
-        Set<MaterialState> states,
-      ) {
-        if (states.contains(MaterialState.selected)) {
-          return primaryColor;
-        }
+      fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+        if (states.contains(WidgetState.selected)) return AppColors.primary;
         return Colors.transparent;
       }),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      side: const BorderSide(width: 1.5, color: Color(0xFFD1D5DB)),
+      side: const BorderSide(width: 1.5, color: AppColors.disabled),
     ),
   );
 
-  // MaterialColor 생성 함수
   static MaterialColor createMaterialColor(Color color) {
-    List<double> strengths = <double>[.05, .1, .2, .3, .4, .5, .6, .7, .8, .9];
-    Map<int, Color> swatch = <int, Color>{};
-    final int r = color.red, g = color.green, b = color.blue;
-
+    final swatch = <int, Color>{};
+    final r = color.red, g = color.green, b = color.blue;
     for (int i = 0; i < 10; i++) {
-      swatch[(strengths[i] * 1000).round()] = Color.fromRGBO(
-        r + ((255 - r) * i / 10).round(),
-        g + ((255 - g) * i / 10).round(),
-        b + ((255 - b) * i / 10).round(),
+      final strength = (i + 1) / 10;
+      swatch[(strength * 1000).round()] = Color.fromRGBO(
+        r + ((255 - r) * (1 - strength)).round(),
+        g + ((255 - g) * (1 - strength)).round(),
+        b + ((255 - b) * (1 - strength)).round(),
         1,
       );
     }
-
     return MaterialColor(color.value, swatch);
   }
 }

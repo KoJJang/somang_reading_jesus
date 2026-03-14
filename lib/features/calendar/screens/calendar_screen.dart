@@ -308,7 +308,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               '${DateFormat('MM월 dd일').format(_selectedDay!)} 말씀을 완료했습니다!',
             ),
             duration: const Duration(milliseconds: 1500),
-            backgroundColor: const Color(0xFF059669),
+            backgroundColor: AppColors.completed,
           ),
         );
       }
@@ -473,7 +473,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         ? Colors.red
                                         : day.weekday == DateTime.saturday
                                         ? Colors.blue
-                                        : const Color(0xFF111827),
+                                        : AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -580,7 +580,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   : Colors.amber[50],
           border:
               isSelected
-                  ? Border.all(color: const Color(0xFF4F46E5), width: 1.5)
+                  ? Border.all(color: AppColors.primary, width: 1.5)
                   : null,
         ),
         child: Center(
@@ -589,10 +589,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
             style: TextStyle(
               color:
                   isSelected
-                      ? const Color(0xFF4F46E5)
+                      ? AppColors.primary
                       : isCompleted
-                      ? const Color(0xFF059669)
-                      : const Color(0xFF111827),
+                      ? AppColors.completed
+                      : AppColors.textPrimary,
               fontWeight: isCompleted || isSelected ? FontWeight.bold : null,
               fontSize: 14,
             ),
@@ -646,7 +646,7 @@ class _SelectedDayActions extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
+                  color: AppColors.textPrimary,
                 ),
               ),
               FutureBuilder(
@@ -660,7 +660,7 @@ class _SelectedDayActions extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5).withOpacity(0.1),
+                        color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -668,7 +668,7 @@ class _SelectedDayActions extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF4F46E5),
+                          color: AppColors.primary,
                         ),
                       ),
                     );
@@ -743,8 +743,8 @@ class _SelectedDayActions extends StatelessWidget {
                           : Icons.check_circle_outline,
                   iconColor:
                       isCompleted
-                          ? const Color(0xFF059669)
-                          : const Color(0xFF6B7280),
+                          ? AppColors.completed
+                          : AppColors.textSecondary,
                   iconBackground:
                       isCompleted
                           ? Colors.green.withOpacity(0.1)
@@ -854,14 +854,14 @@ class _ActionButton extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF111827),
+                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -974,7 +974,7 @@ class _BreakWeekMessage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
+                  color: AppColors.textSecondary,
                 ),
               ),
               Container(
@@ -983,7 +983,7 @@ class _BreakWeekMessage extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
+                  color: AppColors.surfaceGray,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -991,7 +991,7 @@ class _BreakWeekMessage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF6B7280),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -1000,7 +1000,7 @@ class _BreakWeekMessage extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             '이번 주는 편안한 휴식을 취하세요',
-            style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 14, color: AppColors.textTertiary),
           ),
         ],
       ),

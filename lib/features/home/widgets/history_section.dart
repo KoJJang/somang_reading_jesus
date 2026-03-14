@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class HistorySection extends StatelessWidget {
@@ -19,7 +20,7 @@ class HistorySection extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF111827),
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -44,14 +45,14 @@ class HistorySection extends StatelessWidget {
                       const Icon(
                         Icons.history,
                         size: 20,
-                        color: Color(0xFF9CA3AF),
+                        color: AppColors.textTertiary,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         item['title']!,
                         style: const TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF111827),
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -60,7 +61,7 @@ class HistorySection extends StatelessWidget {
                     item['time']!,
                     style: const TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF6B7280),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

@@ -1,3 +1,4 @@
+import 'package:reading_jesus_somang/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class ScheduleCard extends StatelessWidget {
@@ -22,12 +23,12 @@ class ScheduleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: AppColors.warningLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.calendar_today,
-                color: Color(0xFFFCD34D),
+                color: AppColors.pending,
                 size: 20,
               ),
             ),
