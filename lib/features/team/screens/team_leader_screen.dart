@@ -162,7 +162,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
@@ -201,10 +201,10 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: allDone ? const Color(0xFFF0FDF4) : Colors.white,
+        color: allDone ? AppColors.completedLight : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: allDone ? const Color(0xFFBBF7D0) : const Color(0xFFE5E7EB),
+          color: allDone ? AppColors.completedBorder : AppColors.border,
         ),
       ),
       child: Column(
@@ -216,7 +216,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: allDone
-                  ? const Color(0xFF059669)
+                  ? AppColors.completed
                   : AppColors.textTertiary,
               letterSpacing: 0.5,
             ),
@@ -232,7 +232,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                   fontSize: 44,
                   fontWeight: FontWeight.w800,
                   color: allDone
-                      ? const Color(0xFF059669)
+                      ? AppColors.completed
                       : AppColors.textPrimary,
                   height: 1,
                   letterSpacing: -1,
@@ -255,9 +255,9 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
             child: LinearProgressIndicator(
               value: rate,
               minHeight: 6,
-              backgroundColor: const Color(0xFFF3F4F6),
+              backgroundColor: AppColors.surfaceGray,
               valueColor: AlwaysStoppedAnimation<Color>(
-                allDone ? const Color(0xFF059669) : AppColors.primary,
+                allDone ? AppColors.completed : AppColors.primary,
               ),
             ),
           ),
@@ -276,10 +276,10 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: done ? const Color(0xFFF0FDF4) : Colors.white,
+        color: done ? AppColors.completedLight : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: done ? const Color(0xFFBBF7D0) : const Color(0xFFE5E7EB),
+          color: done ? AppColors.completedBorder : AppColors.border,
         ),
       ),
       child: InkWell(
@@ -296,7 +296,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                 radius: 18,
                 backgroundColor:
                     done
-                        ? const Color(0xFFD1FAE5)
+                        ? AppColors.completedSubtle
                         : AppColors.primary.withValues(alpha: 0.1),
                 child:
                     member.isTeamLeader
@@ -304,7 +304,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                           Icons.star_rounded,
                           size: 16,
                           color:
-                              done ? const Color(0xFF059669) : AppColors.primary,
+                              done ? AppColors.completed : AppColors.primary,
                         )
                         : Text(
                           member.name.isNotEmpty ? member.name[0] : '?',
@@ -313,7 +313,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                             fontWeight: FontWeight.w700,
                             color:
                                 done
-                                    ? const Color(0xFF059669)
+                                    ? AppColors.completed
                                     : AppColors.primary,
                           ),
                         ),
@@ -418,13 +418,13 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
             shape: BoxShape.circle,
             color: isDone
                 ? (allDone
-                    ? const Color(0xFFD1FAE5)
+                    ? AppColors.completedSubtle
                     : AppColors.primaryLighter)
                 : isFuture
-                    ? const Color(0xFFF3F4F6)
+                    ? AppColors.surfaceGray
                     : Colors.transparent,
             border: (!isDone && !isFuture)
-                ? Border.all(color: const Color(0xFFE5E7EB), width: 1.5)
+                ? Border.all(color: AppColors.border, width: 1.5)
                 : null,
           ),
           child: Center(
@@ -435,11 +435,11 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                 fontWeight: FontWeight.w600,
                 color: isDone
                     ? (allDone
-                        ? const Color(0xFF059669)
+                        ? AppColors.completed
                         : AppColors.primary)
                     : isFuture
-                        ? const Color(0xFFD1D5DB)
-                        : const Color(0xFF9CA3AF),
+                        ? AppColors.disabled
+                        : AppColors.textTertiary,
               ),
             ),
           ),
@@ -518,7 +518,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                         width: 36,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD1D5DB),
+                          color: AppColors.disabled,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -569,7 +569,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                    const Divider(height: 1, color: AppColors.surfaceGray),
                     const SizedBox(height: 14),
                     const Text(
                       '이번 주 진행상황',
@@ -720,16 +720,16 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
           decoration: BoxDecoration(
             color:
                 isFuture
-                    ? const Color(0xFFF9FAFB)
+                    ? AppColors.background
                     : detail.isCompleted
-                    ? const Color(0xFFF0FDF4)
+                    ? AppColors.completedLight
                     : Colors.white,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
               color:
                   detail.isCompleted
-                      ? const Color(0xFFBBF7D0)
-                      : const Color(0xFFE5E7EB),
+                      ? AppColors.completedBorder
+                      : AppColors.border,
             ),
           ),
           child: Row(
@@ -742,9 +742,9 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                   shape: BoxShape.circle,
                   color:
                       isFuture
-                          ? const Color(0xFFF3F4F6)
+                          ? AppColors.surfaceGray
                           : detail.isCompleted
-                          ? const Color(0xFFD1FAE5)
+                          ? AppColors.completedSubtle
                           : AppColors.primary.withValues(alpha: 0.08),
                 ),
                 alignment: Alignment.center,
@@ -757,7 +757,7 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                         isFuture
                             ? AppColors.textTertiary
                             : detail.isCompleted
-                            ? const Color(0xFF059669)
+                            ? AppColors.completed
                             : AppColors.textPrimary,
                   ),
                 ),
@@ -789,8 +789,8 @@ class _TeamLeaderScreenState extends State<TeamLeaderScreen> {
                       : Icons.radio_button_unchecked,
                   color:
                       detail.isCompleted
-                          ? const Color(0xFF059669)
-                          : const Color(0xFFD1D5DB),
+                          ? AppColors.completed
+                          : AppColors.disabled,
                   size: 22,
                 ),
             ],

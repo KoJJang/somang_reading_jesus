@@ -709,7 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -721,7 +721,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0,
-              color: Color(0xFF9CA3AF),
+              color: AppColors.textTertiary,
             ),
           ),
           const SizedBox(height: 12),
@@ -737,7 +737,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -745,7 +745,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF6366F1),
+                        color: AppColors.primaryMuted,
                       ),
                     ),
                   ),
@@ -758,7 +758,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   : '팀 ${_myTeams.length}개 소속',
               style: const TextStyle(
                 fontSize: 12,
-                color: Color(0xFF9CA3AF),
+                color: AppColors.textTertiary,
               ),
             ),
             const SizedBox(height: 16),
@@ -772,8 +772,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.group, size: 18),
                 label: const Text('팀 현황 보기'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF6B7280),
-                  side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  foregroundColor: AppColors.textSecondary,
+                  side: const BorderSide(color: AppColors.border),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -792,14 +792,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFD1D5DB),
+                    color: AppColors.disabled,
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 8),
                 const Text(
                   '아직 팀에 배정되지 않았습니다',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
               ],
             ),

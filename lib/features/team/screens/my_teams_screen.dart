@@ -132,7 +132,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: AppColors.border),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
@@ -191,7 +191,7 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.border),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         child: Row(
@@ -251,10 +251,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                             child: LinearProgressIndicator(
                               value: rate,
                               minHeight: 5,
-                              backgroundColor: const Color(0xFFF3F4F6),
+                              backgroundColor: AppColors.surfaceGray,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 rate == 1.0
-                                    ? const Color(0xFF059669)
+                                    ? AppColors.completed
                                     : AppColors.primary,
                               ),
                             ),
