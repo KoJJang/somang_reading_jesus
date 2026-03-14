@@ -16,9 +16,20 @@ class AppColors {
   static const Color cardBackground = Colors.white;
   static const Color errorBackground = Color(0xFFDC2626);
 
+  // Border / Surface Colors
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color surfaceGray = Color(0xFFF3F4F6);
+  static const Color disabled = Color(0xFFD1D5DB);
+
   // Status Colors
   static const Color completed = Color(0xFF059669);
+  static const Color completedLight = Color(0xFFF0FDF4);
+  static const Color completedBorder = Color(0xFFBBF7D0);
+  static const Color completedSubtle = Color(0xFFD1FAE5);
   static const Color pending = Color(0xFFFCD34D);
+
+  // Primary Muted (softer indigo for tags/labels)
+  static const Color primaryMuted = Color(0xFF6366F1);
 
   // Calendar Colors
   static const Color sundayText = Colors.red;

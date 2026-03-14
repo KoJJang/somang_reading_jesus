@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../features/services/reading_plan_service.dart';
 import '../../../features/services/models/reading_plan.dart';
 import '../../../data/services/reading_service.dart';
@@ -15,7 +16,15 @@ import '../../../core/utils/date_helper.dart';
 import '../../../core/widgets/explanation_image_dialog.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  /// 다른 유저의 캘린더를 보려면 이 값을 설정합니다. (팀장 → 팀원 캘린더 보기)
+  final String? viewingUserId;
+  final String? viewingUserName;
+
+  const CalendarScreen({
+    super.key,
+    this.viewingUserId,
+    this.viewingUserName,
+  });
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -36,6 +45,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _isLoading = false;
   final _readingService = ReadingService();
   late int _viewYear;
+
+  /// 다른 유저 캘린더를 보는 모드인지 여부
+  bool get _isViewingOtherUser => widget.viewingUserId != null;
 
   DateTime get _calendarFirstDay => DateTime(_viewYear, 1, 1);
   DateTime get _calendarLastDay => DateTime(_viewYear, 12, 31);
@@ -147,27 +159,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _loadMonthCompletions(DateTime month) async {
     try {
-      final service = ReadingService();
       final startDate = DateTime(month.year, month.month, 1);
       final endDate = DateTime(month.year, month.month + 1, 0);
 
       _completionStatus.clear();
-      for (
-        var date = startDate;
-        date.isBefore(endDate.add(const Duration(days: 1)));
-        date = date.add(const Duration(days: 1))
-      ) {
-        final plan = await ReadingPlanService().getPlanForDate(date);
-        if (plan != null) {
-          final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
-          final isCompleted = await service.isCompleted(
-            scheduleYear,
-            plan.week,
-            plan.day,
-          );
-          if (isCompleted) {
-            final dateKey = DateTime(date.year, date.month, date.day);
-            _completionStatus[dateKey] = true;
+
+      if (_isViewingOtherUser) {
+        // 다른 유저의 Firestore completions를 직접 조회
+        await _loadOtherUserCompletions(startDate, endDate);
+      } else {
+        // 본인 데이터: 기존 ReadingService 사용
+        final service = ReadingService();
+        for (
+          var date = startDate;
+          date.isBefore(endDate.add(const Duration(days: 1)));
+          date = date.add(const Duration(days: 1))
+        ) {
+          final plan = await ReadingPlanService().getPlanForDate(date);
+          if (plan != null) {
+            final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
+            final isCompleted = await service.isCompleted(
+              scheduleYear,
+              plan.week,
+              plan.day,
+            );
+            if (isCompleted) {
+              final dateKey = DateTime(date.year, date.month, date.day);
+              _completionStatus[dateKey] = true;
+            }
           }
         }
       }
@@ -180,15 +199,67 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  /// 다른 유저의 completions를 Firestore에서 직접 로드
+  Future<void> _loadOtherUserCompletions(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    final String uid = widget.viewingUserId!;
+    final firestore = FirebaseFirestore.instance;
+
+    // Step 1: 날짜별 plan 계산 (로컬 연산 — 순차)
+    final List<({DateTime dateKey, String docId})> entries = [];
+    for (
+      var date = startDate;
+      date.isBefore(endDate.add(const Duration(days: 1)));
+      date = date.add(const Duration(days: 1))
+    ) {
+      final plan = await ReadingPlanService().getPlanForDate(date);
+      if (plan != null) {
+        final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
+        entries.add((
+          dateKey: DateTime(date.year, date.month, date.day),
+          docId: '${scheduleYear}_${plan.week}_${plan.day}',
+        ));
+      }
+    }
+
+    if (entries.isEmpty) return;
+
+    // Step 2: Firestore 읽기 병렬화
+    final List<DocumentSnapshot> docs = await Future.wait(
+      entries.map(
+        (e) => firestore.collection('users/$uid/completions').doc(e.docId).get(),
+      ),
+    );
+
+    for (int i = 0; i < entries.length; i++) {
+      if (docs[i].exists) {
+        _completionStatus[entries[i].dateKey] = true;
+      }
+    }
+  }
+
   Future<void> _checkSelectedDayCompletion() async {
     if (_selectedDayPlan != null) {
       final date = _selectedDay ?? DateTime.now();
       final scheduleYear = ReadingPlanService.scheduleYearForDate(date);
-      final isCompleted = await _readingService.isCompleted(
-        scheduleYear,
-        _selectedDayPlan!.week,
-        _selectedDayPlan!.day,
-      );
+      bool isCompleted;
+      if (_isViewingOtherUser) {
+        final docId =
+            '${scheduleYear}_${_selectedDayPlan!.week}_${_selectedDayPlan!.day}';
+        final doc = await FirebaseFirestore.instance
+            .collection('users/${widget.viewingUserId}/completions')
+            .doc(docId)
+            .get();
+        isCompleted = doc.exists;
+      } else {
+        isCompleted = await _readingService.isCompleted(
+          scheduleYear,
+          _selectedDayPlan!.week,
+          _selectedDayPlan!.day,
+        );
+      }
       setState(() {
         _isCompletedSelectedDay = isCompleted;
       });
@@ -303,7 +374,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '통독 일정',
+          _isViewingOtherUser
+              ? '${widget.viewingUserName}님의 캘린더'
+              : '통독 일정',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: AppSizes.fontXXL,
@@ -451,8 +524,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 selectedDay: _selectedDay!,
                 isCompleted: _isCompletedSelectedDay,
                 isLoading: _isLoading,
-                onMarkCompleted: _markSelectedDayCompleted,
-                onUnmarkCompleted: _unmarkSelectedDayCompleted,
+                onMarkCompleted: _isViewingOtherUser ? null : _markSelectedDayCompleted,
+                onUnmarkCompleted: _isViewingOtherUser ? null : _unmarkSelectedDayCompleted,
+                isReadOnly: _isViewingOtherUser,
               )
             else if (_selectedDay != null &&
                 DateHelper.isBreakWeek(_selectedDay!))
@@ -534,16 +608,18 @@ class _SelectedDayActions extends StatelessWidget {
   final DateTime selectedDay;
   final bool isCompleted;
   final bool isLoading;
-  final Function() onMarkCompleted;
-  final Function() onUnmarkCompleted;
+  final Function()? onMarkCompleted;
+  final Function()? onUnmarkCompleted;
+  final bool isReadOnly;
 
   const _SelectedDayActions({
     required this.plan,
     required this.selectedDay,
     required this.isCompleted,
     required this.isLoading,
-    required this.onMarkCompleted,
-    required this.onUnmarkCompleted,
+    this.onMarkCompleted,
+    this.onUnmarkCompleted,
+    this.isReadOnly = false,
   });
 
   @override
@@ -673,16 +749,18 @@ class _SelectedDayActions extends StatelessWidget {
                       isCompleted
                           ? Colors.green.withOpacity(0.1)
                           : Colors.grey.withOpacity(0.1),
-                  title: '완료',
-                  subtitle: isCompleted ? '취소하기' : '완료하기',
+                  title: isReadOnly ? (isCompleted ? '완료됨' : '미완료') : '완료',
+                  subtitle: isReadOnly ? '' : (isCompleted ? '취소하기' : '완료하기'),
                   isLoading: isLoading,
-                  onTap: () {
-                    if (isCompleted) {
-                      onUnmarkCompleted();
-                    } else {
-                      onMarkCompleted();
-                    }
-                  },
+                  onTap: isReadOnly
+                      ? null
+                      : () {
+                          if (isCompleted) {
+                            onUnmarkCompleted?.call();
+                          } else {
+                            onMarkCompleted?.call();
+                          }
+                        },
                 ),
               ),
             ],
@@ -730,7 +808,7 @@ class _ActionButton extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool isLoading;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _ActionButton({
     required this.icon,
@@ -739,7 +817,7 @@ class _ActionButton extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.isLoading = false,
-    required this.onTap,
+    this.onTap,
   });
 
   @override

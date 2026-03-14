@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>리딩지저스 팀 UI Playground v2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4F46E5;
+    --primary-light: #EEF2FF;
+    --primary-lighter: #E0E7FF;
+    --green: #059669;
+    --green-light: #D1FAE5;
+    --bg: #F9FAFB;
+    --card: #FFFFFF;
+    --text-1: #111827;
+    --text-2: #6B7280;
+    --text-3: #9CA3AF;
+    --border: #E5E7EB;
+    --border-light: #F3F4F6;
+  }
+  body {
+    font-family: -apple-system, 'Pretendard', system-ui, sans-serif;
+    background: #0F0F12;
+    color: #E5E7EB;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 80px;
+    gap: 20px;
+  }
+  h1 { font-size: 13px; font-weight: 500; color: #6B7280; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .tab-bar { display: flex; background: #1A1A20; border: 1px solid #2A2A35; border-radius: 10px; padding: 4px; gap: 2px; flex-wrap: wrap; justify-content: center; }
+  .tab-btn { background: none; border: none; color: #6B7280; font-size: 12px; font-family: inherit; padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .tab-btn.active { background: #4F46E5; color: #fff; font-weight: 600; }
+
+  .controls-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; min-height: 36px; }
+  .ctrl-label { font-size: 12px; color: #6B7280; }
+  .toggle-group { display: flex; background: #1A1A20; border: 1px solid #2A2A35; border-radius: 8px; overflow: hidden; }
+  .toggle-btn { background: none; border: none; color: #9CA3AF; font-size: 12px; font-family: inherit; padding: 6px 12px; cursor: pointer; transition: all 0.15s; }
+  .toggle-btn.active { background: #2A2A35; color: #E5E7EB; font-weight: 600; }
+
+  .phone-frame { width: 390px; height: 780px; background: var(--bg); border-radius: 40px; border: 8px solid #1E1E28; box-shadow: 0 0 0 1px #2A2A35, 0 30px 80px rgba(0,0,0,0.6); overflow: hidden; position: relative; flex-shrink: 0; }
+  .phone-screen { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .phone-screen::-webkit-scrollbar { display: none; }
+
+  .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 4px; font-size: 12px; font-weight: 600; color: var(--text-1); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+
+  .app-bar { display: flex; align-items: center; gap: 12px; padding: 8px 20px 12px; background: var(--bg); font-size: 17px; font-weight: 700; color: var(--text-1); border-bottom: 1px solid var(--border-light); position: sticky; top: 36px; z-index: 9; }
+  .back-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; color: var(--primary); font-size: 20px; font-weight: 300; }
+
+  .screen-content { padding: 20px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Profile */
+  .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--primary-lighter); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: var(--primary); margin: 0 auto; }
+  .profile-name { text-align: center; font-size: 20px; font-weight: 700; color: var(--text-1); margin-top: 12px; }
+  .profile-phone { text-align: center; font-size: 14px; color: var(--text-2); margin-top: 4px; }
+  .profile-birth { text-align: center; font-size: 13px; color: var(--text-3); margin-top: 2px; }
+
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+  .team-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 20px; }
+  .team-leader-name { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+
+  .filled-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--primary); color: white; font-size: 14px; font-weight: 600; padding: 13px 20px; border-radius: 12px; cursor: pointer; border: none; font-family: inherit; width: 100%; transition: opacity 0.15s; }
+  .filled-btn:hover { opacity: 0.9; }
+  .outline-btn { display: flex; align-items: center; justify-content: center; gap: 8px; background: none; color: var(--primary); font-size: 14px; font-weight: 600; padding: 12px 20px; border-radius: 12px; cursor: pointer; border: 1.5px solid var(--primary-lighter); font-family: inherit; width: 100%; transition: background 0.15s; }
+  .outline-btn:hover { background: var(--primary-light); }
+
+  /* Year selector styles */
+  .year-pill-row { display: flex; gap: 6px; }
+  .year-pill { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); color: var(--text-2); background: white; transition: all 0.15s; }
+  .year-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .year-dropdown-wrap { position: relative; }
+  .year-dropdown-btn { display: flex; align-items: center; gap: 6px; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px; font-size: 14px; font-weight: 600; color: var(--text-1); cursor: pointer; font-family: inherit; }
+  .year-dropdown-btn .caret { color: var(--text-3); font-size: 11px; }
+
+  /* Team list */
+  .team-card { background: white; border-radius: 14px; border: 1px solid var(--border); padding: 16px 18px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.15s; }
+  .team-card:hover { box-shadow: 0 4px 16px rgba(79,70,229,0.08); }
+  .team-card-name { font-size: 16px; font-weight: 700; color: var(--text-1); }
+  .team-card-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+
+  /* Hero card */
+  .hero-card { background: var(--primary); border-radius: 18px; padding: 20px; color: white; }
+  .hero-card.readonly { background: #374151; }
+  .hero-label { font-size: 12px; font-weight: 500; opacity: 0.75; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .hero-number { font-size: 44px; font-weight: 800; letter-spacing: -1px; line-height: 1; display: inline; }
+  .hero-unit { font-size: 18px; font-weight: 500; opacity: 0.8; margin-left: 4px; }
+  .hero-sub { font-size: 12px; opacity: 0.65; margin-top: 4px; }
+  .hero-bar-wrap { height: 6px; background: rgba(255,255,255,0.25); border-radius: 3px; margin-top: 14px; overflow: hidden; }
+  .hero-bar-fill { height: 100%; background: rgba(255,255,255,0.9); border-radius: 3px; transition: width 0.4s; }
+
+  /* Read-only banner */
+  .readonly-banner { display: flex; align-items: center; gap: 8px; background: #F3F4F6; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text-2); }
+  .readonly-icon { font-size: 16px; }
+
+  /* Member row */
+  .member-section-title { font-size: 13px; font-weight: 600; color: var(--text-2); letter-spacing: 0.3px; }
+  .member-row { background: white; border-radius: 12px; border: 1px solid var(--border); border-left: 3px solid transparent; padding: 12px 14px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .member-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .member-row.done { border-left-color: var(--green); background: #F0FDF4; border-color: #BBF7D0; }
+  .member-row.active-sheet { box-shadow: 0 0 0 2px var(--primary); }
+  .member-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--primary); flex-shrink: 0; }
+  .member-avatar.done-av { background: var(--green-light); color: var(--green); }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .member-name { font-size: 14px; font-weight: 600; color: var(--text-1); }
+  .leader-badge { font-size: 10px; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 2px 6px; border-radius: 4px; }
+  .dot-row { display: flex; gap: 4px; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; transition: all 0.15s; }
+  .dot.filled { background: var(--primary); color: white; }
+  .dot.done-dot { background: var(--green); color: white; }
+  .dot.empty { border: 1.5px solid var(--border); color: var(--text-3); }
+  .dot.future { background: var(--border-light); }
+  .dot.future::after { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: #D1D5DB; margin: auto; }
+  .member-total { font-size: 12px; color: var(--text-3); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+
+  /* Bottom sheet */
+  .sheet-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: flex-end; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+  .bottom-sheet { background: white; border-radius: 20px 20px 0 0; width: 100%; padding: 12px 20px 32px; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .sheet-overlay.open .bottom-sheet { transform: translateY(0); }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .sheet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border-light); }
+  .sheet-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--primary); }
+  .sheet-name { font-size: 17px; font-weight: 700; color: var(--text-1); }
+  .sheet-total { margin-left: auto; font-size: 13px; color: var(--text-3); }
+  .sheet-week-title { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; }
+  .sheet-hint { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
+  .day-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); margin-bottom: 6px; cursor: pointer; transition: all 0.12s; }
+  .day-row.comp { background: #F0FDF4; border-color: #BBF7D0; }
+  .day-row.fut { background: var(--border-light); border-color: transparent; cursor: default; opacity: 0.7; }
+  .day-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .day-circle.c { background: var(--green-light); color: var(--green); }
+  .day-circle.p { background: var(--primary-light); color: var(--primary); }
+  .day-circle.f { background: var(--border); color: var(--text-3); }
+  .day-date { font-size: 13px; color: var(--text-1); flex: 1; }
+  .day-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.12s; flex-shrink: 0; }
+  .day-check.checked { background: var(--green); border-color: var(--green); color: white; }
+  .day-future-tag { font-size: 11px; color: var(--text-3); }
+  .calendar-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; border: 1.5px solid var(--primary-lighter); border-radius: 10px; background: none; color: var(--primary); font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; margin-top: 14px; transition: background 0.12s; }
+  .calendar-btn:hover { background: var(--primary-light); }
+
+  /* Prompt */
+  .prompt-section { width: 390px; background: #1A1A20; border: 1px solid #2A2A35; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .prompt-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #4B5563; text-transform: uppercase; }
+  #prompt-text { font-size: 13px; line-height: 1.6; color: #D1D5DB; }
+  .copy-btn { background: #2A2A35; border: 1px solid #3A3A45; border-radius: 7px; color: #9CA3AF; font-size: 12px; font-family: inherit; padding: 7px 14px; cursor: pointer; align-self: flex-start; transition: all 0.15s; }
+  .copy-btn:hover { background: #3A3A45; color: #E5E7EB; }
+  .copy-btn.copied { color: #34D399; border-color: #34D399; }
+
+  .divider { height: 1px; background: var(--border-light); margin: 2px 0; }
+</style>
+</head>
+<body>
+
+<h1>리딩지저스 — 팀 UI Playground v2</h1>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchScreen(0)">① 프로필</button>
+  <button class="tab-btn" onclick="switchScreen(1)">② 팀 목록</button>
+  <button class="tab-btn" onclick="switchScreen(2)">③ 팀 대시보드</button>
+  <button class="tab-btn" onclick="switchScreen(3)">④ 팀원 현황 (읽기)</button>
+</div>
+
+<div class="controls-row" id="ctrl-0">
+  <span class="ctrl-label">역할</span>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="setRole('member')">팀원</button>
+    <button class="toggle-btn" onclick="setRole('leader')">팀장</button>
+  </div>
+  <span class="ctrl-label" style="margin-left:8px;">연도 표시 위치</span>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="setYearStyle('chip')">칩 옆</button>
+    <button class="toggle-btn" onclick="setYearStyle('none')">없음</button>
+  </div>
+</div>
+<div class="controls-row" id="ctrl-1" style="display:none">
+  <span class="ctrl-label">연도 선택 UI</span>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="setYearUI('pills')">년도 pill</button>
+    <button class="toggle-btn" onclick="setYearUI('dropdown')">드롭다운</button>
+  </div>
+</div>
+<div class="controls-row" id="ctrl-2" style="display:none">
+  <span class="ctrl-label">연도 선택 UI</span>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="setYearUI('pills')">년도 pill</button>
+    <button class="toggle-btn" onclick="setYearUI('dropdown')">드롭다운</button>
+  </div>
+</div>
+<div class="controls-row" id="ctrl-3" style="display:none">
+  <span class="ctrl-label">팀원 읽기 전용 뷰입니다</span>
+</div>
+
+<div class="phone-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <!-- ① 프로필 -->
+  <div id="screen-0" class="phone-screen">
+    <div class="app-bar"><div class="back-btn">‹</div>프로필</div>
+    <div class="screen-content">
+      <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:20px;text-align:center;">
+        <div class="profile-avatar">김</div>
+        <div class="profile-name">김성도</div>
+        <div class="profile-phone">010-1234-5678</div>
+        <div class="profile-birth">생년월일: 1985년 3월 15일</div>
+      </div>
+
+      <!-- 팀 섹션 -->
+      <div id="profile-team-section" style="background:white;border-radius:16px;border:1px solid var(--border);padding:20px;"></div>
+    </div>
+  </div>
+
+  <!-- ② 팀 목록 (팀장) -->
+  <div id="screen-1" class="phone-screen" style="display:none;">
+    <div class="app-bar"><div class="back-btn" onclick="switchScreen(0)">‹</div>내 팀 관리</div>
+    <div class="screen-content" id="team-list-content"></div>
+  </div>
+
+  <!-- ③ 팀 대시보드 (팀장) -->
+  <div id="screen-2" class="phone-screen" style="display:none;position:relative;">
+    <div class="app-bar"><div class="back-btn" onclick="switchScreen(1)">‹</div>소망 A팀</div>
+    <div class="screen-content" id="dashboard-content"></div>
+    <div class="sheet-overlay" id="sheet-overlay-2" onclick="closeSheet(2,event)">
+      <div class="bottom-sheet" id="bottom-sheet-2"></div>
+    </div>
+  </div>
+
+  <!-- ④ 팀원 현황 (읽기 전용) -->
+  <div id="screen-3" class="phone-screen" style="display:none;position:relative;">
+    <div class="app-bar"><div class="back-btn" onclick="switchScreen(0)">‹</div>우리 팀 현황</div>
+    <div class="screen-content" id="readonly-content"></div>
+    <div class="sheet-overlay" id="sheet-overlay-3" onclick="closeSheet(3,event)">
+      <div class="bottom-sheet" id="bottom-sheet-3"></div>
+    </div>
+  </div>
+</div>
+
+<div class="prompt-section">
+  <div class="prompt-label">현재 화면 설명</div>
+  <div id="prompt-text">프로필 화면을 보고 있습니다.</div>
+  <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">복사</button>
+</div>
+
+<script>
+const state = {
+  screen: 0,
+  role: 'member',       // 'member' | 'leader'
+  yearUI: 'pills',      // 'pills' | 'dropdown'
+  yearStyle: 'chip',    // 'chip' | 'none'
+  selectedYear: 2026,
+  openMember: { 2: null, 3: null },
+};
+
+const YEARS = [2024, 2025, 2026];
+
+// 오늘 = 수요일 기준. 목/금/토 = future
+const members = [
+  { name: '이규한', leader: true,  total: 52, dots: ['done','done','done','future','future','future'] },
+  { name: '김믿음', leader: false, total: 42, dots: ['done','done','done','future','future','future'] },
+  { name: '이소망', leader: false, total: 28, dots: ['done','done','empty','future','future','future'] },
+  { name: '박사랑', leader: false, total: 35, dots: ['done','empty','done','future','future','future'] },
+  { name: '최성심', leader: false, total: 10, dots: ['empty','empty','empty','future','future','future'] },
+  { name: '정은혜', leader: false, total: 19, dots: ['done','empty','empty','future','future','future'] },
+];
+const DAY_LABELS = ['월','화','수','목','금','토'];
+const DATES = ['3/3','3/4','3/5','3/6','3/7','3/8'];
+
+function isWeekDone(m) {
+  const active = m.dots.filter(d => d !== 'future');
+  return active.length > 0 && active.every(d => d === 'done');
+}
+
+// ── Screen switch ──
+function switchScreen(idx) {
+  state.screen = idx;
+  state.openMember = { 2: null, 3: null };
+  document.querySelectorAll('.phone-screen').forEach((s,i) => s.style.display = i === idx ? 'block' : 'none');
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i === idx));
+  [0,1,2,3].forEach(i => document.getElementById('ctrl-'+i).style.display = i === idx ? 'flex' : 'none');
+  render();
+}
+
+function setRole(r) { state.role = r; document.querySelectorAll('#ctrl-0 .toggle-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&r==='member')||(i===1&&r==='leader'))); render(); }
+function setYearStyle(s) { state.yearStyle = s; document.querySelectorAll('#ctrl-0 .toggle-group')[1].querySelectorAll('.toggle-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&s==='chip')||(i===1&&s==='none'))); render(); }
+function setYearUI(u) { state.yearUI = u; ['ctrl-1','ctrl-2'].forEach(id => { const el = document.getElementById(id); if (el) el.querySelectorAll('.toggle-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&u==='pills')||(i===1&&u==='dropdown'))); }); render(); }
+function selectYear(y) { state.selectedYear = y; render(); }
+
+// ── Render ──
+function render() {
+  renderProfile();
+  renderTeamList();
+  renderDashboard(2, false);
+  renderDashboard(3, true);
+  updatePrompt();
+}
+
+// ── Profile ──
+function renderProfile() {
+  const el = document.getElementById('profile-team-section');
+  const isLeader = state.role === 'leader';
+  const showYear = state.yearStyle === 'chip';
+
+  let yearTag = showYear ? `<span style="font-size:11px;color:var(--text-3);background:var(--border-light);padding:3px 8px;border-radius:10px;margin-left:6px;">${state.selectedYear}년</span>` : '';
+
+  let html = `<div class="section-label">TEAM</div>`;
+  html += `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div class="team-chip">소망 3팀</div>${yearTag}
+  </div>`;
+  html += `<div class="team-leader-name" style="margin-top:6px;">팀장: 이규한</div>`;
+
+  if (isLeader) {
+    html += `<div style="height:14px;"></div>
+    <div class="divider"></div>
+    <button class="filled-btn" style="margin-top:14px;" onclick="switchScreen(1)">
+      <span>👥</span> 팀 관리하기 <span style="font-size:16px;">→</span>
+    </button>`;
+  } else {
+    // 팀원도 팀 현황 조회 가능
+    html += `<div style="height:14px;"></div>
+    <div class="divider"></div>
+    <button class="outline-btn" style="margin-top:14px;" onclick="switchScreen(3)">
+      <span>👀</span> 팀 현황 보기
+    </button>`;
+  }
+  el.innerHTML = html;
+}
+
+// ── Team list (leader) ──
+function renderTeamList() {
+  const el = document.getElementById('team-list-content');
+  const teams = [
+    { name: '소망 A팀', completed: 3, total: 6 },
+    { name: '소망 B팀', completed: 4, total: 5 },
+    { name: '소망 C팀', completed: 4, total: 4 },
+  ];
+
+  let yearHtml = '';
+  if (state.yearUI === 'pills') {
+    yearHtml = `<div class="year-pill-row">` +
+      YEARS.map(y => `<div class="year-pill ${y===state.selectedYear?'active':''}" onclick="selectYear(${y})">${y}년</div>`).join('') +
+      `</div>`;
+  } else {
+    yearHtml = `<div class="year-dropdown-wrap">
+      <button class="year-dropdown-btn">${state.selectedYear}년 <span class="caret">▼</span></button>
+    </div>`;
+  }
+
+  let html = yearHtml + `<div style="font-size:13px;color:var(--text-2);margin-top:4px;">내가 팀장인 팀 <strong style="color:var(--text-1);">3</strong>개</div>`;
+
+  teams.forEach((t, i) => {
+    const pct = t.completed / t.total;
+    const allDone = pct >= 1;
+    const fillColor = allDone ? 'linear-gradient(90deg,#059669,#34D399)' : 'linear-gradient(90deg,#4F46E5,#818CF8)';
+    const completedLabel = allDone
+      ? `<span style="background:#D1FAE5;color:#059669;font-size:12px;font-weight:600;padding:3px 8px;border-radius:10px;">✓ 전원 완료</span>`
+      : `<span style="font-size:12px;color:var(--text-2);">${t.completed}/${t.total}명 완료</span>`;
+    html += `
+      <div class="team-card" style="${allDone?'border-color:#BBF7D0;':''}" onclick="switchScreen(2)">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span class="team-card-name">${t.name}</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${completedLabel}
+              <span style="color:var(--text-3);font-size:16px;">›</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${pct*100}%;background:${fillColor};border-radius:3px;"></div>
+            </div>
+            <span style="font-size:12px;color:var(--text-2);min-width:40px;text-align:right;">${Math.round(pct*100)}%</span>
+          </div>
+        </div>
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── Dashboard (shared for leader + readonly) ──
+function renderDashboard(screenIdx, isReadOnly) {
+  const el = document.getElementById(screenIdx === 2 ? 'dashboard-content' : 'readonly-content');
+  if (!el) return;
+
+  const completedCount = members.filter(isWeekDone).length;
+  const pct = completedCount / members.length;
+
+  let yearHtml = '';
+  if (state.yearUI === 'pills') {
+    yearHtml = `<div class="year-pill-row">` +
+      YEARS.map(y => `<div class="year-pill ${y===state.selectedYear?'active':''}" onclick="selectYear(${y})">${y}년</div>`).join('') +
+      `</div>`;
+  } else {
+    yearHtml = `<div class="year-dropdown-wrap">
+      <button class="year-dropdown-btn">${state.selectedYear}년 <span class="caret">▼</span></button>
+    </div>`;
+  }
+
+  let html = yearHtml;
+
+  // Read-only banner
+  if (isReadOnly) {
+    html += `<div class="readonly-banner">
+      <span class="readonly-icon">👁</span>
+      <span>팀원 현황을 확인할 수 있습니다. 완료 처리는 팀장만 가능합니다.</span>
+    </div>`;
+  }
+
+  // Hero card
+  html += `<div class="hero-card ${isReadOnly?'readonly':''}">
+    <div class="hero-label">이번 주 완료</div>
+    <div style="display:flex;align-items:baseline;gap:4px;">
+      <span class="hero-number">${completedCount}</span>
+      <span class="hero-unit">/ ${members.length}명</span>
+    </div>
+    <div class="hero-sub">팀 전체 주간 통독 현황 · ${state.selectedYear}년</div>
+    <div class="hero-bar-wrap"><div class="hero-bar-fill" style="width:${pct*100}%;"></div></div>
+  </div>`;
+
+  html += `<div class="member-section-title">팀원 진행상황</div>`;
+
+  members.forEach((m, i) => {
+    const done = isWeekDone(m);
+    const dotHtml = m.dots.map((d, di) => {
+      const cls = d==='done' ? (done?'done-dot':'filled') : d==='future' ? 'future' : 'empty';
+      return `<div class="dot ${cls}">${d!=='future'?DAY_LABELS[di]:''}</div>`;
+    }).join('');
+    const avClass = 'member-avatar' + (done?' done-av':'');
+    const avatarContent = m.leader ? '★' : m.name[0];
+    const isOpen = state.openMember[screenIdx] === i;
+    html += `
+      <div class="member-row ${done?'done':''} ${isOpen?'active-sheet':''}" onclick="openSheet(${screenIdx},${i})">
+        <div class="${avClass}">${avatarContent}</div>
+        <div class="member-info">
+          <div class="member-name-row">
+            <span class="member-name">${m.name}</span>
+            ${m.leader?'<span class="leader-badge">팀장</span>':''}
+          </div>
+          <div class="dot-row">${dotHtml}</div>
+        </div>
+        <span class="member-total">${m.total}일</span>
+        <span style="color:var(--text-3);font-size:16px;margin-left:2px;">›</span>
+      </div>`;
+  });
+
+  el.innerHTML = html;
+
+  // Re-render sheet if open
+  const openIdx = state.openMember[screenIdx];
+  if (openIdx !== null) {
+    renderSheet(screenIdx, openIdx, isReadOnly);
+    document.getElementById(`sheet-overlay-${screenIdx}`).classList.add('open');
+  } else {
+    document.getElementById(`sheet-overlay-${screenIdx}`)?.classList.remove('open');
+  }
+}
+
+// ── Sheet ──
+function openSheet(screenIdx, memberIdx) {
+  const isReadOnly = screenIdx === 3;
+  if (state.openMember[screenIdx] === memberIdx) {
+    state.openMember[screenIdx] = null;
+  } else {
+    state.openMember[screenIdx] = memberIdx;
+    renderSheet(screenIdx, memberIdx, isReadOnly);
+    document.getElementById(`sheet-overlay-${screenIdx}`).classList.add('open');
+  }
+  renderDashboard(screenIdx, isReadOnly);
+}
+
+function renderSheet(screenIdx, memberIdx, isReadOnly) {
+  const m = members[memberIdx];
+  const sheetEl = document.getElementById(`bottom-sheet-${screenIdx}`);
+
+  let daysHtml = m.dots.map((d, di) => {
+    const isFut = d === 'future';
+    const isComp = d === 'done';
+    const rowCls = isFut ? 'fut' : isComp ? 'comp' : '';
+    const circleCls = isFut ? 'f' : isComp ? 'c' : 'p';
+
+    let rightHtml;
+    if (isFut) {
+      rightHtml = `<span class="day-future-tag">예정</span>`;
+    } else if (isReadOnly) {
+      // 읽기 전용: 체크박스 비활성화
+      rightHtml = `<div class="day-check ${isComp?'checked':''}" style="cursor:default;opacity:0.7;">${isComp?'✓':''}</div>`;
+    } else {
+      rightHtml = `<div class="day-check ${isComp?'checked':''}" onclick="toggleDay(${screenIdx},${memberIdx},${di},event)">${isComp?'✓':''}</div>`;
+    }
+    return `<div class="day-row ${rowCls}">
+      <div class="day-circle ${circleCls}">${DAY_LABELS[di]}</div>
+      <div class="day-date">${DATES[di]} (${DAY_LABELS[di]})</div>
+      ${rightHtml}
+    </div>`;
+  }).join('');
+
+  const hintText = isReadOnly
+    ? '팀원 완료 처리는 팀장만 할 수 있습니다'
+    : '탭하여 읽음 처리를 대신해줄 수 있습니다';
+
+  sheetEl.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-avatar">${m.name[0]}</div>
+      <span class="sheet-name">${m.name}</span>
+      <span class="sheet-total">전체 ${m.total}일</span>
+    </div>
+    <div class="sheet-week-title">이번 주 진행상황</div>
+    <div class="sheet-hint">${hintText}</div>
+    ${daysHtml}
+    <button class="calendar-btn">📅 전체 캘린더 보기</button>
+  `;
+}
+
+function toggleDay(screenIdx, memberIdx, dayIdx, e) {
+  e.stopPropagation();
+  if (members[memberIdx].dots[dayIdx] === 'future') return;
+  members[memberIdx].dots[dayIdx] = members[memberIdx].dots[dayIdx] === 'done' ? 'empty' : 'done';
+  members[memberIdx].total += members[memberIdx].dots[dayIdx] === 'done' ? 1 : -1;
+  renderSheet(screenIdx, memberIdx, false);
+  renderDashboard(screenIdx, false);
+}
+
+function closeSheet(screenIdx, e) {
+  if (e.target === document.getElementById(`sheet-overlay-${screenIdx}`)) {
+    state.openMember[screenIdx] = null;
+    renderDashboard(screenIdx, screenIdx === 3);
+  }
+}
+
+// ── Prompt ──
+function updatePrompt() {
+  const lines = {
+    0: state.role === 'leader'
+      ? `프로필 팀 섹션 — 팀장 뷰: 팀명 pill 칩${state.yearStyle==='chip'?' + 연도 태그':''} 표시, "팀 관리하기" solid 버튼 노출.`
+      : `프로필 팀 섹션 — 팀원 뷰: 팀명 pill 칩${state.yearStyle==='chip'?' + 연도 태그':''} 표시, "팀 현황 보기" outline 버튼으로 읽기 전용 현황 진입.`,
+    1: `팀 목록 화면 — ${state.yearUI==='pills'?'pill 형태':'드롭다운'} 연도 선택기. 팀별 완료율 progress bar 표시.`,
+    2: `팀 대시보드(팀장) — ${state.yearUI==='pills'?'pill':'드롭다운'} 연도 선택기. 인디고 히어로 카드 + dot row. 바텀시트에서 완료 처리 가능.`,
+    3: `팀 현황(팀원 읽기전용) — 회색 히어로 카드, 상단 안내 배너, 바텀시트 체크박스 비활성화.`,
+  };
+  document.getElementById('prompt-text').textContent = lines[state.screen];
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('prompt-text').textContent);
+  const btn = document.getElementById('copy-btn');
+  btn.textContent = '복사됨 ✓'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('copied'); }, 1500);
+}
+
+render();
+</script>
+</body>
+</html>
