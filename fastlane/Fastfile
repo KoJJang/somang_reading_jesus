@@ -52,37 +52,31 @@ platform :android do
       track: "internal",
       aab: aab_path,
       json_key: "#{project_root}/fastlane/google_play_key.json",
+      metadata_path: "#{project_root}/fastlane/metadata/android",
       skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_changelogs: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
     )
     UI.success("Android beta 업로드 완료!")
   end
 
-  desc "Android 프로덕션 트랙에 업로드"
+  desc "내부 테스트 트랙 → 프로덕션으로 승격"
   lane :prod do
-    name, code = read_pubspec_version
-    UI.message("빌드 버전: #{name}+#{code}")
-
     project_root = File.expand_path("..", __dir__)
-    aab_path = "#{project_root}/build/app/outputs/bundle/release/app-release.aab"
-
-    sh("flutter build appbundle --release --build-name=#{name} --build-number=#{code}",
-       chdir: project_root)
 
     upload_to_play_store(
-      track: "production",
-      aab: aab_path,
+      track: "internal",
+      track_promote_to: "production",
+      rollout: "1.0",
       json_key: "#{project_root}/fastlane/google_play_key.json",
       skip_upload_apk: true,
+      skip_upload_aab: true,
       skip_upload_metadata: true,
       skip_upload_changelogs: true,
       skip_upload_images: true,
       skip_upload_screenshots: true,
     )
-    UI.success("Android production 업로드 완료!")
+    UI.success("Android production 승격 완료! Google 심사 후 출시됩니다.")
   end
 end
 
