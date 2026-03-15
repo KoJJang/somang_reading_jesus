@@ -102,15 +102,29 @@ platform :ios do
     sh("flutter build ios --release --no-codesign --build-name=#{name} --build-number=#{code}",
        chdir: project_root)
 
+    # App Store 배포용 프로비저닝 프로파일 다운로드 & 설치
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.somangchurch.readingjesus",
+      readonly: false,
+    )
+
     build_app(
       workspace: "#{project_root}/ios/Runner.xcworkspace",
       scheme: "Runner",
       configuration: "Release",
       export_method: "app-store",
+      export_team_id: "MAUUDTBVJ4",
       output_directory: "#{project_root}/build/ios",
       output_name: "Runner.ipa",
       silent: false,
       clean: false,
+      disable_xcpretty: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        teamID: "MAUUDTBVJ4",
+      },
     )
 
     upload_to_testflight(
@@ -139,15 +153,28 @@ platform :ios do
     sh("flutter build ios --release --no-codesign --build-name=#{name} --build-number=#{code}",
        chdir: project_root)
 
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.somangchurch.readingjesus",
+      readonly: false,
+    )
+
     build_app(
       workspace: "#{project_root}/ios/Runner.xcworkspace",
       scheme: "Runner",
       configuration: "Release",
       export_method: "app-store",
+      export_team_id: "MAUUDTBVJ4",
       output_directory: "#{project_root}/build/ios",
       output_name: "Runner.ipa",
       silent: false,
       clean: false,
+      disable_xcpretty: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        teamID: "MAUUDTBVJ4",
+      },
     )
 
     deliver(
