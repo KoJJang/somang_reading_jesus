@@ -1,0 +1,191 @@
+default_platform(:ios)
+
+# ─── 공통 헬퍼 ────────────────────────────────────────────────────────────────
+
+# pubspec.yaml에서 현재 버전 읽기 (예: "1.0.5+19" → ["1.0.5", 19])
+def read_pubspec_version
+  content = File.read("../pubspec.yaml")
+  match = content.match(/^version:\s*(\d+\.\d+\.\d+)\+(\d+)/)
+  UI.user_error!("pubspec.yaml에서 버전을 찾을 수 없습니다") unless match
+  [match[1], match[2].to_i]
+end
+
+# pubspec.yaml 버전 업데이트
+def write_pubspec_version(name, code)
+  path = "../pubspec.yaml"
+  content = File.read(path)
+  content.gsub!(/^version:.*$/, "version: #{name}+#{code}")
+  File.write(path, content)
+end
+
+# ─── 공통 lane ────────────────────────────────────────────────────────────────
+
+lane :bump_version do |options|
+  name, code = read_pubspec_version
+  new_code = code + 1
+
+  # patch 버전도 자동 증가 (1.0.5 → 1.0.6)
+  parts = name.split(".").map(&:to_i)
+  parts[2] += 1
+  new_name = parts.join(".")
+
+  write_pubspec_version(new_name, new_code)
+  UI.success("버전 업데이트: #{name}+#{code} → #{new_name}+#{new_code}")
+  [new_name, new_code]
+end
+
+# ─── Android lanes ────────────────────────────────────────────────────────────
+
+platform :android do
+  desc "Android 내부 테스트(internal) 트랙에 업로드"
+  lane :beta do
+    name, code = read_pubspec_version
+    UI.message("빌드 버전: #{name}+#{code}")
+
+    project_root = File.expand_path("..", __dir__)
+    aab_path = "#{project_root}/build/app/outputs/bundle/release/app-release.aab"
+
+    sh("flutter build appbundle --release --build-name=#{name} --build-number=#{code}",
+       chdir: project_root)
+
+    upload_to_play_store(
+      track: "internal",
+      aab: aab_path,
+      json_key: "#{project_root}/fastlane/google_play_key.json",
+      metadata_path: "#{project_root}/fastlane/metadata/android",
+      skip_upload_apk: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+    UI.success("Android beta 업로드 완료!")
+  end
+
+  desc "내부 테스트 트랙 → 프로덕션으로 승격"
+  lane :prod do
+    project_root = File.expand_path("..", __dir__)
+
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      rollout: "1.0",
+      json_key: "#{project_root}/fastlane/google_play_key.json",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+    UI.success("Android production 승격 완료! Google 심사 후 출시됩니다.")
+  end
+end
+
+# ─── iOS lanes ────────────────────────────────────────────────────────────────
+
+platform :ios do
+  desc "TestFlight에 업로드"
+  lane :beta do
+    name, code = read_pubspec_version
+    UI.message("빌드 버전: #{name}+#{code}")
+
+    project_root = File.expand_path("..", __dir__)
+
+    # App Store Connect API 키 로드 (json 파일 or 환경변수)
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"] || "",
+      issuer_id: ENV["ASC_ISSUER_ID"] || "",
+      key_filepath: ENV["ASC_KEY_FILEPATH"] || "#{project_root}/fastlane/app_store_connect_api_key.p8",
+      duration: 1200,
+      in_house: false,
+    )
+
+    sh("flutter build ios --release --no-codesign --build-name=#{name} --build-number=#{code}",
+       chdir: project_root)
+
+    # App Store 배포용 프로비저닝 프로파일 다운로드 & 설치
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.somangchurch.readingjesus",
+      readonly: false,
+    )
+
+    build_app(
+      workspace: "#{project_root}/ios/Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: "MAUUDTBVJ4",
+      output_directory: "#{project_root}/build/ios",
+      output_name: "Runner.ipa",
+      silent: false,
+      clean: false,
+      disable_xcpretty: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        teamID: "MAUUDTBVJ4",
+      },
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      ipa: "#{project_root}/build/ios/Runner.ipa",
+      skip_waiting_for_build_processing: true,
+    )
+    UI.success("iOS TestFlight 업로드 완료!")
+  end
+
+  desc "App Store에 제출"
+  lane :prod do
+    name, code = read_pubspec_version
+    UI.message("빌드 버전: #{name}+#{code}")
+
+    project_root = File.expand_path("..", __dir__)
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"] || "",
+      issuer_id: ENV["ASC_ISSUER_ID"] || "",
+      key_filepath: ENV["ASC_KEY_FILEPATH"] || "#{project_root}/fastlane/app_store_connect_api_key.p8",
+      duration: 1200,
+      in_house: false,
+    )
+
+    sh("flutter build ios --release --no-codesign --build-name=#{name} --build-number=#{code}",
+       chdir: project_root)
+
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "com.somangchurch.readingjesus",
+      readonly: false,
+    )
+
+    build_app(
+      workspace: "#{project_root}/ios/Runner.xcworkspace",
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: "MAUUDTBVJ4",
+      output_directory: "#{project_root}/build/ios",
+      output_name: "Runner.ipa",
+      silent: false,
+      clean: false,
+      disable_xcpretty: true,
+      export_options: {
+        method: "app-store",
+        signingStyle: "automatic",
+        teamID: "MAUUDTBVJ4",
+      },
+    )
+
+    deliver(
+      api_key: api_key,
+      ipa: "#{project_root}/build/ios/Runner.ipa",
+      submit_for_review: false,  # true로 바꾸면 심사 자동 제출
+      automatic_release: false,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+    )
+    UI.success("iOS App Store 업로드 완료!")
+  end
+end

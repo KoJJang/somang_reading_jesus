@@ -1,0 +1,164 @@
+name: Deploy Mobile (iOS + Android)
+
+on:
+  # git tag v* 푸시 시 자동 실행
+  push:
+    tags:
+      - 'v*'
+  # 수동 트리거
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: '배포 플랫폼'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+      track:
+        description: '배포 트랙'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - beta
+          - prod
+
+jobs:
+  # ─── Android ─────────────────────────────────────────────────────────────────
+  android:
+    name: Android Build & Deploy
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      inputs.platform == 'android' ||
+      inputs.platform == 'both'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run analyze
+        run: flutter analyze --no-pub
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Decode Android keystore
+        run: |
+          mkdir -p android/app/keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore/release-key.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=keystore/release-key.jks
+          EOF
+
+      - name: Build App Bundle
+        run: flutter build appbundle --release
+
+      - name: Setup Ruby & Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Decode Google Play key
+        run: echo "${{ secrets.GOOGLE_PLAY_KEY_JSON }}" > fastlane/google_play_key.json
+
+      - name: Deploy to Play Store (beta)
+        if: github.event_name == 'push' || inputs.track == 'beta'
+        run: fastlane android beta
+
+      - name: Deploy to Play Store (prod)
+        if: inputs.track == 'prod'
+        run: fastlane android prod
+
+  # ─── iOS ──────────────────────────────────────────────────────────────────────
+  ios:
+    name: iOS Build & Deploy
+    runs-on: macos-latest
+    if: |
+      github.event_name == 'push' ||
+      inputs.platform == 'ios' ||
+      inputs.platform == 'both'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run analyze
+        run: flutter analyze --no-pub
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Setup Ruby & Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Setup App Store Connect API key
+        run: |
+          mkdir -p fastlane
+          echo "${{ secrets.ASC_PRIVATE_KEY }}" > fastlane/app_store_connect_api_key.p8
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_FILEPATH: fastlane/app_store_connect_api_key.p8
+
+      - name: Install certificates & provisioning profiles
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DISTRIBUTION_CERT_BASE64 }}
+          p12-password: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+
+      - name: Deploy to TestFlight (beta)
+        if: github.event_name == 'push' || inputs.track == 'beta'
+        run: fastlane ios beta
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_FILEPATH: fastlane/app_store_connect_api_key.p8
+
+      - name: Deploy to App Store (prod)
+        if: inputs.track == 'prod'
+        run: fastlane ios prod
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_FILEPATH: fastlane/app_store_connect_api_key.p8
