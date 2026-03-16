@@ -149,9 +149,40 @@ flutter build ios --release
 flutter build appbundle --release
 ```
 
-- 릴리즈 전 `flutter analyze` 에러 0개 확인.
-- `kDebugMode` 블록 밖에 디버그 코드가 없는지 확인.
-- `_isTestData: true` 데이터가 프로덕션 Firestore에 남아있지 않은지 확인.
+---
+
+## ⚠️ PR 머지 전 필수 검증 체크리스트
+
+> PR 등록 또는 main 머지 전에 아래 항목을 **반드시** 직접 확인한다.
+> 확인 없이 머지하거나 배포하지 않는다.
+
+### 1. 정적 분석
+- [ ] `flutter analyze` — 에러 0개
+- [ ] `flutter test` — 전체 통과
+
+### 2. Android 릴리즈 빌드 & 실기기 동작 확인
+```bash
+flutter build apk --release
+adb install build/app/outputs/flutter-apk/app-release.apk
+```
+- [ ] 앱이 크래시 없이 정상 실행되는지 확인
+- [ ] 홈 화면이 정상 렌더링되는지 확인
+- [ ] 주요 변경 화면을 직접 탭해서 동작 확인
+
+### 3. iOS 릴리즈 빌드 & 실기기/시뮬레이터 동작 확인
+```bash
+flutter build ios --release --no-codesign
+```
+- [ ] 빌드 에러 없음
+- [ ] 시뮬레이터 또는 TestFlight에서 앱 정상 실행 확인
+- [ ] 홈 화면이 정상 렌더링되는지 확인
+
+### 4. 배포 전 추가 확인
+- [ ] `kDebugMode` 블록 밖에 디버그 코드가 없는지 확인
+- [ ] `_isTestData: true` 데이터가 프로덕션 Firestore에 남아있지 않은지 확인
+- [ ] Firestore rules/indexes 변경 시 `firebase deploy --only firestore:rules,firestore:indexes` 실행
+- [ ] `pubspec.yaml` 버전 번호 올렸는지 확인
+- [ ] `fastlane/metadata/android/ko-KR/changelogs/{버전코드}.txt` 파일 추가했는지 확인
 
 ---
 

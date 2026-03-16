@@ -1,5 +1,27 @@
 # 배포 가이드
 
+## ⚠️ 배포 전 필수 검증
+
+> **배포 전 아래 항목을 반드시 직접 확인한다. 미확인 시 배포하지 않는다.**
+
+### Android 동작 확인
+```bash
+flutter build apk --release
+adb install build/app/outputs/flutter-apk/app-release.apk
+adb shell am start -n com.somangchurch.readingjesus/.MainActivity
+adb logcat | grep -E "I/flutter|E/flutter|FATAL"
+```
+- 앱이 크래시 없이 홈 화면까지 정상 도달하는지 확인
+
+### iOS 동작 확인
+```bash
+flutter build ios --release --no-codesign
+# Xcode 또는 시뮬레이터에서 실행 확인
+```
+- 앱이 크래시 없이 홈 화면까지 정상 도달하는지 확인
+
+---
+
 ## Android 배포 명령어
 
 ```bash
