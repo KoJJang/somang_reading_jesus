@@ -56,6 +56,12 @@ service cloud.firestore {
       allow write: if isOwner(uid) || isTeamLeader(year);
     }
 
+    // ── 앱 설정 (일정 config 등) ──────────────────────────────
+    match /config/{document=**} {
+      allow read: if isAuth();
+      allow write: if false; // 관리자 콘솔에서만 수정
+    }
+
     // ── 읽기 계획 (콘텐츠) ────────────────────────────────────
     match /reading_plans/{document=**} {
       allow read: if isAuth();

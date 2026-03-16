@@ -144,17 +144,24 @@ class AppTheme {
   );
 
   static MaterialColor createMaterialColor(Color color) {
-    final swatch = <int, Color>{};
     final r = color.red, g = color.green, b = color.blue;
-    for (int i = 0; i < 10; i++) {
-      final strength = (i + 1) / 10;
-      swatch[(strength * 1000).round()] = Color.fromRGBO(
-        r + ((255 - r) * (1 - strength)).round(),
-        g + ((255 - g) * (1 - strength)).round(),
-        b + ((255 - b) * (1 - strength)).round(),
-        1,
-      );
-    }
-    return MaterialColor(color.value, swatch);
+    Color shade(double strength) => Color.fromRGBO(
+      r + ((255 - r) * (1 - strength)).round(),
+      g + ((255 - g) * (1 - strength)).round(),
+      b + ((255 - b) * (1 - strength)).round(),
+      1,
+    );
+    return MaterialColor(color.value, {
+      50:  shade(0.1),
+      100: shade(0.2),
+      200: shade(0.3),
+      300: shade(0.4),
+      400: shade(0.5),
+      500: shade(0.6),
+      600: shade(0.7),
+      700: shade(0.8),
+      800: shade(0.9),
+      900: shade(1.0),
+    });
   }
 }
