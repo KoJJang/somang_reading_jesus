@@ -53,3 +53,6 @@ fastlane/app_store_connect_api_key.json
 # Android 키스토어
 android/app/keystore/
 android/key.properties
+
+# 스토어 스크린샷 도구 의존성
+docs/store_screenshots/node_modules/
