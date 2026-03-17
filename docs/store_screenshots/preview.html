@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>리딩지저스 소망교회 — Store Screenshots</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #111;
+  font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 60px;
+  padding: 60px 40px;
+}
+
+/* ─── 슬라이드 래퍼 (1290×2796 → 33% 미리보기) ─── */
+.slide-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.slide-label {
+  color: #666;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.slide-scale {
+  transform: scale(0.33);
+  transform-origin: top center;
+  /* 실제 높이만큼 음수 마진으로 공간 줄이기 */
+}
+.slide-spacer {
+  /* 2796 * 0.33 = 922.68, 2796 - 922.68 = 1873.32 */
+  height: calc(2796px * 0.33);
+  width: calc(1290px * 0.33);
+  position: relative;
+}
+
+/* ─── 슬라이드 본체 (1290×2796, iPhone 14 Pro Max 기준) ─── */
+.slide {
+  width: 1290px;
+  height: 2796px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ─── 배경 그라디언트 ─── */
+.slide-home   { background: linear-gradient(155deg, #1e1b5e 0%, #3730a3 45%, #4f46e5 100%); }
+.slide-cal    { background: linear-gradient(155deg, #022c22 0%, #047857 50%, #059669 100%); }
+.slide-team   { background: linear-gradient(155deg, #0c1a3a 0%, #1d4ed8 55%, #3b82f6 100%); }
+
+/* ─── 배경 장식 원 ─── */
+.deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  pointer-events: none;
+}
+.deco-1 { width: 900px; height: 900px; top: -250px; right: -280px; }
+.deco-2 { width: 600px; height: 600px; bottom: 80px;  left: -200px; }
+.deco-3 { width: 300px; height: 300px; top: 500px;    left: 60px; opacity: 0.05; }
+
+/* ─── 상단 영역 ─── */
+.slide-top {
+  width: 100%;
+  padding: 160px 80px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.slide-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.9);
+  font-size: 26px;
+  font-weight: 500;
+  padding: 14px 36px;
+  border-radius: 100px;
+  margin-bottom: 60px;
+  letter-spacing: 1px;
+}
+.slide-headline {
+  color: #fff;
+  font-size: 96px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -2px;
+  margin-bottom: 32px;
+}
+.slide-subline {
+  color: rgba(255,255,255,0.65);
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 80px;
+}
+
+/* ─── 폰 목업 ─── */
+.phone-outer {
+  width: 560px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.phone-body {
+  width: 560px;
+  height: 1140px;
+  background: #080808;
+  border-radius: 76px;
+  padding: 14px;
+  box-shadow:
+    0 0 0 2px #2a2a2a,
+    0 80px 160px rgba(0,0,0,0.7),
+    inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: #F9FAFB;
+  border-radius: 64px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+/* 다이나믹 아일랜드 */
+.di {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 36px;
+  background: #080808;
+  border-radius: 100px;
+  z-index: 20;
+}
+
+/* ─── 하단 기능 태그 ─── */
+.slide-bottom {
+  margin-top: 60px;
+  position: relative;
+  z-index: 1;
+}
+.feature-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 34px;
+  font-weight: 600;
+  padding: 20px 52px;
+  border-radius: 100px;
+}
+
+/* ═══════════════════════════════════
+   앱 UI — AppBar 공통
+═══════════════════════════════════ */
+.app-bar {
+  height: 100px;
+  background: white;
+  border-bottom: 1px solid #F3F4F6;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 24px 14px;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding-top: 52px;
+}
+.app-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-bar-logo {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #4F46E5, #818CF8);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.app-bar-title { font-size: 18px; font-weight: 700; color: #111827; }
+.app-bar-sub   { font-size: 11px; font-weight: 600; color: #6B7280; }
+.app-bar-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: #DBEAFE;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #1D4ED8;
+}
+
+/* 탭바 */
+.tab-bar {
+  height: 82px;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px 12px;
+  flex-shrink: 0;
+}
+.tab { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tab-ico { font-size: 22px; }
+.tab-lbl { font-size: 10px; font-weight: 500; color: #9CA3AF; }
+.tab.active .tab-lbl { color: #4F46E5; font-weight: 600; }
+
+/* ═══════════════════════════════════
+   홈 화면
+═══════════════════════════════════ */
+.home-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ReadingCard */
+.reading-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 18px 20px;
+}
+.reading-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.reading-title { font-size: 13px; font-weight: 600; color: #6B7280; }
+.reading-arrow { font-size: 16px; color: #9CA3AF; }
+.reading-book { font-size: 20px; font-weight: 700; color: #4F46E5; }
+.reading-hint { font-size: 12px; color: #9CA3AF; margin-top: 4px; }
+
+/* 2단 카드 */
+.card-row { display: flex; gap: 10px; }
+
+/* ScheduleCard */
+.schedule-card {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 20px;
+}
+.card-icon-wrap {
+  width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+.icon-yellow { background: #FEF3C7; }
+.icon-green  { background: #D1FAE5; }
+.card-title  { font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+.card-sub    { font-size: 13px; color: #6B7280; }
+
+/* CompletionCard */
+.completion-card {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 20px;
+}
+.completion-done .card-title { color: #059669; }
+
+/* WeeklyProgressCard */
+.weekly-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.weekly-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+.weekly-week  { font-size: 15px; font-weight: 600; color: #111827; }
+.weekly-pct   { font-size: 14px; font-weight: 700; color: #4F46E5; }
+.weekly-bar-bg { height: 10px; background: #F3F4F6; border-radius: 5px; overflow: hidden; margin-bottom: 20px; }
+.weekly-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #4F46E5, #818CF8); }
+.weekly-days { display: flex; gap: 8px; justify-content: space-between; margin-bottom: 16px; }
+.day-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px;
+}
+.day-circle.done    { background: #D1FAE5; }
+.day-circle.todo    { background: #FEF3C7; }
+.day-circle.empty   { background: #F3F4F6; }
+.day-name  { font-size: 10px; font-weight: 500; color: #9CA3AF; }
+.day-mark  { font-size: 12px; }
+.weekly-status { font-size: 13px; color: #6B7280; text-align: center; }
+
+/* ═══════════════════════════════════
+   캘린더 화면
+═══════════════════════════════════ */
+.cal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 12px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cal-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 18px;
+}
+.cal-month-row {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+}
+.cal-month-label { font-size: 17px; font-weight: 700; color: #111827; }
+.cal-nav-row { display: flex; gap: 6px; }
+.cal-nav-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #F3F4F6; border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #6B7280;
+}
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7,1fr);
+  margin-bottom: 6px;
+}
+.cal-wd {
+  font-size: 11px; font-weight: 600; color: #9CA3AF;
+  text-align: center; padding: 4px 0;
+}
+.cal-wd:first-child { color: #FCA5A5; }
+.cal-wd:last-child  { color: #93C5FD; }
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7,1fr); gap: 3px;
+}
+.cal-day {
+  aspect-ratio: 1; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; color: #111827;
+}
+.cal-day.done    { background: #D1FAE5; color: #059669; font-weight: 600; }
+.cal-day.todo    { background: #FEF3C7; color: #92400E; }
+.cal-day.future  { color: #D1D5DB; }
+.cal-day.today   { background: #4F46E5; color: white; font-weight: 700; }
+.cal-day.empty   {}
+.cal-day.sun     { color: #FCA5A5; }
+.cal-day.sat     { color: #93C5FD; }
+.cal-day.done.sun, .cal-day.done.sat, .cal-day.todo.sun, .cal-day.todo.sat { color: inherit; }
+
+/* 범례 */
+.cal-legend { display: flex; gap: 14px; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot  { width: 12px; height: 12px; border-radius: 50%; }
+.legend-txt  { font-size: 11px; color: #6B7280; }
+
+/* 월간 현황 카드 */
+.stat-card {
+  background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); padding: 18px;
+}
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.stat-label { font-size: 14px; font-weight: 600; color: #111827; }
+.stat-val   { font-size: 14px; font-weight: 700; color: #4F46E5; }
+.stat-bar-bg { height: 8px; background: #F3F4F6; border-radius: 4px; overflow: hidden; }
+.stat-bar    { height: 100%; border-radius: 4px; }
+
+/* ═══════════════════════════════════
+   팀 화면
+═══════════════════════════════════ */
+.team-body {
+  flex: 1; overflow: hidden;
+  padding: 12px 16px 0;
+  display: flex; flex-direction: column; gap: 10px;
+}
+/* 내 팀 히어로 */
+.team-hero {
+  background: white; border-radius: 18px; border: 1px solid #E5E7EB; padding: 18px;
+}
+.team-hero-section { font-size: 11px; font-weight: 600; color: #9CA3AF; letter-spacing: 1px; margin-bottom: 8px; }
+.team-hero-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.team-hero-title { font-size: 17px; font-weight: 700; color: #111827; }
+.team-leader-badge {
+  background: rgba(79,70,229,0.1); color: #4F46E5;
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px;
+}
+/* 주간 dot row */
+.dot-row { display: flex; gap: 5px; }
+.dot-pill {
+  padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; gap: 3px;
+}
+.dot-pill.done    { background: #E0E7FF; color: #4F46E5; }
+.dot-pill.pending { background: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
+
+/* 팀 섹션 */
+.team-section-label { font-size: 11px; font-weight: 600; color: #9CA3AF; letter-spacing: 1px; }
+
+/* 멤버 카드 */
+.member-card {
+  background: white; border-radius: 14px; border: 1px solid #E5E7EB;
+  padding: 13px 16px; display: flex; align-items: center; gap: 12px;
+}
+.member-card.done-card { background: #F0FDF4; border-color: #BBF7D0; }
+.member-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: #EEF2FF;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #4F46E5; flex-shrink: 0;
+}
+.member-avatar.done-av { background: #D1FAE5; color: #059669; }
+.member-info { flex: 1; }
+.member-name { font-size: 14px; font-weight: 600; color: #111827; }
+.member-sub  { font-size: 12px; color: #6B7280; margin-top: 2px; }
+/* 멤버 진행 바 */
+.member-prog-wrap { margin-top: 6px; }
+.member-prog-bg { height: 5px; background: #F3F4F6; border-radius: 3px; overflow: hidden; }
+.member-prog-fill { height: 100%; border-radius: 3px; }
+.fill-done    { background: #059669; }
+.fill-partial { background: #4F46E5; }
+.member-pct { font-size: 12px; font-weight: 600; color: #6B7280; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     슬라이드 1 — 홈 (통독 현황)
+══════════════════════════════════════ -->
+<div class="slide-wrapper">
+  <div class="slide-label">Slide 1 — 홈</div>
+  <div class="slide-spacer">
+    <div class="slide slide-home slide-scale">
+      <div class="deco deco-1"></div>
+      <div class="deco deco-2"></div>
+      <div class="deco deco-3"></div>
+
+      <div class="slide-top">
+        <div class="slide-tag">📖 리딩지저스 소망교회</div>
+        <div class="slide-headline">오늘도 말씀과<br>함께하는 하루</div>
+        <div class="slide-subline">나의 통독 현황을 한눈에<br>매일 꾸준히 이어가세요</div>
+      </div>
+
+      <!-- 폰 -->
+      <div class="phone-outer">
+        <div class="phone-body">
+          <div class="phone-screen">
+            <div class="di"></div>
+
+            <!-- AppBar -->
+            <div class="app-bar">
+              <div class="app-bar-brand">
+                <div class="app-bar-logo">✝</div>
+                <div>
+                  <div class="app-bar-title">리딩 지저스</div>
+                  <div class="app-bar-sub">소망 교회</div>
+                </div>
+              </div>
+              <div class="app-bar-avatar">장</div>
+            </div>
+
+            <!-- 홈 본문 -->
+            <div class="home-body">
+              <!-- ReadingCard -->
+              <div class="reading-card">
+                <div class="reading-header">
+                  <span class="reading-title">오늘의 말씀</span>
+                  <span class="reading-arrow">›</span>
+                </div>
+                <div class="reading-book">마태복음 5-7장</div>
+                <div class="reading-hint">탭하여 유튜브에서 말씀 듣기 ▶</div>
+              </div>
+
+              <!-- ScheduleCard + CompletionCard -->
+              <div class="card-row">
+                <div class="schedule-card">
+                  <div class="card-icon-wrap icon-yellow">📅</div>
+                  <div class="card-title">통독 일정</div>
+                  <div class="card-sub">날짜별 읽기 분량</div>
+                </div>
+                <div class="completion-card completion-done">
+                  <div class="card-icon-wrap icon-green">✅</div>
+                  <div class="card-title">완료</div>
+                  <div class="card-sub">오늘 읽기 완료!</div>
+                </div>
+              </div>
+
+              <!-- WeeklyProgressCard -->
+              <div class="weekly-card">
+                <div class="weekly-header">
+                  <span class="weekly-week">3월 3주차</span>
+                  <span class="weekly-pct">71% 완료</span>
+                </div>
+                <div class="weekly-bar-bg">
+                  <div class="weekly-bar-fill" style="width:71%"></div>
+                </div>
+                <div class="weekly-days">
+                  <div class="day-circle done"><div class="day-name">월</div><div class="day-mark">✓</div></div>
+                  <div class="day-circle done"><div class="day-name">화</div><div class="day-mark">✓</div></div>
+                  <div class="day-circle done"><div class="day-name">수</div><div class="day-mark">✓</div></div>
+                  <div class="day-circle done"><div class="day-name">목</div><div class="day-mark">✓</div></div>
+                  <div class="day-circle done"><div class="day-name">금</div><div class="day-mark">✓</div></div>
+                  <div class="day-circle todo"><div class="day-name">토</div><div class="day-mark">○</div></div>
+                </div>
+                <div class="weekly-status">현재 5일 / 6일 완료</div>
+              </div>
+            </div>
+
+            <!-- 탭바 -->
+            <div class="tab-bar">
+              <div class="tab active"><div class="tab-ico">🏠</div><div class="tab-lbl">홈</div></div>
+              <div class="tab"><div class="tab-ico">📅</div><div class="tab-lbl">캘린더</div></div>
+              <div class="tab"><div class="tab-ico">👥</div><div class="tab-lbl">팀</div></div>
+              <div class="tab"><div class="tab-ico">👤</div><div class="tab-lbl">프로필</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-bottom">
+        <div class="feature-pill">📊 나의 통독 현황 한눈에</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     슬라이드 2 — 캘린더
+══════════════════════════════════════ -->
+<div class="slide-wrapper">
+  <div class="slide-label">Slide 2 — 캘린더</div>
+  <div class="slide-spacer">
+    <div class="slide slide-cal slide-scale">
+      <div class="deco deco-1"></div>
+      <div class="deco deco-2"></div>
+
+      <div class="slide-top">
+        <div class="slide-tag">📅 리딩지저스 소망교회</div>
+        <div class="slide-headline">매일의 기록이<br>쌓여가는 달력</div>
+        <div class="slide-subline">완독한 날들을 달력으로 확인하며<br>나의 통독 여정을 돌아보세요</div>
+      </div>
+
+      <div class="phone-outer">
+        <div class="phone-body">
+          <div class="phone-screen">
+            <div class="di"></div>
+            <div class="app-bar">
+              <div class="app-bar-brand">
+                <div class="app-bar-logo">✝</div>
+                <div>
+                  <div class="app-bar-title">리딩 지저스</div>
+                  <div class="app-bar-sub">소망 교회</div>
+                </div>
+              </div>
+              <div class="app-bar-avatar">장</div>
+            </div>
+
+            <div class="cal-body">
+              <!-- 캘린더 카드 -->
+              <div class="cal-card">
+                <div class="cal-month-row">
+                  <span class="cal-month-label">2026년 3월</span>
+                  <div class="cal-nav-row">
+                    <div class="cal-nav-btn">‹</div>
+                    <div class="cal-nav-btn">›</div>
+                  </div>
+                </div>
+                <div class="cal-weekdays">
+                  <div class="cal-wd">일</div><div class="cal-wd">월</div><div class="cal-wd">화</div>
+                  <div class="cal-wd">수</div><div class="cal-wd">목</div><div class="cal-wd">금</div><div class="cal-wd">토</div>
+                </div>
+                <div class="cal-grid">
+                  <!-- 1주 (1일=일) -->
+                  <div class="cal-day done sun">1</div><div class="cal-day done">2</div><div class="cal-day done">3</div>
+                  <div class="cal-day done">4</div><div class="cal-day done">5</div><div class="cal-day done">6</div><div class="cal-day done sat">7</div>
+                  <!-- 2주 -->
+                  <div class="cal-day done sun">8</div><div class="cal-day done">9</div><div class="cal-day done">10</div>
+                  <div class="cal-day done">11</div><div class="cal-day done">12</div><div class="cal-day todo">13</div><div class="cal-day todo sat">14</div>
+                  <!-- 3주 -->
+                  <div class="cal-day today sun">15</div><div class="cal-day future">16</div><div class="cal-day future">17</div>
+                  <div class="cal-day future">18</div><div class="cal-day future">19</div><div class="cal-day future">20</div><div class="cal-day future sat">21</div>
+                  <!-- 4주 -->
+                  <div class="cal-day future sun">22</div><div class="cal-day future">23</div><div class="cal-day future">24</div>
+                  <div class="cal-day future">25</div><div class="cal-day future">26</div><div class="cal-day future">27</div><div class="cal-day future sat">28</div>
+                  <!-- 5주 -->
+                  <div class="cal-day future sun">29</div><div class="cal-day future">30</div><div class="cal-day future">31</div>
+                </div>
+                <div class="cal-legend">
+                  <div class="legend-item"><div class="legend-dot" style="background:#D1FAE5"></div><div class="legend-txt">완독</div></div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#FEF3C7"></div><div class="legend-txt">미완독</div></div>
+                  <div class="legend-item"><div class="legend-dot" style="background:#F3F4F6"></div><div class="legend-txt">미래</div></div>
+                </div>
+              </div>
+
+              <!-- 월간 통계 -->
+              <div class="stat-card">
+                <div class="stat-row">
+                  <span class="stat-label">3월 완독률</span>
+                  <span class="stat-val" style="color:#059669">74%</span>
+                </div>
+                <div class="stat-bar-bg">
+                  <div class="stat-bar fill-done" style="width:74%"></div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-row">
+                  <span class="stat-label">전체 누적 달성률</span>
+                  <span class="stat-val">68%</span>
+                </div>
+                <div class="stat-bar-bg">
+                  <div class="stat-bar fill-partial" style="width:68%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-bar">
+              <div class="tab"><div class="tab-ico">🏠</div><div class="tab-lbl">홈</div></div>
+              <div class="tab active"><div class="tab-ico">📅</div><div class="tab-lbl" style="color:#059669">캘린더</div></div>
+              <div class="tab"><div class="tab-ico">👥</div><div class="tab-lbl">팀</div></div>
+              <div class="tab"><div class="tab-ico">👤</div><div class="tab-lbl">프로필</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-bottom">
+        <div class="feature-pill" style="background:rgba(255,255,255,0.12)">📅 완독 달력으로 한눈에</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     슬라이드 3 — 팀 현황
+══════════════════════════════════════ -->
+<div class="slide-wrapper">
+  <div class="slide-label">Slide 3 — 팀 현황</div>
+  <div class="slide-spacer">
+    <div class="slide slide-team slide-scale">
+      <div class="deco deco-1"></div>
+      <div class="deco deco-2"></div>
+
+      <div class="slide-top">
+        <div class="slide-tag">👥 리딩지저스 소망교회</div>
+        <div class="slide-headline">함께하면<br>더 멀리 갑니다</div>
+        <div class="slide-subline">팀원들의 통독 현황을 확인하며<br>서로 격려하고 나아가세요</div>
+      </div>
+
+      <div class="phone-outer">
+        <div class="phone-body">
+          <div class="phone-screen">
+            <div class="di"></div>
+            <div class="app-bar">
+              <div class="app-bar-brand">
+                <div class="app-bar-logo">✝</div>
+                <div>
+                  <div class="app-bar-title">리딩 지저스</div>
+                  <div class="app-bar-sub">소망 교회</div>
+                </div>
+              </div>
+              <div class="app-bar-avatar">장</div>
+            </div>
+
+            <div class="team-body">
+              <!-- 내 팀 히어로 -->
+              <div class="team-hero">
+                <div class="team-hero-section">MY TEAM</div>
+                <div class="team-hero-name-row">
+                  <span class="team-hero-title">홍길동 팀</span>
+                  <span class="team-leader-badge">팀장</span>
+                </div>
+                <div class="dot-row">
+                  <div class="dot-pill done">✓ 월</div>
+                  <div class="dot-pill done">✓ 화</div>
+                  <div class="dot-pill done">✓ 수</div>
+                  <div class="dot-pill done">✓ 목</div>
+                  <div class="dot-pill done">✓ 금</div>
+                  <div class="dot-pill pending">○ 토</div>
+                </div>
+              </div>
+
+              <div class="team-section-label">MEMBERS</div>
+
+              <!-- 멤버 카드들 -->
+              <div class="member-card done-card">
+                <div class="member-avatar done-av">홍</div>
+                <div class="member-info">
+                  <div class="member-name">홍길동</div>
+                  <div class="member-sub">이번 주 6일 완독</div>
+                  <div class="member-prog-wrap">
+                    <div class="member-prog-bg"><div class="member-prog-fill fill-done" style="width:100%"></div></div>
+                  </div>
+                </div>
+                <div class="member-pct" style="color:#059669">100%</div>
+              </div>
+              <div class="member-card done-card">
+                <div class="member-avatar done-av">김</div>
+                <div class="member-info">
+                  <div class="member-name">김철수</div>
+                  <div class="member-sub">이번 주 5일 완독</div>
+                  <div class="member-prog-wrap">
+                    <div class="member-prog-bg"><div class="member-prog-fill fill-done" style="width:83%"></div></div>
+                  </div>
+                </div>
+                <div class="member-pct" style="color:#059669">83%</div>
+              </div>
+              <div class="member-card">
+                <div class="member-avatar">이</div>
+                <div class="member-info">
+                  <div class="member-name">이영희</div>
+                  <div class="member-sub">이번 주 4일 완독</div>
+                  <div class="member-prog-wrap">
+                    <div class="member-prog-bg"><div class="member-prog-fill fill-partial" style="width:67%"></div></div>
+                  </div>
+                </div>
+                <div class="member-pct">67%</div>
+              </div>
+              <div class="member-card">
+                <div class="member-avatar">박</div>
+                <div class="member-info">
+                  <div class="member-name">박아무개</div>
+                  <div class="member-sub">이번 주 3일 완독</div>
+                  <div class="member-prog-wrap">
+                    <div class="member-prog-bg"><div class="member-prog-fill fill-partial" style="width:50%"></div></div>
+                  </div>
+                </div>
+                <div class="member-pct">50%</div>
+              </div>
+            </div>
+
+            <div class="tab-bar">
+              <div class="tab"><div class="tab-ico">🏠</div><div class="tab-lbl">홈</div></div>
+              <div class="tab"><div class="tab-ico">📅</div><div class="tab-lbl">캘린더</div></div>
+              <div class="tab active"><div class="tab-ico">👥</div><div class="tab-lbl" style="color:#1d4ed8">팀</div></div>
+              <div class="tab"><div class="tab-ico">👤</div><div class="tab-lbl">프로필</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-bottom">
+        <div class="feature-pill">👥 팀원과 함께 통독</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ─── Feature Graphic (1024×500) ─── -->
+<div class="fg-wrapper">
+  <div class="slide-label">Feature Graphic — 1024×500</div>
+  <div class="fg-spacer">
+    <div class="feature-graphic" id="feature-graphic">
+      <!-- 배경 장식 원 -->
+      <div class="fg-circle fg-circle-1"></div>
+      <div class="fg-circle fg-circle-2"></div>
+      <div class="fg-circle fg-circle-3"></div>
+
+      <!-- 왼쪽: 텍스트 -->
+      <div class="fg-left">
+        <div class="fg-tag">📖 리딩지저스 소망교회</div>
+        <div class="fg-title">말씀과 함께,<br>날마다 새롭게</div>
+        <div class="fg-sub">소망교회 성경통독 프로그램을<br>앱으로 더 쉽고 꾸준하게</div>
+      </div>
+
+      <!-- 오른쪽: 미니 폰 목업 -->
+      <div class="fg-right">
+        <div class="fg-phone">
+          <div class="fg-phone-notch"></div>
+          <div class="fg-phone-screen">
+            <div class="fg-app-bar">
+              <span class="fg-app-title">리딩 지저스</span>
+              <div class="fg-avatar"></div>
+            </div>
+            <div class="fg-card">
+              <div class="fg-card-label">오늘의 통독</div>
+              <div class="fg-card-range">마태복음 5-7장</div>
+              <div class="fg-progress-bar"><div class="fg-progress-fill" style="width:75%"></div></div>
+              <div class="fg-progress-text">75% 완료</div>
+            </div>
+            <div class="fg-week-row">
+              <div class="fg-day done">월</div>
+              <div class="fg-day done">화</div>
+              <div class="fg-day done">수</div>
+              <div class="fg-day today">목</div>
+              <div class="fg-day">금</div>
+              <div class="fg-day">토</div>
+              <div class="fg-day">일</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ─── Feature Graphic ─── */
+.fg-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.fg-spacer {
+  height: calc(500px * 0.6);
+  width: calc(1024px * 0.6);
+  position: relative;
+}
+.feature-graphic {
+  width: 1024px;
+  height: 500px;
+  background: linear-gradient(135deg, #1e1b5e 0%, #3730a3 40%, #4f46e5 70%, #6d28d9 100%);
+  position: absolute;
+  top: 0; left: 0;
+  transform: scale(0.6);
+  transform-origin: top left;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 80px;
+  gap: 60px;
+}
+
+/* 배경 장식 원 */
+.fg-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.12;
+  background: white;
+}
+.fg-circle-1 { width: 400px; height: 400px; top: -120px; right: 280px; }
+.fg-circle-2 { width: 250px; height: 250px; bottom: -80px; right: 120px; }
+.fg-circle-3 { width: 150px; height: 150px; top: 60px; left: 320px; }
+
+/* 왼쪽 텍스트 */
+.fg-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.fg-tag {
+  font-size: 18px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+.fg-title {
+  font-size: 54px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+.fg-sub {
+  font-size: 20px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* 오른쪽 폰 목업 */
+.fg-right {
+  flex-shrink: 0;
+}
+.fg-phone {
+  width: 210px;
+  height: 420px;
+  background: #fff;
+  border-radius: 36px;
+  padding: 14px 10px 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.fg-phone-notch {
+  width: 70px;
+  height: 10px;
+  background: #000;
+  border-radius: 10px;
+  margin: 0 auto 10px;
+}
+.fg-phone-screen {
+  flex: 1;
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fg-app-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fg-app-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.fg-avatar {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+.fg-card {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.fg-card-label {
+  font-size: 9px;
+  color: #888;
+  font-weight: 500;
+}
+.fg-card-range {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.fg-progress-bar {
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.fg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  border-radius: 3px;
+}
+.fg-progress-text {
+  font-size: 9px;
+  color: #4f46e5;
+  font-weight: 600;
+}
+.fg-week-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.fg-day {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 600;
+  color: #888;
+}
+.fg-day.done {
+  background: #4f46e5;
+  color: white;
+}
+.fg-day.today {
+  background: #f59e0b;
+  color: white;
+}
+
+/* ─── 태블릿 슬라이드 공통 ─── */
+.tablet-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.tablet-spacer {
+  position: relative;
+}
+.tablet-slide {
+  position: absolute;
+  top: 0; left: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.tablet-7  { width: 1200px; height: 1920px; }
+.tablet-10 { width: 1600px; height: 2560px; }
+
+.tablet-home  { background: linear-gradient(155deg, #1e1b5e 0%, #3730a3 45%, #4f46e5 100%); }
+.tablet-cal   { background: linear-gradient(155deg, #022c22 0%, #047857 50%, #059669 100%); }
+.tablet-team  { background: linear-gradient(155deg, #0c1a3a 0%, #1d4ed8 55%, #3b82f6 100%); }
+
+.tablet-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 120px;
+  gap: 20px;
+  text-align: center;
+}
+.tablet-tag {
+  font-size: 28px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  background: rgba(255,255,255,0.12);
+  padding: 10px 28px;
+  border-radius: 50px;
+}
+.tablet-headline {
+  font-size: 90px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -2px;
+}
+.tablet-subline {
+  font-size: 34px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+}
+
+/* 태블릿 목업 */
+.tablet-mockup-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 60px 80px;
+  width: 100%;
+}
+.tablet-device {
+  background: #fff;
+  border-radius: 40px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.tablet-7 .tablet-device  { width: 700px; height: 980px; padding: 20px 16px; border-radius: 40px; }
+.tablet-10 .tablet-device { width: 920px; height: 1300px; padding: 28px 22px; border-radius: 50px; }
+
+.tablet-device-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+}
+.tablet-device-title { font-weight: 700; color: #1a1a2e; }
+.tablet-device-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+.tablet-device-screen {
+  flex: 1;
+  background: #f5f5f7;
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+/* 태블릿용 카드들 */
+.t-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.t-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.t-card-title { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+.t-card-badge { font-size: 11px; color: #4f46e5; font-weight: 600; background: #ede9fe; padding: 3px 8px; border-radius: 8px; }
+.t-reading-range { font-size: 22px; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+.t-progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+.t-progress-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #7c3aed); border-radius: 4px; }
+.t-progress-row { display: flex; justify-content: space-between; margin-top: 6px; }
+.t-progress-label { font-size: 12px; color: #888; }
+.t-progress-pct { font-size: 12px; color: #4f46e5; font-weight: 700; }
+
+/* 요일 도트 */
+.t-week { display: flex; gap: 10px; justify-content: space-between; }
+.t-day { flex:1; height: 36px; border-radius: 8px; background: #e5e7eb; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#888; }
+.t-day.done { background: #4f46e5; color: white; }
+.t-day.today { background: #f59e0b; color: white; }
+
+/* 캘린더 그리드 */
+.t-cal-header { display:flex; justify-content:space-between; margin-bottom:10px; }
+.t-cal-month { font-size:18px; font-weight:700; color:#1a1a2e; }
+.t-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.t-cal-day-label { text-align:center; font-size:11px; color:#888; font-weight:600; padding-bottom:4px; }
+.t-cal-cell { aspect-ratio:1; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:500; color:#555; }
+.t-cal-cell.done { background:#4f46e5; color:white; font-weight:700; }
+.t-cal-cell.done-green { background:#059669; color:white; font-weight:700; }
+.t-cal-cell.today { background:#f59e0b; color:white; font-weight:700; }
+.t-cal-cell.empty { opacity:0; }
+
+/* 팀 멤버 */
+.t-member { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+.t-member:last-child { border-bottom:none; }
+.t-member-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:white; flex-shrink:0; }
+.t-member-info { flex:1; }
+.t-member-name { font-size:15px; font-weight:700; color:#1a1a2e; }
+.t-member-range { font-size:11px; color:#888; margin-top:2px; }
+.t-member-bar { height:5px; background:#e5e7eb; border-radius:3px; margin-top:6px; overflow:hidden; }
+.t-member-fill { height:100%; border-radius:3px; }
+.t-member-pct { font-size:12px; font-weight:700; color:#4f46e5; flex-shrink:0; }
+
+.tablet-bottom {
+  padding-bottom: 100px;
+  display: flex;
+  justify-content: center;
+}
+.tablet-pill {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 28px;
+  font-weight: 600;
+  padding: 18px 48px;
+  border-radius: 60px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 7인치 태블릿 슬라이드 (1200×1920) -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="tablet-wrapper">
+  <div class="slide-label">7인치 태블릿 — Slide 1 / 홈 (1200×1920)</div>
+  <div class="tablet-spacer" style="height:calc(1920px * 0.25); width:calc(1200px * 0.25);">
+    <div class="tablet-slide tablet-7 tablet-home" id="tab7-1" style="transform:scale(0.25);transform-origin:top left;">
+      <div class="tablet-top">
+        <div class="tablet-tag">📖 리딩지저스 소망교회</div>
+        <div class="tablet-headline">오늘도 말씀과<br>함께하는 하루</div>
+        <div class="tablet-subline">나의 통독 현황을 한눈에 — 매일 꾸준히 이어가세요</div>
+      </div>
+      <div class="tablet-mockup-area">
+        <div class="tablet-device">
+          <div class="tablet-device-bar">
+            <span class="tablet-device-title" style="font-size:18px;">리딩 지저스</span>
+            <div class="tablet-device-avatar"></div>
+          </div>
+          <div class="tablet-device-screen">
+            <div class="t-card">
+              <div class="t-card-header">
+                <span class="t-card-title">오늘의 통독</span>
+                <span class="t-card-badge">진행 중</span>
+              </div>
+              <div class="t-reading-range">마태복음 5-7장</div>
+              <div class="t-progress-bar"><div class="t-progress-fill" style="width:75%"></div></div>
+              <div class="t-progress-row"><span class="t-progress-label">이번 주 진도</span><span class="t-progress-pct">75%</span></div>
+            </div>
+            <div class="t-card">
+              <div class="t-card-title" style="margin-bottom:12px;">이번 주</div>
+              <div class="t-week">
+                <div class="t-day done">월</div><div class="t-day done">화</div><div class="t-day done">수</div>
+                <div class="t-day today">목</div><div class="t-day">금</div><div class="t-day">토</div><div class="t-day">일</div>
+              </div>
+            </div>
+            <div class="t-card">
+              <div class="t-card-header"><span class="t-card-title">전체 진행률</span><span class="t-card-badge">누적</span></div>
+              <div class="t-progress-bar" style="height:12px;"><div class="t-progress-fill" style="width:62%"></div></div>
+              <div class="t-progress-row"><span class="t-progress-label">신약 전체</span><span class="t-progress-pct">62%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom"><div class="tablet-pill">📖 나의 통독 현황 한눈에</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tablet-wrapper">
+  <div class="slide-label">7인치 태블릿 — Slide 2 / 캘린더 (1200×1920)</div>
+  <div class="tablet-spacer" style="height:calc(1920px * 0.25); width:calc(1200px * 0.25);">
+    <div class="tablet-slide tablet-7 tablet-cal" id="tab7-2" style="transform:scale(0.25);transform-origin:top left;">
+      <div class="tablet-top">
+        <div class="tablet-tag">📅 리딩지저스 소망교회</div>
+        <div class="tablet-headline">매일의 기록이<br>쌓여가는 달력</div>
+        <div class="tablet-subline">완독한 날들을 달력으로 확인하며 통독 여정을 돌아보세요</div>
+      </div>
+      <div class="tablet-mockup-area">
+        <div class="tablet-device">
+          <div class="tablet-device-bar">
+            <span class="tablet-device-title" style="font-size:18px;">리딩 지저스</span>
+            <div class="tablet-device-avatar" style="background:linear-gradient(135deg,#059669,#047857)"></div>
+          </div>
+          <div class="tablet-device-screen">
+            <div class="t-card">
+              <div class="t-cal-header"><span class="t-cal-month">2026년 3월</span></div>
+              <div class="t-cal-grid">
+                <div class="t-cal-day-label">일</div><div class="t-cal-day-label">월</div><div class="t-cal-day-label">화</div><div class="t-cal-day-label">수</div><div class="t-cal-day-label">목</div><div class="t-cal-day-label">금</div><div class="t-cal-day-label">토</div>
+                <div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell">1</div>
+                <div class="t-cal-cell done">2</div><div class="t-cal-cell done">3</div><div class="t-cal-cell done">4</div><div class="t-cal-cell done">5</div><div class="t-cal-cell done">6</div><div class="t-cal-cell done">7</div><div class="t-cal-cell">8</div>
+                <div class="t-cal-cell done">9</div><div class="t-cal-cell done">10</div><div class="t-cal-cell done">11</div><div class="t-cal-cell done-green">12</div><div class="t-cal-cell done">13</div><div class="t-cal-cell done">14</div><div class="t-cal-cell">15</div>
+                <div class="t-cal-cell done">16</div><div class="t-cal-cell done">17</div><div class="t-cal-cell done">18</div><div class="t-cal-cell done">19</div><div class="t-cal-cell done">20</div><div class="t-cal-cell done">21</div><div class="t-cal-cell">22</div>
+                <div class="t-cal-cell today">23</div><div class="t-cal-cell">24</div><div class="t-cal-cell">25</div><div class="t-cal-cell">26</div><div class="t-cal-cell">27</div><div class="t-cal-cell">28</div><div class="t-cal-cell">29</div>
+                <div class="t-cal-cell">30</div><div class="t-cal-cell">31</div>
+              </div>
+            </div>
+            <div class="t-card">
+              <div class="t-card-header"><span class="t-card-title">이번 달 완독</span><span class="t-card-badge">88%</span></div>
+              <div class="t-progress-bar"><div class="t-progress-fill" style="width:88%;background:linear-gradient(90deg,#059669,#047857)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom"><div class="tablet-pill" style="background:rgba(255,255,255,0.15);">📅 완독 달력으로 한눈에</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tablet-wrapper">
+  <div class="slide-label">7인치 태블릿 — Slide 3 / 팀 (1200×1920)</div>
+  <div class="tablet-spacer" style="height:calc(1920px * 0.25); width:calc(1200px * 0.25);">
+    <div class="tablet-slide tablet-7 tablet-team" id="tab7-3" style="transform:scale(0.25);transform-origin:top left;">
+      <div class="tablet-top">
+        <div class="tablet-tag">👥 리딩지저스 소망교회</div>
+        <div class="tablet-headline">함께하면<br>더 멀리 갑니다</div>
+        <div class="tablet-subline">팀원들의 통독 현황을 확인하며 서로 격려하고 나아가세요</div>
+      </div>
+      <div class="tablet-mockup-area">
+        <div class="tablet-device">
+          <div class="tablet-device-bar">
+            <span class="tablet-device-title" style="font-size:18px;">리딩 지저스</span>
+            <div class="tablet-device-avatar" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)"></div>
+          </div>
+          <div class="tablet-device-screen">
+            <div class="t-card">
+              <div class="t-card-header"><span class="t-card-title">홍길동 팀</span><span class="t-card-badge">팀장</span></div>
+              <div class="t-member">
+                <div class="t-member-avatar" style="background:#4f46e5;">홍</div>
+                <div class="t-member-info">
+                  <div class="t-member-name">홍길동</div>
+                  <div class="t-member-range">마태복음 5장</div>
+                  <div class="t-member-bar"><div class="t-member-fill" style="width:90%;background:#4f46e5;"></div></div>
+                </div>
+                <div class="t-member-pct">90%</div>
+              </div>
+              <div class="t-member">
+                <div class="t-member-avatar" style="background:#059669;">김</div>
+                <div class="t-member-info">
+                  <div class="t-member-name">김철수</div>
+                  <div class="t-member-range">마태복음 3장</div>
+                  <div class="t-member-bar"><div class="t-member-fill" style="width:68%;background:#059669;"></div></div>
+                </div>
+                <div class="t-member-pct">68%</div>
+              </div>
+              <div class="t-member">
+                <div class="t-member-avatar" style="background:#d97706;">이</div>
+                <div class="t-member-info">
+                  <div class="t-member-name">이영희</div>
+                  <div class="t-member-range">마태복음 1장</div>
+                  <div class="t-member-bar"><div class="t-member-fill" style="width:45%;background:#d97706;"></div></div>
+                </div>
+                <div class="t-member-pct">45%</div>
+              </div>
+              <div class="t-member">
+                <div class="t-member-avatar" style="background:#7c3aed;">박</div>
+                <div class="t-member-info">
+                  <div class="t-member-name">박아무개</div>
+                  <div class="t-member-range">시작 전</div>
+                  <div class="t-member-bar"><div class="t-member-fill" style="width:20%;background:#7c3aed;"></div></div>
+                </div>
+                <div class="t-member-pct">20%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom"><div class="tablet-pill">👥 팀원과 함께 통독</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 10인치 태블릿 슬라이드 (1600×2560) -->
+<!-- ═══════════════════════════════════════════════════════ -->
+
+<div class="tablet-wrapper">
+  <div class="slide-label">10인치 태블릿 — Slide 1 / 홈 (1600×2560)</div>
+  <div class="tablet-spacer" style="height:calc(2560px * 0.19); width:calc(1600px * 0.19);">
+    <div class="tablet-slide tablet-10 tablet-home" id="tab10-1" style="transform:scale(0.19);transform-origin:top left;">
+      <div class="tablet-top" style="padding-top:160px;">
+        <div class="tablet-tag" style="font-size:36px;">📖 리딩지저스 소망교회</div>
+        <div class="tablet-headline" style="font-size:120px;">오늘도 말씀과<br>함께하는 하루</div>
+        <div class="tablet-subline" style="font-size:44px;">나의 통독 현황을 한눈에 — 매일 꾸준히 이어가세요</div>
+      </div>
+      <div class="tablet-mockup-area" style="padding:80px 120px;">
+        <div class="tablet-device">
+          <div class="tablet-device-bar" style="padding-bottom:20px;">
+            <span class="tablet-device-title" style="font-size:24px;">리딩 지저스</span>
+            <div class="tablet-device-avatar" style="width:36px;height:36px;"></div>
+          </div>
+          <div class="tablet-device-screen" style="gap:20px;padding:28px;">
+            <div class="t-card" style="padding:24px;">
+              <div class="t-card-header"><span class="t-card-title" style="font-size:22px;">오늘의 통독</span><span class="t-card-badge" style="font-size:15px;">진행 중</span></div>
+              <div class="t-reading-range" style="font-size:30px;">마태복음 5-7장</div>
+              <div class="t-progress-bar" style="height:12px;"><div class="t-progress-fill" style="width:75%"></div></div>
+              <div class="t-progress-row"><span class="t-progress-label" style="font-size:16px;">이번 주 진도</span><span class="t-progress-pct" style="font-size:16px;">75%</span></div>
+            </div>
+            <div class="t-card" style="padding:24px;">
+              <div class="t-card-title" style="font-size:22px;margin-bottom:16px;">이번 주</div>
+              <div class="t-week">
+                <div class="t-day done" style="height:48px;font-size:17px;">월</div><div class="t-day done" style="height:48px;font-size:17px;">화</div><div class="t-day done" style="height:48px;font-size:17px;">수</div>
+                <div class="t-day today" style="height:48px;font-size:17px;">목</div><div class="t-day" style="height:48px;font-size:17px;">금</div><div class="t-day" style="height:48px;font-size:17px;">토</div><div class="t-day" style="height:48px;font-size:17px;">일</div>
+              </div>
+            </div>
+            <div class="t-card" style="padding:24px;">
+              <div class="t-card-header"><span class="t-card-title" style="font-size:22px;">전체 진행률</span><span class="t-card-badge" style="font-size:15px;">누적</span></div>
+              <div class="t-progress-bar" style="height:14px;"><div class="t-progress-fill" style="width:62%"></div></div>
+              <div class="t-progress-row"><span class="t-progress-label" style="font-size:16px;">신약 전체</span><span class="t-progress-pct" style="font-size:16px;">62%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom" style="padding-bottom:130px;"><div class="tablet-pill" style="font-size:36px;padding:24px 64px;">📖 나의 통독 현황 한눈에</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tablet-wrapper">
+  <div class="slide-label">10인치 태블릿 — Slide 2 / 캘린더 (1600×2560)</div>
+  <div class="tablet-spacer" style="height:calc(2560px * 0.19); width:calc(1600px * 0.19);">
+    <div class="tablet-slide tablet-10 tablet-cal" id="tab10-2" style="transform:scale(0.19);transform-origin:top left;">
+      <div class="tablet-top" style="padding-top:160px;">
+        <div class="tablet-tag" style="font-size:36px;">📅 리딩지저스 소망교회</div>
+        <div class="tablet-headline" style="font-size:120px;">매일의 기록이<br>쌓여가는 달력</div>
+        <div class="tablet-subline" style="font-size:44px;">완독한 날들을 달력으로 확인하며 통독 여정을 돌아보세요</div>
+      </div>
+      <div class="tablet-mockup-area" style="padding:80px 120px;">
+        <div class="tablet-device">
+          <div class="tablet-device-bar" style="padding-bottom:20px;">
+            <span class="tablet-device-title" style="font-size:24px;">리딩 지저스</span>
+            <div class="tablet-device-avatar" style="width:36px;height:36px;background:linear-gradient(135deg,#059669,#047857)"></div>
+          </div>
+          <div class="tablet-device-screen" style="gap:20px;padding:28px;">
+            <div class="t-card" style="padding:24px;">
+              <div class="t-cal-header"><span class="t-cal-month" style="font-size:24px;">2026년 3월</span></div>
+              <div class="t-cal-grid" style="gap:8px;">
+                <div class="t-cal-day-label" style="font-size:15px;">일</div><div class="t-cal-day-label" style="font-size:15px;">월</div><div class="t-cal-day-label" style="font-size:15px;">화</div><div class="t-cal-day-label" style="font-size:15px;">수</div><div class="t-cal-day-label" style="font-size:15px;">목</div><div class="t-cal-day-label" style="font-size:15px;">금</div><div class="t-cal-day-label" style="font-size:15px;">토</div>
+                <div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell empty"></div><div class="t-cal-cell" style="font-size:17px;">1</div>
+                <div class="t-cal-cell done" style="font-size:17px;">2</div><div class="t-cal-cell done" style="font-size:17px;">3</div><div class="t-cal-cell done" style="font-size:17px;">4</div><div class="t-cal-cell done" style="font-size:17px;">5</div><div class="t-cal-cell done" style="font-size:17px;">6</div><div class="t-cal-cell done" style="font-size:17px;">7</div><div class="t-cal-cell" style="font-size:17px;">8</div>
+                <div class="t-cal-cell done" style="font-size:17px;">9</div><div class="t-cal-cell done" style="font-size:17px;">10</div><div class="t-cal-cell done" style="font-size:17px;">11</div><div class="t-cal-cell done-green" style="font-size:17px;">12</div><div class="t-cal-cell done" style="font-size:17px;">13</div><div class="t-cal-cell done" style="font-size:17px;">14</div><div class="t-cal-cell" style="font-size:17px;">15</div>
+                <div class="t-cal-cell done" style="font-size:17px;">16</div><div class="t-cal-cell done" style="font-size:17px;">17</div><div class="t-cal-cell done" style="font-size:17px;">18</div><div class="t-cal-cell done" style="font-size:17px;">19</div><div class="t-cal-cell done" style="font-size:17px;">20</div><div class="t-cal-cell done" style="font-size:17px;">21</div><div class="t-cal-cell" style="font-size:17px;">22</div>
+                <div class="t-cal-cell today" style="font-size:17px;">23</div><div class="t-cal-cell" style="font-size:17px;">24</div><div class="t-cal-cell" style="font-size:17px;">25</div><div class="t-cal-cell" style="font-size:17px;">26</div><div class="t-cal-cell" style="font-size:17px;">27</div><div class="t-cal-cell" style="font-size:17px;">28</div><div class="t-cal-cell" style="font-size:17px;">29</div>
+                <div class="t-cal-cell" style="font-size:17px;">30</div><div class="t-cal-cell" style="font-size:17px;">31</div>
+              </div>
+            </div>
+            <div class="t-card" style="padding:24px;">
+              <div class="t-card-header"><span class="t-card-title" style="font-size:22px;">이번 달 완독</span><span class="t-card-badge" style="font-size:15px;">88%</span></div>
+              <div class="t-progress-bar" style="height:14px;"><div class="t-progress-fill" style="width:88%;background:linear-gradient(90deg,#059669,#047857)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom" style="padding-bottom:130px;"><div class="tablet-pill" style="font-size:36px;padding:24px 64px;">📅 완독 달력으로 한눈에</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="tablet-wrapper">
+  <div class="slide-label">10인치 태블릿 — Slide 3 / 팀 (1600×2560)</div>
+  <div class="tablet-spacer" style="height:calc(2560px * 0.19); width:calc(1600px * 0.19);">
+    <div class="tablet-slide tablet-10 tablet-team" id="tab10-3" style="transform:scale(0.19);transform-origin:top left;">
+      <div class="tablet-top" style="padding-top:160px;">
+        <div class="tablet-tag" style="font-size:36px;">👥 리딩지저스 소망교회</div>
+        <div class="tablet-headline" style="font-size:120px;">함께하면<br>더 멀리 갑니다</div>
+        <div class="tablet-subline" style="font-size:44px;">팀원들의 통독 현황을 확인하며 서로 격려하고 나아가세요</div>
+      </div>
+      <div class="tablet-mockup-area" style="padding:80px 120px;">
+        <div class="tablet-device">
+          <div class="tablet-device-bar" style="padding-bottom:20px;">
+            <span class="tablet-device-title" style="font-size:24px;">리딩 지저스</span>
+            <div class="tablet-device-avatar" style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#3b82f6)"></div>
+          </div>
+          <div class="tablet-device-screen" style="gap:20px;padding:28px;">
+            <div class="t-card" style="padding:24px;">
+              <div class="t-card-header"><span class="t-card-title" style="font-size:22px;">홍길동 팀</span><span class="t-card-badge" style="font-size:15px;">팀장</span></div>
+              <div class="t-member" style="padding:16px 0;">
+                <div class="t-member-avatar" style="background:#4f46e5;width:44px;height:44px;font-size:18px;">홍</div>
+                <div class="t-member-info"><div class="t-member-name" style="font-size:19px;">홍길동</div><div class="t-member-range" style="font-size:14px;">마태복음 5장</div><div class="t-member-bar" style="height:7px;margin-top:8px;"><div class="t-member-fill" style="width:90%;background:#4f46e5;"></div></div></div>
+                <div class="t-member-pct" style="font-size:16px;">90%</div>
+              </div>
+              <div class="t-member" style="padding:16px 0;">
+                <div class="t-member-avatar" style="background:#059669;width:44px;height:44px;font-size:18px;">김</div>
+                <div class="t-member-info"><div class="t-member-name" style="font-size:19px;">김철수</div><div class="t-member-range" style="font-size:14px;">마태복음 3장</div><div class="t-member-bar" style="height:7px;margin-top:8px;"><div class="t-member-fill" style="width:68%;background:#059669;"></div></div></div>
+                <div class="t-member-pct" style="font-size:16px;">68%</div>
+              </div>
+              <div class="t-member" style="padding:16px 0;">
+                <div class="t-member-avatar" style="background:#d97706;width:44px;height:44px;font-size:18px;">이</div>
+                <div class="t-member-info"><div class="t-member-name" style="font-size:19px;">이영희</div><div class="t-member-range" style="font-size:14px;">마태복음 1장</div><div class="t-member-bar" style="height:7px;margin-top:8px;"><div class="t-member-fill" style="width:45%;background:#d97706;"></div></div></div>
+                <div class="t-member-pct" style="font-size:16px;">45%</div>
+              </div>
+              <div class="t-member" style="padding:16px 0;border-bottom:none;">
+                <div class="t-member-avatar" style="background:#7c3aed;width:44px;height:44px;font-size:18px;">박</div>
+                <div class="t-member-info"><div class="t-member-name" style="font-size:19px;">박아무개</div><div class="t-member-range" style="font-size:14px;">시작 전</div><div class="t-member-bar" style="height:7px;margin-top:8px;"><div class="t-member-fill" style="width:20%;background:#7c3aed;"></div></div></div>
+                <div class="t-member-pct" style="font-size:16px;">20%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tablet-bottom" style="padding-bottom:130px;"><div class="tablet-pill" style="font-size:36px;padding:24px 64px;">👥 팀원과 함께 통독</div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

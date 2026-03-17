@@ -45,6 +45,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# iOS 프로비전 프로파일 (절대 커밋 금지)
+*.mobileprovision
+
 # Fastlane 키 파일 (절대 커밋 금지)
 fastlane/google_play_key.json
 fastlane/app_store_connect_api_key.p8
