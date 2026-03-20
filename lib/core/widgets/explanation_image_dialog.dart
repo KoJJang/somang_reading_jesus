@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 
@@ -55,6 +60,12 @@ class ExplanationImageDialog extends StatelessWidget {
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.share),
+                          onPressed: () => _shareImage(),
                         ),
                       ],
                     ),
@@ -119,6 +130,24 @@ class ExplanationImageDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _shareImage() async {
+    if (!kIsWeb) {
+      final path = await imagePathFuture;
+      if (path != null) {
+        try {
+          final bytes = await rootBundle.load(path);
+          final dir = await getTemporaryDirectory();
+          final file = File('${dir.path}/explanation.jpg')
+            ..writeAsBytesSync(bytes.buffer.asUint8List());
+          await Share.shareXFiles([XFile(file.path)]);
+          return;
+        } catch (_) {}
+      }
+    }
+    final url = await imageUrlFuture;
+    if (url != null) Share.share(url);
   }
 }
 
