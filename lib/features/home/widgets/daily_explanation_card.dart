@@ -1,4 +1,9 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../features/services/rjesus_service.dart';
 import '../../../core/widgets/explanation_image_dialog.dart';
 
@@ -38,9 +43,19 @@ class DailyExplanationCard extends StatelessWidget {
                   child: const Icon(Icons.image, color: Colors.green, size: 20),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  '일별 해설',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '일별 해설',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    if (hasReading)
+                      GestureDetector(
+                        onTap: () => _shareImage(),
+                        child: const Icon(Icons.share, size: 18, color: Colors.black38),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -56,6 +71,24 @@ class DailyExplanationCard extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _shareImage() async {
+    if (!kIsWeb) {
+      final path = await RJesusService.instance.getTodaysExplanationImagePath();
+      if (path != null) {
+        try {
+          final bytes = await rootBundle.load(path);
+          final dir = await getTemporaryDirectory();
+          final file = File('${dir.path}/explanation.jpg')
+            ..writeAsBytesSync(bytes.buffer.asUint8List());
+          await Share.shareXFiles([XFile(file.path)]);
+          return;
+        } catch (_) {}
+      }
+    }
+    final url = await RJesusService.instance.getTodaysExplanationImageUrl();
+    if (url != null) Share.share(url);
   }
 
   void _showImageDialog(BuildContext context) {
