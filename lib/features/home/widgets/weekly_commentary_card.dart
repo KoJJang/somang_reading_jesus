@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../features/services/rjesus_service.dart';
 import '../../../features/services/models/rjesus_content.dart';
 import '../../../core/utils/logger_util.dart';
+import '../../../core/widgets/youtube_player_screen.dart';
 
 class WeeklyCommentaryCard extends StatelessWidget {
   const WeeklyCommentaryCard({super.key});
@@ -14,7 +15,19 @@ class WeeklyCommentaryCard extends StatelessWidget {
       onTap: () async {
         final commentary =
             await RJesusService.instance.getThisWeeksCommentary();
-        if (commentary != null) {
+        if (commentary == null) return;
+        final videoId = commentary.youtubeId;
+        if (videoId != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => YoutubePlayerScreen(
+                videoId: videoId,
+                title: commentary.title,
+              ),
+            ),
+          );
+        } else {
           try {
             final Uri uri = Uri.parse(commentary.url);
             await launchUrl(uri, mode: LaunchMode.platformDefault);
