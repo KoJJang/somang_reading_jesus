@@ -31,6 +31,7 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
         autoPlay: true,
         mute: false,
         controlsVisibleAtStart: true,
+        enableCaption: false,
       ),
     );
   }
