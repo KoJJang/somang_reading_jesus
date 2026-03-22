@@ -30,6 +30,7 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
+        controlsVisibleAtStart: true,
       ),
     );
   }
@@ -47,73 +48,68 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubePlayerBuilder(
-      player: YoutubePlayer(
-        controller: _controller,
-        showVideoProgressIndicator: true,
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: AppColors.background,
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
-      builder: (context, player) {
-        return Scaffold(
-          appBar: AppBar(
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            backgroundColor: AppColors.background,
-            title: Text(
-              widget.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          YoutubePlayer(
+            controller: _controller,
+            showVideoProgressIndicator: true,
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: _speeds.map((speed) {
+                final selected = _playbackRate == speed;
+                final label = speed == 1.0 ? '1x' : '${speed}x';
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilledButton(
+                    onPressed: () => _setSpeed(speed),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: selected
+                          ? AppColors.primary
+                          : const Color(0xFFE5E7EB),
+                      foregroundColor: selected
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              player,
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: _speeds.map((speed) {
-                    final selected = _playbackRate == speed;
-                    final label = speed == 1.0 ? '1x' : '${speed}x';
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilledButton(
-                        onPressed: () => _setSpeed(speed),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: selected
-                              ? AppColors.primary
-                              : const Color(0xFFE5E7EB),
-                          foregroundColor: selected
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
