@@ -63,7 +63,7 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
         ),
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           YoutubePlayer(
             controller: _controller,
