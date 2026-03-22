@@ -34,6 +34,11 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
     );
   }
 
+  void _seekBy(int seconds) {
+    final current = _controller.value.position;
+    _controller.seekTo(current + Duration(seconds: seconds));
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -65,7 +70,29 @@ class _YoutubePlayerScreenState extends State<YoutubePlayerScreen> {
               ),
             ),
           ),
-          body: player,
+          body: Stack(
+            children: [
+              player,
+              Positioned.fill(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onDoubleTap: () => _seekBy(-10),
+                        behavior: HitTestBehavior.translucent,
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onDoubleTap: () => _seekBy(10),
+                        behavior: HitTestBehavior.translucent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
