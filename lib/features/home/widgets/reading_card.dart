@@ -6,6 +6,7 @@ import '../../../features/services/models/rjesus_content.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/logger_util.dart';
+import '../../../core/widgets/youtube_player_screen.dart';
 
 class ReadingCard extends StatelessWidget {
   const ReadingCard({super.key});
@@ -22,7 +23,19 @@ class ReadingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
         onTap: () async {
           final todaysReading = await RJesusService.instance.getTodaysReading();
-          if (todaysReading != null) {
+          if (todaysReading == null) return;
+          final videoId = todaysReading.youtubeId;
+          if (videoId != null && context.mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => YoutubePlayerScreen(
+                  videoId: videoId,
+                  title: todaysReading.title,
+                ),
+              ),
+            );
+          } else {
             _launchYouTube(todaysReading.url);
           }
         },
@@ -135,9 +148,9 @@ class ReadingCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // 유튜브 링크 정보
+                      // 영상 링크 정보
                       Text(
-                        '탭하여 유튜브에서 말씀 듣기',
+                        '탭하여 앱에서 말씀 보기',
                         style: TextStyle(
                           fontSize: AppSizes.fontM,
                           color: AppColors.textSecondary,
