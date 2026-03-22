@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../data/models/reading_completion.dart';
 import '../../../core/utils/date_helper.dart';
 import '../../../core/widgets/explanation_image_dialog.dart';
+import '../../../core/widgets/youtube_player_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   /// 다른 유저의 캘린더를 보려면 이 값을 설정합니다. (팀장 → 팀원 캘린더 보기)
@@ -696,7 +697,19 @@ class _SelectedDayActions extends StatelessWidget {
                   onTap: () async {
                     final reading = await RJesusService.instance
                         .getReadingByDate(selectedDay);
-                    if (reading != null) {
+                    if (reading == null) return;
+                    final videoId = reading.youtubeId;
+                    if (videoId != null && context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => YoutubePlayerScreen(
+                            videoId: videoId,
+                            title: reading.title,
+                          ),
+                        ),
+                      );
+                    } else {
                       try {
                         final Uri uri = Uri.parse(reading.url);
                         await launchUrl(uri, mode: LaunchMode.platformDefault);
