@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../features/services/rjesus_service.dart';
 import '../../../features/services/models/rjesus_content.dart';
 import '../../../core/utils/logger_util.dart';
@@ -54,9 +55,21 @@ class WeeklyCommentaryCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              '주간 해설',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '주간 해설',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                GestureDetector(
+                  onTap: () async {
+                    final commentary = await RJesusService.instance.getThisWeeksCommentary();
+                    if (commentary != null) Share.share(commentary.url);
+                  },
+                  child: const Icon(Icons.share, size: 18, color: Colors.black38),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             FutureBuilder<WeeklyCommentary?>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../features/services/rjesus_service.dart';
 import '../../../features/services/models/rjesus_content.dart';
 import '../../../core/constants/app_colors.dart';
@@ -45,10 +46,28 @@ class ReadingCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: AppSizes.iconS,
-                    color: AppColors.textSecondary,
+                  Row(
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: Icon(
+                          Icons.share,
+                          size: AppSizes.iconS,
+                          color: AppColors.textSecondary,
+                        ),
+                        onPressed: () async {
+                          final reading = await RJesusService.instance.getTodaysReading();
+                          if (reading != null) Share.share(reading.url);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: AppSizes.iconS,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -66,7 +85,7 @@ class ReadingCard extends StatelessWidget {
                       '오늘의 강의를 불러오는데 실패했습니다',
                       style: TextStyle(
                         fontSize: AppSizes.fontL,
-                        color: AppColors.errorBackground,
+                        color: AppColors.errorDark,
                       ),
                     );
                   }
