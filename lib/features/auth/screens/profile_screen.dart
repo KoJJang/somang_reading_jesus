@@ -10,7 +10,6 @@ import '../../../data/services/reading_service.dart';
 import '../controllers/auth_service.dart';
 import '../../team/models/team.dart';
 import '../../team/services/team_service.dart';
-import '../../team/services/team_test_data_seeder.dart';
 import '../../team/services/real_team_data_importer.dart';
 import '../../../core/utils/phone_helper.dart';
 import '../../../core/constants/app_colors.dart';
@@ -1103,87 +1102,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ],
     );
-  }
-
-  Future<void> _seedTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      final bool exists = await seeder.hasTestData();
-      if (exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
-            ),
-          );
-        }
-        return;
-      }
-      await seeder.seedTestData();
-      // 프로필 새로고침 (팀 정보 반영)
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 테스트 팀 데이터가 생성되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('시드 생성 실패: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _removeTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      await seeder.removeTestData();
-      // 프로필 새로고침
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🗑️ 테스트 데이터가 삭제되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('시드 삭제 실패: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _seedComplexTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      final bool exists = await seeder.hasComplexTestData();
-      if (exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('복합 테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
-            ),
-          );
-        }
-        return;
-      }
-      await seeder.seedComplexTestData();
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 복합 케이스 테스트 데이터가 생성되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('복합 시드 생성 실패: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _importRealTeamData() async {
