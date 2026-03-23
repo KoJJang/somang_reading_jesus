@@ -9,6 +9,7 @@ import 'package:reading_jesus_somang/data/services/database_service.dart';
 import 'package:reading_jesus_somang/data/repositories/local_reading_repository.dart';
 import 'package:reading_jesus_somang/data/services/reading_service.dart';
 import 'package:reading_jesus_somang/data/services/schedule_config_service.dart';
+import 'package:reading_jesus_somang/core/services/notification_service.dart';
 import 'package:reading_jesus_somang/features/calendar/screens/calendar_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/phone_auth_screen.dart';
 import 'package:reading_jesus_somang/features/auth/screens/profile_completion_screen.dart';
@@ -39,6 +40,9 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase 초기화 오류: $e');
   }
+
+  // 알림 서비스 초기화
+  await NotificationService.instance.initialize();
 
   // Load remote schedule configs; fall back to local defaults on failure.
   await ScheduleConfigService().loadRemoteConfigs();
