@@ -91,10 +91,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       _readingService.dispose();
     }
     // 앱이 다시 포그라운드로 돌아왔을 때 동기화 시도
-    else if (state == AppLifecycleState.resumed &&
-        _readingService.isAuthenticated) {
-      // 앱이 다시 포그라운드로 왔을 때 동기화 시도 (Firebase에서 데이터 가져오기)
-      _readingService.syncFromFirebase();
+    else if (state == AppLifecycleState.resumed) {
+      // 소진된 알림 보충
+      NotificationService.instance.rescheduleIfEnabled();
+      if (_readingService.isAuthenticated) {
+        // Firebase에서 데이터 가져오기
+        _readingService.syncFromFirebase();
+      }
     }
   }
 

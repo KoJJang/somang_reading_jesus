@@ -16,7 +16,10 @@ class NotificationService {
   static const String _enabledKey = 'notification_enabled';
   static const String _hourKey = 'notification_hour';
   static const String _minuteKey = 'notification_minute';
-  static const int _dailyNotificationId = 1;
+
+  // 개별 날짜 알림 슬롯: ID 1~45
+  static const int _scheduleCount = 45;
+  static const int _notificationIdBase = 1; // 1..45 사용, 0은 show()용
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -97,6 +100,15 @@ class NotificationService {
     }
   }
 
+  /// 앱 재실행/포그라운드 복귀 시 소진된 알림 보충
+  Future<void> rescheduleIfEnabled() async {
+    if (kIsWeb) return;
+    final settings = await loadSettings();
+    if (settings.enabled) {
+      await _scheduleDailyReminder(settings.hour, settings.minute);
+    }
+  }
+
   /// 단일 알림 표시 (FCM 수신 시에도 이 메서드 호출)
   Future<void> show(String title, String body) async {
     if (kIsWeb) return;
@@ -117,21 +129,6 @@ class NotificationService {
     if (kIsWeb) return;
     await _cancelDailyReminder();
 
-    // 다음 유효 알림 시각 계산 (오늘 or 내일)
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledTime = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-    if (scheduledTime.isBefore(now)) {
-      scheduledTime = scheduledTime.add(const Duration(days: 1));
-    }
-    scheduledTime = _nextValidDay(scheduledTime);
-
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'daily_reading',
@@ -143,30 +140,44 @@ class NotificationService {
       iOS: DarwinNotificationDetails(),
     );
 
-    // 매일 같은 시각에 반복 예약 (휴식주/일요일은 수신 측에서 무시)
-    await _plugin.zonedSchedule(
-      _dailyNotificationId,
-      '오늘의 말씀',
-      '말씀 읽을 시간입니다 📖',
-      scheduledTime,
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+    // 오늘 지정 시각이 아직 안 지났으면 오늘부터, 지났으면 내일부터 시작
+    final now = tz.TZDateTime.now(tz.local);
+    var candidate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
     );
+    if (candidate.isBefore(now)) {
+      candidate = candidate.add(const Duration(days: 1));
+    }
+
+    // 유효한 날짜(월~토, 휴식주 제외)를 찾아 45개 개별 등록
+    int registered = 0;
+    while (registered < _scheduleCount) {
+      if (!_shouldSkip(candidate)) {
+        await _plugin.zonedSchedule(
+          _notificationIdBase + registered,
+          '오늘의 말씀',
+          '말씀 읽을 시간입니다 📖',
+          candidate,
+          details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+        );
+        registered++;
+      }
+      candidate = candidate.add(const Duration(days: 1));
+    }
   }
 
   Future<void> _cancelDailyReminder() async {
-    await _plugin.cancel(_dailyNotificationId);
-  }
-
-  /// 알림을 받을 수 없는 날(일요일·휴식주)이면 다음 유효일로 이동
-  tz.TZDateTime _nextValidDay(tz.TZDateTime dt) {
-    while (_shouldSkip(dt)) {
-      dt = dt.add(const Duration(days: 1));
+    for (int i = 0; i < _scheduleCount; i++) {
+      await _plugin.cancel(_notificationIdBase + i);
     }
-    return dt;
   }
 
   bool _shouldSkip(DateTime dt) {
