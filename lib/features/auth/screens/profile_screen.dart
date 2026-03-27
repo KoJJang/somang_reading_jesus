@@ -809,7 +809,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '매일 $timeLabel 알림 (월~토, 휴식주 제외)',
+                    '매일 $timeLabel 알림 (일요일/휴식주 제외)',
                     style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
