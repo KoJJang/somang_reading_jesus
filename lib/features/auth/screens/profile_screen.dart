@@ -776,6 +776,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+          if (kDebugMode && _notificationEnabled) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                await NotificationService.instance.show(
+                  '오늘의 말씀',
+                  '말씀 읽을 시간입니다 📖 (테스트)',
+                );
+              },
+              child: const Text(
+                '⚡ 지금 바로 알림 테스트',
+                style: TextStyle(fontSize: 12, color: AppColors.primary),
+              ),
+            ),
+          ],
           if (_notificationEnabled) ...[
             const SizedBox(height: 4),
             GestureDetector(
