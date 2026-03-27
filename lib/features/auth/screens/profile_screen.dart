@@ -10,10 +10,10 @@ import '../../../data/services/reading_service.dart';
 import '../controllers/auth_service.dart';
 import '../../team/models/team.dart';
 import '../../team/services/team_service.dart';
-import '../../team/services/team_test_data_seeder.dart';
 import '../../team/services/real_team_data_importer.dart';
 import '../../../core/utils/phone_helper.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/notification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,6 +34,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSyncing = false;
   final _dateFormat = DateFormat('yyyy년 MM월 dd일');
 
+  // 알림 설정
+  bool _notificationEnabled = false;
+  int _notificationHour = 8;
+  int _notificationMinute = 0;
+
   // 동기화 제한 관련 변수 추가
   DateTime? _lastSyncTime;
   static const int _syncCooldownSeconds = 30; // 30초 쿨다운
@@ -51,6 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadUserProfile();
     _loadLastSyncTime();
+    _loadNotificationSettings();
 
     // Listen to authentication state changes
     _auth.authStateChanges().listen((User? user) {
@@ -75,6 +81,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // 타이머 정리
     _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  // 알림 설정 로드
+  Future<void> _loadNotificationSettings() async {
+    final settings = await NotificationService.instance.loadSettings();
+    if (mounted) {
+      setState(() {
+        _notificationEnabled = settings.enabled;
+        _notificationHour = settings.hour;
+        _notificationMinute = settings.minute;
+      });
+    }
   }
 
   // 마지막 동기화 시간 로드
@@ -705,6 +723,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _buildNotificationCard() {
+    final timeLabel =
+        '${_notificationHour.toString().padLeft(2, '0')}:'
+        '${_notificationMinute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'NOTIFICATION',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              color: AppColors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '말씀 알림',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Switch(
+                value: _notificationEnabled,
+                onChanged: (value) async {
+                  if (value) {
+                    await NotificationService.instance.requestPermission();
+                  }
+                  await NotificationService.instance.saveSettings(
+                    enabled: value,
+                    hour: _notificationHour,
+                    minute: _notificationMinute,
+                  );
+                  if (mounted) {
+                    setState(() => _notificationEnabled = value);
+                  }
+                },
+              ),
+            ],
+          ),
+          if (kDebugMode && _notificationEnabled) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                await NotificationService.instance.show(
+                  '오늘의 말씀',
+                  '말씀 읽을 시간입니다 📖 (테스트)',
+                );
+              },
+              child: const Text(
+                '⚡ 지금 바로 알림 테스트',
+                style: TextStyle(fontSize: 12, color: AppColors.primary),
+              ),
+            ),
+          ],
+          if (_notificationEnabled) ...[
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay(
+                    hour: _notificationHour,
+                    minute: _notificationMinute,
+                  ),
+                  initialEntryMode: TimePickerEntryMode.input,
+                );
+                if (picked != null && mounted) {
+                  await NotificationService.instance.saveSettings(
+                    enabled: true,
+                    hour: picked.hour,
+                    minute: picked.minute,
+                  );
+                  setState(() {
+                    _notificationHour = picked.hour;
+                    _notificationMinute = picked.minute;
+                  });
+                }
+              },
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '매일 $timeLabel 알림 (일요일/휴식주 제외)',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildTeamInfoCard() {
     return Container(
       decoration: BoxDecoration(
@@ -900,6 +1034,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     // 팀 정보 카드
                     if (_authService.isAuthenticated) _buildTeamInfoCard(),
+
+                    const SizedBox(height: 16),
+
+                    // 알림 설정 카드
+                    _buildNotificationCard(),
 
                     const SizedBox(height: 16),
 
@@ -1103,87 +1242,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ],
     );
-  }
-
-  Future<void> _seedTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      final bool exists = await seeder.hasTestData();
-      if (exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
-            ),
-          );
-        }
-        return;
-      }
-      await seeder.seedTestData();
-      // 프로필 새로고침 (팀 정보 반영)
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 테스트 팀 데이터가 생성되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('시드 생성 실패: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _removeTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      await seeder.removeTestData();
-      // 프로필 새로고침
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🗑️ 테스트 데이터가 삭제되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('시드 삭제 실패: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _seedComplexTestData() async {
-    final seeder = TeamTestDataSeeder();
-    try {
-      final bool exists = await seeder.hasComplexTestData();
-      if (exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('복합 테스트 데이터가 이미 존재합니다. 삭제 후 다시 시도하세요.'),
-            ),
-          );
-        }
-        return;
-      }
-      await seeder.seedComplexTestData();
-      await _loadUserProfile();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 복합 케이스 테스트 데이터가 생성되었습니다.')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('복합 시드 생성 실패: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _importRealTeamData() async {
