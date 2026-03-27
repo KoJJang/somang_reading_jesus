@@ -38,6 +38,9 @@ class NotificationService {
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      defaultPresentAlert: true,
+      defaultPresentBadge: true,
+      defaultPresentSound: true,
     );
     const settings = InitializationSettings(
       android: androidSettings,
@@ -112,17 +115,26 @@ class NotificationService {
   /// 단일 알림 표시 (FCM 수신 시에도 이 메서드 호출)
   Future<void> show(String title, String body) async {
     if (kIsWeb) return;
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'daily_reading',
-        '통독 알림',
-        channelDescription: '매일 말씀 읽기 리마인더',
-        importance: Importance.high,
-        priority: Priority.high,
-      ),
-      iOS: DarwinNotificationDetails(),
-    );
-    await _plugin.show(0, title, body, details);
+    try {
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_reading',
+          '통독 알림',
+          channelDescription: '매일 말씀 읽기 리마인더',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
+      await _plugin.show(0, title, body, details);
+      debugPrint('[NotificationService] show() 완료: $title');
+    } catch (e) {
+      debugPrint('[NotificationService] show() 오류: $e');
+    }
   }
 
   Future<void> _scheduleDailyReminder(int hour, int minute) async {
