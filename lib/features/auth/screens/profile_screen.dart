@@ -786,6 +786,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     hour: _notificationHour,
                     minute: _notificationMinute,
                   ),
+                  initialEntryMode: TimePickerEntryMode.input,
                 );
                 if (picked != null && mounted) {
                   await NotificationService.instance.saveSettings(
